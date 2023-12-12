@@ -14,25 +14,17 @@ interface Param {
 
 export default async function SSGPage({ params: { lang } }: Param) {
   const dict = await getDictionary(lang)
-  const storyComp = () => <CmButton>{dict['button']['button']}</CmButton>
   return (
     <section className="flex-center-col">
       <div className="inline-block justify-center text-center">
         <div className="flex-center-col">
           <CmTitle className="m-auto" size="lg">
-            {dict['home']['teamName']}
+            Projects
           </CmTitle>
           <CmTitle size="lg" gradient>
             {dict['home']['description']['title']}&nbsp;
           </CmTitle>
         </div>
-        <p className="mb-12 mt-6 max-w-6xl text-xl text-default-500">
-          {dict['home']['description']['summary1']}
-          <br />
-          {dict['home']['description']['summary2']}
-          <br />
-          {dict['home']['description']['summary3']}
-        </p>
       </div>
       <HiButton />
     </section>

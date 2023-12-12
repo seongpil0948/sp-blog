@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-
 import {
   LANDING_PATH,
   NAV_ITEMS_HOME,
@@ -54,7 +53,6 @@ export default function RootLayout({
       <main id="content-container" className={main()}>
         {children}
       </main>
-
       <CmFooter />
     </div>
   )

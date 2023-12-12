@@ -27,7 +27,7 @@ export default function HiButton(props: { onClick?: () => void }) {
         initial={false}
         animate={isHover ? 'hover' : 'rest'}
         onClick={() => {
-          router.push(`/doc/getting-started`)
+          router.push(`/doc/framework-next/getting-started`)
           props.onClick && props.onClick()
         }}
         whileTap="press"

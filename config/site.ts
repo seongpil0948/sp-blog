@@ -10,7 +10,7 @@ export const siteConfig = {
     github: 'https://github.com/seongpil0948',
     twitter: 'https://www.instagram.com/m_moonggg',
     // docs: '/doc',
-    // discord: 'https://discord.gg/9b6yyZKmH4',
+    discord: 'https://discord.gg/9HsQkekR',
     // sponsor: 'https://patreon.com/jrgarciadev',
   },
 }
@@ -31,11 +31,16 @@ const linkToTree = (links: THrefLinks): TreeSectionProps[] => {
     return tree
   })
 }
+
 export const NAV_ITEMS_HOME = linkToTree([
 
   {
     label: 'Doc',
     href: '/doc',
+  },
+  {
+    label: 'Projects',
+    href: '/projects',
   },
 ])
 export const NAV_ITEMS_HOME_MOBILE = linkToTree([
@@ -44,16 +49,32 @@ export const NAV_ITEMS_HOME_MOBILE = linkToTree([
     label: 'Doc',
     href: '/doc',
   },
+  {
+    label: 'Projects',
+    href: '/projects',
+  },
   // {
   //   label: 'Logout',
   //   href: '/logout',
   // },
 ])
+export const NAV_ITEMS_DOC = linkToTree([
+  {
+    label: 'Framework Next',
+    href: '/doc/framework-next',
+  },
+  {
+    label: 'Kubernetes',
+    href: '/doc/kubernetes',
+  },
+])
+
+
 
 export const NEXT_FRAME_MENU_LIST = linkToTree([
   {
     label: 'Getting Started',
-    href: '/doc/getting-started',
+    href: '/doc/framework-next/getting-started',
     children: [],
   },
   {
@@ -62,7 +83,7 @@ export const NEXT_FRAME_MENU_LIST = linkToTree([
     children: [
       {
         label: 'File Structure',
-        href: '/doc/convention/structure',
+        href: '/doc/framework-next/convention/structure',
       },
       { label: 'Naming', href: '/doc/convention/name' },
     ],
@@ -73,23 +94,23 @@ export const NEXT_FRAME_MENU_LIST = linkToTree([
     children: [
       {
         label: 'Mdx Sample',
-        href: '/doc/guide/mdx-sample',
+        href: '/doc/framework-next/guide/mdx-sample',
       },
       {
         label: 'Keyword',
-        href: '/doc/guide/keyword',
+        href: '/doc/framework-next/guide/keyword',
       },
       {
         label: 'Server Client Pattern',
-        href: '/doc/guide/server-client-pattern',
+        href: '/doc/framework-next/guide/server-client-pattern',
       },
       {
         label: 'Customize Theme',
-        href: '/doc/guide/customize-theme',
+        href: '/doc/framework-next/guide/customize-theme',
       },
       {
         label: 'Contribute',
-        href: '/doc/guide/contribute',
+        href: '/doc/framework-next/guide/contribute',
       },
     ],
   },
