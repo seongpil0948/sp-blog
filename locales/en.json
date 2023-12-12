@@ -1,0 +1,50 @@
+{
+  "button": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "button": "Button",
+    "modify": "Modify",
+    "search": "Search",
+    "started": "Getting Started",
+    "submit": "Submit"
+  },
+  "common": {
+    "label": {
+      "createInformation": "Create Information",
+      "updateInformation": "Update Information"
+    },
+    "loading": "loading..."
+  },
+  "error": {
+    "errorMessage": {
+      "code": "Please enter at least 1 character."
+    }
+  },
+  "home": {
+    "description": {
+      "by": "by Team Convergence",
+      "summary1": "It is a framework for building web applications with a focus on expressive, elegant syntax.",
+      "summary2": "We believe development must be an enjoyable, creative experience to be truly fulfilling.",
+      "summary3": "It's attempts to take the pain out of development by easing common tasks used in the majority of web projects",
+      "title": "SP Blog"
+    },
+    "teamName": "SP"
+  },
+  "login": {
+    "signIn": "Sign In",
+    "signOut": "SignOut",
+    "signUp": "Sign Up",
+    "searchPassword": "Forgot password"
+  },
+  "manifest": {
+    "title": "SP Blog"
+  },
+  "status": {
+    "success": "Success",
+    "fail": "Fail"
+  },
+  "search": {
+    "searchCriteria": "Search Criteria",
+    "searchWord": "Search Word"
+  }
+}
