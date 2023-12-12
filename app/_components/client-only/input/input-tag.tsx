@@ -89,7 +89,7 @@ const InputTag = forwardRef<any, InputTagProps>((props, ref) => {
             handleSearch()
           }
         }}
-        className="text-black/50 dark:text-white/90 text-slate-400 flex-shrink-0 cursor-pointer"
+        className="flex-shrink-0 cursor-pointer text-black/50 text-slate-400 dark:text-white/90"
       />
     ),
     // custom styles

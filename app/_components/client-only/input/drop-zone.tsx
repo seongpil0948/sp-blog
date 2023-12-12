@@ -16,7 +16,7 @@ export function PDropZone({
   return (
     <div {...getRootProps()}>
       <input
-        className="text-default-500 text-sm"
+        className="text-sm text-default-500"
         {...getInputProps({
           accept: dropZoneProps.accept
             ? Object.keys(dropZoneProps.accept).join(',')

@@ -5,7 +5,7 @@ export function LoadingComponent(props: CircularProgressProps) {
   return (
     <CircularProgress
       key="7"
-      className="fixed top-1/2 left-1/2"
+      className="fixed left-1/2 top-1/2"
       size="lg"
       aria-label="Loading..."
       {...props}

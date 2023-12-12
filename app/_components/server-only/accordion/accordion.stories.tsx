@@ -62,7 +62,7 @@ export const Default = {
         ariaLabel: 'custom',
         title: <span className="text-secondary">it&#39;s custom title</span>,
         subtitle: <span className="text-primary">it&#39;s custom style</span>,
-        indicator: <HeadphonesIcon className="w-5 h-5" />,
+        indicator: <HeadphonesIcon className="h-5 w-5" />,
         disableIndicatorAnimation: true,
         contents: (
           <div>
@@ -74,7 +74,7 @@ export const Default = {
         id: 5,
         ariaLabel: 'use icon',
         title: 'use icon',
-        startContent: <HeadphonesIcon className="w-5 h-5" />,
+        startContent: <HeadphonesIcon className="h-5 w-5" />,
         contents: 'use icon header',
       },
     ],

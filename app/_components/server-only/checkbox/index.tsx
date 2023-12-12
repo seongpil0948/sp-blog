@@ -64,9 +64,7 @@ export default function CmCheckbox({
         isDisabled={disabled}
         isReadOnly={readOnly}
         isInvalid={isInvalid === true && valid === false}
-        errorMessage={
-          isInvalid === true && valid === false && errorMsg
-        }
+        errorMessage={isInvalid === true && valid === false && errorMsg}
         orientation={orientation}
         value={selectedVaule}
         onValueChange={setSelected}

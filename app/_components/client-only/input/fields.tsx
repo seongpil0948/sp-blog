@@ -11,7 +11,7 @@ export function InputEmail(p: {
       variant="bordered"
       className="mb-2"
       endContent={
-        <MailIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
+        <MailIcon className="pointer-events-none flex-shrink-0 text-2xl text-default-400" />
       }
       label="Email"
       placeholder="Enter your email"
@@ -30,7 +30,7 @@ export function InputPassword(p: {
     <Input
       variant="bordered"
       endContent={
-        <LockIcon className="text-2xl text-default-400 pointer-events-none flex-shrink-0" />
+        <LockIcon className="pointer-events-none flex-shrink-0 text-2xl text-default-400" />
       }
       label="Password"
       placeholder="Enter your password"

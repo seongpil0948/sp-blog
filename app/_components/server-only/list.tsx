@@ -9,7 +9,7 @@ export interface ChipListProps {
 
 export const ChipList = ({ tags, chipProps, onClose }: ChipListProps) => {
   return (
-    <div className="flex gap-1 mt-1">
+    <div className="mt-1 flex gap-1">
       {tags.map((item, index) => (
         <Chip
           key={item + index}

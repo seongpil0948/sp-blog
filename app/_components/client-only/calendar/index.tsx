@@ -67,7 +67,7 @@ const Calendar = forwardRef<'div', CalendarStateOptions<CalendarDate>>(
         ])}
         {...calendarProps}
       >
-        <div className="header  text-gray-800 inline-flex ">
+        <div className="header  inline-flex text-gray-800 ">
           <h2 className=" items-center">{title}</h2>
           <Button size="sm" className={clsx(btnClasses)} {...prevButtonProps}>
             저번달 &lt;

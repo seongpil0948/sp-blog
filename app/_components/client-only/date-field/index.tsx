@@ -62,7 +62,7 @@ export default function DateField(props: DateFieldProps) {
       <div
         {...fieldProps}
         ref={ref}
-        className="flex-nowrap px-2 py-3 inline-flex border-solid border-2 align-middle items-center "
+        className="inline-flex flex-nowrap items-center border-2 border-solid px-2 py-3 align-middle "
       >
         {segments}
         {state.isInvalid && <span aria-hidden="true">🚫</span>}

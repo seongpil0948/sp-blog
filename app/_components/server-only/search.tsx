@@ -10,12 +10,11 @@ export default function CmSearch(props: SearchProps) {
   const { children } = props
 
   return (
-    <div className={box({isSearch: true})}>
-      <div>
-        {children}
-      </div>
+    <div className={box({ isSearch: true })}>
+      <div>{children}</div>
       <CmButton color="primary">
-        <SearchIcon/>검색
+        <SearchIcon />
+        검색
       </CmButton>
     </div>
   )

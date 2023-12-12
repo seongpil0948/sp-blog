@@ -33,7 +33,6 @@ const linkToTree = (links: THrefLinks): TreeSectionProps[] => {
 }
 
 export const NAV_ITEMS_HOME = linkToTree([
-
   {
     label: 'Doc',
     href: '/doc',
@@ -44,7 +43,6 @@ export const NAV_ITEMS_HOME = linkToTree([
   },
 ])
 export const NAV_ITEMS_HOME_MOBILE = linkToTree([
-
   {
     label: 'Doc',
     href: '/doc',
@@ -68,8 +66,6 @@ export const NAV_ITEMS_DOC = linkToTree([
     href: '/doc/kubernetes',
   },
 ])
-
-
 
 export const NEXT_FRAME_MENU_LIST = linkToTree([
   {

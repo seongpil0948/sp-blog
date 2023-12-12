@@ -49,6 +49,6 @@ export const Default = {
 export const IconOnly = {
   args: {
     isIconOnly: true,
-    children: <HeadphonesIcon className="w-5 h-5" />,
+    children: <HeadphonesIcon className="h-5 w-5" />,
   },
 }

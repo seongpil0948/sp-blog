@@ -60,13 +60,13 @@ export const AsSidebar: Story = {
 function ExampleApp(props: { children?: React.ReactNode }) {
   return (
     <NextUIProvider>
-      <div className="flex flex-col w-screen h-screen">
+      <div className="flex h-screen w-screen flex-col">
         <nav className=" flex w-full bg-slate-400">
           {props.children}
           <Logo />
           <p className="font-bold text-inherit">Example</p>
         </nav>
-        <main className="w-full h-full max-h-full relative">zz</main>
+        <main className="relative h-full max-h-full w-full">zz</main>
       </div>
     </NextUIProvider>
   )
