@@ -17,7 +17,7 @@ export const config = {
     // "/",
   ],
 }
-const IGNORE_PATHS = ['icon/']
+const IGNORE_PATHS = ['icon/', 'sitemap.xml', 'robots.txt', 'favicon.ico', 'svg', 'manifest', 'sw.js', 'worker.js', 'peach-service-worker.js', 'workbox',]
 
 export async function middleware(request: NextRequest, response: NextResponse) {
   if (IGNORE_PATHS.some((p) => request.nextUrl.pathname.includes(p))) {
