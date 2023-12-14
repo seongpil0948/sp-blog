@@ -1,11 +1,16 @@
 import type { TreeSectionProps } from '@/app/_components/client-only/tree-section'
+import { uniqueFilter } from '@/app/_utils'
 import { THrefLinks } from '@/types'
 
+// TODO: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons
 export type SiteConfig = typeof siteConfig
 export const LANDING_PATH = '/home'
+export const APP_DOMAIN = 'https://www.peachhub.love'
+
 export const siteConfig = {
-  name: 'SP-Blog',
-  description: 'Make beautiful websites regardless of your design experience.',
+  name: 'SeongPil Blog',
+  short_name: 'SP-Blog',
+  description: 'my log',
   links: {
     github: 'https://github.com/seongpil0948',
     twitter: 'https://www.instagram.com/m_moonggg',
@@ -13,7 +18,16 @@ export const siteConfig = {
     discord: 'https://discord.gg/9HsQkekR',
     // sponsor: 'https://patreon.com/jrgarciadev',
   },
+  sitemap: APP_DOMAIN + '/sitemap.xml',
+  start_url: '/',
+  display: 'standalone',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: 'favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
 }
+
 const linkToTree = (links: THrefLinks): TreeSectionProps[] => {
   return links.map((link) => {
     const tree = {
@@ -111,3 +125,22 @@ export const NEXT_FRAME_MENU_LIST = linkToTree([
     ],
   },
 ])
+
+
+const reduceLinks = (links: THrefLinks): string[] => {
+  return links.reduce((acc, link) => {
+    if (link.children) {
+      return [...acc, ...reduceLinks(link.children)]
+    }
+    return [...acc, APP_DOMAIN + link.href]
+  }, [] as string[])
+}
+
+export const ALL_LINKS = [APP_DOMAIN, ...uniqueFilter(reduceLinks([
+  ...NAV_ITEMS_HOME,
+  ...NAV_ITEMS_DOC,
+  ...NEXT_FRAME_MENU_LIST
+]))]
+// if (process.env.NEXT_PUBLIC_ENV === 'production') {
+//   console.info("getAllLinks: ", ALL_LINKS)
+// }
