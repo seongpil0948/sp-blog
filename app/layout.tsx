@@ -27,6 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <meta
+        name="naver-site-verification"
+        content="a1cd903032b0efba5543fddeb9533e90d0812859"
+      />
       <head />
       <body
         className={clsx(
