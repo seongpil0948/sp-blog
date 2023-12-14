@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { PaginationProps } from '@nextui-org/pagination'
 import { pagination } from './theme'
 import clsx from 'clsx'

@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest, response: NextResponse) {
   } else if (!locale) {
     locale = getLocaleRequest(request)
   }
-  console.log({ onlyPath, locale, nextP })
+  // console.log({ onlyPath, locale, nextP })
 
   const join = (p: string, l?: string) => {
     if (!l) return new URL(p, request.url)
@@ -46,6 +46,6 @@ export async function middleware(request: NextRequest, response: NextResponse) {
   if (nextUrl.pathname === nextP) {
     return NextResponse.next()
   }
-  console.log(`go redirect from ${nextP} to ${nextUrl.pathname}`)
+  // console.log(`go redirect from ${nextP} to ${nextUrl.pathname}`)
   return NextResponse.redirect(nextUrl, { status: 301 })
 }

@@ -7,13 +7,14 @@ import {
   TableHeader,
   TableBody,
 } from '@nextui-org/table'
+import { Key } from 'react-aria'
 
 interface KT {
-  key: string
+  key: Key
   title: React.ReactNode
 }
 interface Row {
-  key: string
+  key: Key
   cells: KT[]
 }
 interface Props {

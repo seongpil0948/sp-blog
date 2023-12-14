@@ -1,5 +1,3 @@
-// 임시, #81 반영시 완료
-
 import { TableProps } from '@nextui-org/table'
 import { v4 } from 'uuid'
 

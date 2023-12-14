@@ -88,6 +88,17 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ul: (props) => (
       <ul className="my-5 list-none [blockquote_&]:my-0" {...props} />
     ),
+    table: (props) => (
+      <table className="w-full border-collapse">{props.children}</table>
+    ),
+    th: (props) => (
+      <th className="whitespace-nowrap border border-gray-200 bg-gray-100 px-4 py-2">
+        {props.children}
+      </th>
+    ),
+    td: (props) => (
+      <td className="border border-gray-200 px-4 py-2">{props.children}</td>
+    ),
   }
 }
 
