@@ -45,31 +45,19 @@ const linkToTree = (links: THrefLinks): TreeSectionProps[] => {
     return tree
   })
 }
+const NAV_MENUS_HOME = [
+  {
+    label: 'Doc',
+    href: '/doc',
+  },
+  {
+    label: 'Projects',
+    href: '/projects',
+  },
+]
+export const NAV_ITEMS_HOME = linkToTree(NAV_MENUS_HOME)
+export const NAV_ITEMS_HOME_MOBILE = linkToTree(NAV_MENUS_HOME)
 
-export const NAV_ITEMS_HOME = linkToTree([
-  {
-    label: 'Doc',
-    href: '/doc',
-  },
-  {
-    label: 'Projects',
-    href: '/projects',
-  },
-])
-export const NAV_ITEMS_HOME_MOBILE = linkToTree([
-  {
-    label: 'Doc',
-    href: '/doc',
-  },
-  {
-    label: 'Projects',
-    href: '/projects',
-  },
-  // {
-  //   label: 'Logout',
-  //   href: '/logout',
-  // },
-])
 export const NAV_ITEMS_DOC = linkToTree([
   {
     label: 'Framework Next',
@@ -78,6 +66,14 @@ export const NAV_ITEMS_DOC = linkToTree([
   {
     label: 'Kubernetes',
     href: '/doc/kubernetes',
+  },
+  {
+    label: 'Java',
+    href: '/doc/java',
+  },
+  {
+    label: 'Interactive',
+    href: '/doc/interactive',
   },
 ])
 
