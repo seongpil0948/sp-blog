@@ -9,7 +9,7 @@ export const APP_DOMAIN = 'https://www.peachhub.love'
 
 export const siteConfig = {
   name: 'SeongPil Blog',
-  short_name: 'SP-Blog',
+  short_name: 'SP Blog',
   description: 'my log',
   links: {
     github: 'https://github.com/seongpil0948',
@@ -74,6 +74,12 @@ export const NAV_ITEMS_DOC = linkToTree([
   {
     label: 'Interactive',
     href: '/doc/interactive',
+    children: [
+      {
+        label: 'Wave',
+        href: '/doc/interactive/wave',
+      }
+    ]
   },
 ])
 

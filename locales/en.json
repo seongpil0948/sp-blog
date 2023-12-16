@@ -22,13 +22,13 @@
   },
   "home": {
     "description": {
-      "by": "by Team Convergence",
+      "by": "by SeongPil Choi",
       "summary1": "It is a framework for building web applications with a focus on expressive, elegant syntax.",
       "summary2": "We believe development must be an enjoyable, creative experience to be truly fulfilling.",
       "summary3": "It's attempts to take the pain out of development by easing common tasks used in the majority of web projects",
-      "title": "SP Blog"
+      "title": "Seong pil choi Log"
     },
-    "teamName": "SP"
+    "teamName": "log SP"
   },
   "login": {
     "signIn": "Sign In",
