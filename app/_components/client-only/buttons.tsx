@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import Icon from '@mdi/react'
 import { mdiPlus } from '@mdi/js'
-// import { Checkbox } from "@nextui-org/checkbox";
+
 import {
   useDisclosure,
   Modal,

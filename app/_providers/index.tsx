@@ -9,6 +9,7 @@ import { ToastContainer } from 'react-toastify'
 import { I18nProvider } from 'react-aria'
 import { useRouter } from 'next/navigation'
 import CommonProvider from './common'
+import { AnimatePresence, motion } from 'framer-motion'
 // import { ErrorBoundary } from '../_utils/exceptions'
 
 export interface ProvidersProps {
@@ -27,7 +28,25 @@ export function Providers({ children, themeProps }: ProvidersProps) {
           <CommonProvider>
             <ReduxProvider>
               <LoadingProvider>
-                {children}
+                <AnimatePresence
+                  mode="wait"
+                  // initial={true}
+                  // onExitComplete={() => window.scrollTo(0, 0)}
+                >
+                  <motion.div
+                    initial={{ x: 300, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 300, opacity: 0 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 260,
+                      damping: 20,
+                    }}
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
+
                 <ToastContainer
                   position="top-right"
                   autoClose={false}
