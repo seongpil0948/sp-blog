@@ -1,33 +1,31 @@
-import { TAvailLocale } from '@/config/system'
+import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
 import { Metadata, ResolvingMetadata } from 'next'
+import { getDictionary } from '../dictionaries'
 
-export const metadata: Metadata = {
-  title: 'sp blog - Documentation',
-  description: 'Documentation',
+export async function generateStaticParams() {
+  return AVAIL_LOCALES.map((lang) => ({ lang }))
 }
 
 type Props = {
-  lang: TAvailLocale
-  // params: { id: string }
-  // searchParams: { [key: string]: string | string[] | undefined }
+  params: { lang: TAvailLocale }
+  searchParams: { [key: string]: string | string[] | undefined }
+  children: React.ReactNode
 }
 
 export async function generateMetadata(
-  { lang }: Props,
+  { params: { lang } }: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
+  const dict = await getDictionary(lang)
   return {
-    title: ,
+    title: dict['doc']['title'],
+    description: dict['doc']['description'],
     openGraph: {
-      images: ['/some-specific-page-image.jpg', ...previousImages],
+      images: ['/image/logo.png'],
     },
   }
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: Props) {
   return <div id="layout-doc">{children}</div>
 }

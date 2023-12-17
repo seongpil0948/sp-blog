@@ -8,6 +8,20 @@
     "started": "Getting Started",
     "submit": "Submit"
   },
+  "doc": {
+    "title": "Sp Blog Document",
+    "description": "document for sp blog",
+    "kubernetes": {
+      "on-premise-1": {
+        "title": "kubernetes on-premise",
+        "description": "construct kubernetes on-premise"
+      },
+      "workloads": {
+        "title": "workloads",
+        "description": "What is workloads"
+      }
+    }
+  },  
   "common": {
     "label": {
       "createInformation": "Create Information",

@@ -1,0 +1,60 @@
+# Summary
+
+워크로드는 Kubernetes에서 실행되는 여러개의 파드 혹은 리소스들로 구성된 애플리케이션입니다.
+
+Kubernetes는 워크로드와 해당 워크로드의 구성 요소를 선언적으로 관리하기 위한 여러 내장 API를 제공합니다  
+
+# StatefulSet
+StatefulSet는 다음 중 하나 이상이 필요한 애플리케이션에 유용합니다.
+
+* 안정적이고 고유한 네트워크 식별자입니다. 
+* 안정적이고 지속적인 스토리지. 
+* 질서 있고 점진적인 배포 및 
+* 확장. 순서대로 자동 롤링 업데이트가 이루어집니다.
+
+
+## 시작하기
+아래 느낌으로 실행시키면
+
+```bash
+kubectl delete namespace oidc
+kubectl create namespace oidc
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install keycloak bitnami/keycloak  --namespace oidc --values values-keycloak.yaml
+```
+
+아래와 같은 결과를 확인할 수 있다.
+```bash
+NAME: keycloak
+LAST DEPLOYED: Sun Dec 17 03:44:58 2023
+NAMESPACE: oidc
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: keycloak
+CHART VERSION: 17.3.6
+APP VERSION: 22.0.5
+
+** Please be patient while the chart is being deployed **
+
+Keycloak can be accessed through the following DNS name from within your cluster:
+
+    keycloak.oidc.svc.cluster.local (port 80)
+
+To access Keycloak from outside the cluster execute the following commands:
+
+1. Get the Keycloak URL by running these commands:
+
+export HTTP_SERVICE_PORT=$(kubectl get --namespace oidc -o jsonpath="{.spec.ports[?(@.name=='http')].port}" services keycloak)
+kubectl port-forward --namespace oidc svc/keycloak 8097:${HTTP_SERVICE_PORT} &
+
+echo "http://127.0.0.1:${HTTP_SERVICE_PORT}/"
+
+2. Access Keycloak using the obtained URL.
+```
+아직 외부 IP가 없기 때문에, 내부 IP로 접속해야 한다.
+위 1번 명령어를 실행하면, 포트포워딩이 되어서, 내부 IP로 접속할 수 있다.
+
+

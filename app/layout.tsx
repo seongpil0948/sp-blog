@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   //   { media: "(prefers-color-scheme: dark)", color: "black" },
   // ],
   icons: siteConfig.icons,
+  metadataBase: new URL('https://www.peachhub.love'),
 }
 
 export default function RootLayout({

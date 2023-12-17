@@ -10,7 +10,17 @@
   },
   "doc": {
     "title": "문서 정리",
-    "description": "공부한 내용 정리 문서"
+    "description": "공부한 내용 정리 문서",
+    "kubernetes": {
+      "on-premise-1": {
+        "title": "쿠버네티스",
+        "description": "사내 서버 구축 Part 1"
+      },
+      "workloads": {
+        "title": "워크 로드",
+        "description": "워크로드란?"
+      }
+    }
   },
 
   "common": {

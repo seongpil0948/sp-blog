@@ -1,0 +1,87 @@
+# 개요 
+요새 많은 회사들이 k8s 도입하며 서비스를 관리하고 있다.   
+이번에 팀용 사내서버를 새로 구축하게 되면서, 우리도 k8s를 도입하고자 한다.  
+* Ubuntu 20.04 LTS를 사용할 것이며, 모든 서버에 Docker를 설치할 것이다. 
+* 사용할 서버는 4대이며, 각 서버는 16GB의 메모리와 500GB의 디스크를 가지고 있다.  
+* 서버는 1대의 마스터노드와 3대의 워커노드로 구성할 것이다.
+
+각 사용할 오픈소스들에 대해 알아보고, 설치 및 설정을 진행해보자.
+
+## List of Open source
+- [Kubernetes](https://kubernetes.io/)
+- [Docker](https://www.docker.com/)
+- [Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+- [Calico](https://www.projectcalico.org/)
+- [MetalLB](https://metallb.universe.tf/)
+- [Helms](https://helm.sh/)
+- [Keycloak](https://www.keycloak.org/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
+  
+
+### What is Kubeadm?
+kubeadm은 Kubernetes 클러스터를 빠르고 쉽게 구축할 수 있도록 도와주는 도구로, 다음과 같은 작업을 수행하여 클러스터를 구성합니다.
+
+* 클러스터의 노드에 필요한 컴포넌트를 설치합니다.
+* 클러스터의 노드 간에 통신을 위한 네트워크 구성을 합니다.
+* 클러스터의 API 서버를 시작합니다.
+
+### What is Calico?
+Calico는 Kubernetes 클러스터의 네트워크 정책을 관리하는 오픈소스 솔루션입니다.
+Calico는 다음과 같은 기능을 제공합니다.
+* 클러스터의 노드 간에 통신을 위한 네트워크 구성을 합니다.
+* 클러스터의 노드 간에 통신을 위한 네트워크 정책을 관리합니다.
+  
+### What is MetalLB?
+MetalLB는 Kubernetes 클러스터에 로드밸런서 서비스를 제공하는 컨트롤러입니다.
+ExternalIPs, LoadBalancer 서비스 유형을 사용하여 서비스를 외부로 노출할 수 있습니다.
+보통 토이프로젝트는 NodePort를 사용하여 서비스를 외부로 노출합니다.
+실무에서 사용하는 방식은 아니기 때문에 이번에는 MetalLB를 사용하여 서비스를 외부로 노출할 것입니다.
+
+### What is Helms?
+Helm은 Kubernetes의 패키지 관리자입니다.
+기존 Node.js 의 npm, Python의 pip, Java의 maven과 같은 역할을 합니다.
+서버에 한번 설치된 어플리케이션을 업데이트하거나 삭제할 때, 매번 명령어를 입력하는 것은 번거롭습니다.
+Helm은 이러한 문제를 해결하기 위해 어플리케이션을 chart라는 단위로 관리합니다.
+chart를 사용하여 Kubernetes 애플리케이션을 설치, 업그레이드, 삭제할 수 있습니다.
+
+### What is Keycloak?
+Keycloak은 Red Hat에서 만든 오픈소스 싱글 사인온(SSO) 솔루션입니다.
+인증 및 권한 부여를 위한 기능을 제공하며, OAuth 2.0, OpenID Connect, SAML 2.0을 지원합니다.
+Keycloak은 다양한 클라이언트 언어를 지원하며, 다양한 클라이언트 언어를 지원합니다.
+우리는 다양한 어플리케이션의 로그인을 통합하기 위해 Keycloak을 사용할 것입니다.
+
+예로 우리팀은 사내 프레임워크, 스텝업 서비스, 팀별 서비스 등 다양한 서비스를 운영 하고있습니다.
+이러한 서비스들은 각각의 로그인 서비스를 가지고 있습니다.
+한 유저가 여러 서비스를 사용할 때, 각 서비스마다 계정을 생성하고,
+로그인을 해야하는 번거로움이 있습니다.
+이러한 문제를 해결하기 위해 Keycloak을 사용하여 로그인을 통합할 것입니다.
+
+### What is Prometheus?
+* 오픈소스 모니터링 솔루션입니다.
+* 다양한 서버, 서비스, 어플리케이션의 상태를 모니터링 할 수 있습니다.
+* 다양한 클라이언트 라이브러리를 제공하며, 다양한 언어로 작성된 어플리케이션을 모니터링 할 수 있습니다.
+* 다양한 Exporter를 제공하며, 다양한 서버, 서비스, 어플리케이션을 모니터링 할 수 있습니다.
+  
+
+### What is Grafana?
+* 오픈소스 대시보드 솔루션입니다.
+* 다양한 데이터 소스를 지원하며, 다양한 데이터 소스를 대시보드로 시각화 할 수 있습니다. 
+
+음 너무 많으니까 이정도만 알아보자.
+
+# Setup
+
+## 서버 네트워크 구성
+Kubernetes는 클러스터의 노드 간에 통신하기 위해 네트워크를 사용합니다. 따라서, 서버의 네트워크 설정을 구성해야 합니다.
+가용 IP 주소 범위는 192.168.0.100 ~ 103 입니다.
+
+마스터 노드로 사용할 100번 서버의 ifconfig 결과를 살펴보면 여럿 네트워크 인터페이스를 가지고 있습니다.
+
+*  br-* : 브릿지 인터페이스이며 다른 인터페이스 간의 트래픽 전송을 지원합니다.
+*  cali* : Calico 네트워크 인터페이스
+   *  calico 네트워크 fabric의 일부이며 서버 간의 통신을 위해 사용됩니다.
+*  docker*: Docker 컨테이너의 네트워킹을 관리하는 가상 인터페이스입니다.
+*  enp2s0f0 : 서버의 물리적인 네트워크 인터페이스입니다.
+*  lo : 로컬 루프백 인터페이스이며 서버 내부 통신에 사용됩니다.
+*  veth* : 인터페이스는 가상 이더넷 인터페이스이며 서버 내부 통신에 사용됩니다.

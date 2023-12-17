@@ -60,6 +60,10 @@ export const NAV_ITEMS_HOME_MOBILE = linkToTree(NAV_MENUS_HOME)
 
 export const NAV_ITEMS_DOC = linkToTree([
   {
+    label: 'Write',
+    href: '/doc/write',
+  },
+  {
     label: 'Framework Next',
     href: '/doc/framework-next',
   },

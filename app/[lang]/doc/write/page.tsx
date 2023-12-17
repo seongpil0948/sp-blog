@@ -1,5 +1,6 @@
 import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
-import { redirect } from 'next/navigation'
+import Content from './content.mdx'
+import DocumentContainer from '~/[lang]/doc/_components/server-only/DocumentContainer'
 
 export async function generateStaticParams() {
   return AVAIL_LOCALES.map((lang) => ({ lang }))
@@ -10,5 +11,9 @@ interface Param {
 }
 
 export default async function SSGPage({ params: { lang } }: Param) {
-  return redirect(`/${lang}/doc/kubernetes/on-premise-1`)
+  return (
+    <DocumentContainer lang={lang}>
+      <Content />
+    </DocumentContainer>
+  )
 }
