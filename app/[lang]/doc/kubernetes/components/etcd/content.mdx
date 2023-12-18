@@ -1,0 +1,42 @@
+## What is etcd
+etcd는 모든 클러스터 데이터에 대한 Kubernetes의 백업 저장소로 사용되는 일관되고 가용성이 높은 키 값 저장소입니다.
+
+kubeadm 으로 세팅된 환경에서 `kubectl get pod -n kube-system`을 실행한 결과는 다음과 같습니다.
+
+```bash
+coredns-5dd5756b68-2d672            1/1     Running   0               14d
+coredns-5dd5756b68-x6sm4            1/1     Running   0               14d
+etcd-abacus103                      1/1     Running   2               14d
+kube-apiserver-abacus103            1/1     Running   2               14d
+kube-controller-manager-abacus103   1/1     Running   1               14d
+kube-proxy-29f5t                    1/1     Running   0               11d
+kube-proxy-9s4wl                    1/1     Running   1 (7d11h ago)   13d
+kube-proxy-cntk5                    1/1     Running   0               14d
+kube-proxy-lp6k9                    1/1     Running   0               13d
+kube-scheduler-abacus103            1/1     Running   2               14d
+```
+
+위의 결과를 보면 etcd는 `etcd-abacus103`라는 이름으로 실행되고 있습니다. 
+과연 어떤 리소스들이 etcd에 저장되어 있는지 확인해보겠습니다.
+
+```bash
+kubectl  exec pod/etcd-abacus103 -n kube-system -- sh -c "ETCDCTL_API=3 etcdctl get / --prefix --keys-only --limit=10 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt  --key /etc/kubernetes/pki/etcd/server.key"
+```
+* ETCDCTL이 ETCD API 서버에 인증할 수 있도록 인증서 파일 경로도 지정해야 합니다. 인증서 파일은 다음 경로의 etcd-master에서 사용할 수 있습니다.
+**결과**
+```bash
+/registry/apiextensions.k8s.io/customresourcedefinitions/addresspools.metallb.io
+/registry/apiextensions.k8s.io/customresourcedefinitions/alertmanagerconfigs.monitoring.coreos.com
+/registry/apiextensions.k8s.io/customresourcedefinitions/alertmanagers.monitoring.coreos.com
+/registry/apiextensions.k8s.io/customresourcedefinitions/apiservers.operator.tigera.io
+/registry/apiextensions.k8s.io/customresourcedefinitions/bfdprofiles.metallb.io
+/registry/apiextensions.k8s.io/customresourcedefinitions/bgpadvertisements.metallb.io
+/registry/apiextensions.k8s.io/customresourcedefinitions/bgpconfigurations.crd.projectcalico.org
+/registry/apiextensions.k8s.io/customresourcedefinitions/bgpfilters.crd.projectcalico.org
+/registry/apiextensions.k8s.io/customresourcedefinitions/bgppeers.crd.projectcalico.org
+/registry/apiextensions.k8s.io/customresourcedefinitions/bgppeers.metallb.io
+```
+서비스, 파드 등의 리소스들이 etcd에 저장되어 있음을 확인할 수 있습니다.
+> 이게 맞아? 
+
+

@@ -19,6 +19,12 @@
       "workloads": {
         "title": "workloads",
         "description": "What is workloads"
+      },
+      "components": {
+       "etcd": {
+        "title": "Kubernetes components etcd",
+        "description": "What is Kubernetes components etcd"
+       }
       }
     }
   },  

@@ -70,6 +70,16 @@ export const NAV_ITEMS_DOC = linkToTree([
   {
     label: 'Kubernetes',
     href: '/doc/kubernetes',
+    children: [
+      { label: 'architecture', href: '/doc/kubernetes/architecture' },
+      {
+        label: 'components', href: '/doc/kubernetes/components', children: [
+          { label: 'etcd', href: '/doc/kubernetes/components/etcd' },
+        ]
+      },
+      { label: 'on-premise-1', href: '/doc/kubernetes/on-premise-1' }, ,
+      { label: 'workloads', href: '/doc/kubernetes/workloads' },
+    ] as THrefLinks
   },
   {
     label: 'Java',

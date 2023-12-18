@@ -19,7 +19,13 @@
       "workloads": {
         "title": "워크 로드",
         "description": "워크로드란?"
-      }
+      },
+      "components": {
+        "etcd": {
+         "title": "쿠버네티스 ETCD",
+         "description": "etcd 란?"
+        }
+       }      
     }
   },
 

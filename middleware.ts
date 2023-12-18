@@ -6,14 +6,16 @@ import { splitLocaleAndPath, getLocaleRequest } from './app/_utils/locale'
 export const config = {
   // Matcher ignoring `/_next/` and `/api/`
   matcher: [
-    '/((?!api/*|_next/static|_next/image|icon/*|favicon.ico|image/*|sw|worker|peach-service-worker|workbox|__nextjs_original-stack-frame).*)',
+    // '/((?!api/*|_next/static|_next/image|icon/*|favicon.ico|image/*|sw|worker|peach-service-worker|workbox|__nextjs_original-stack-frame).*)',
     // `/dsi/api/:path*`,
     // `/acf/api/:path*`,
     // "/((?!api|_next/static|favicon.ico).*)",
     // "/code/:path*",
     // "/signin",
-    // "/doc",
-    // "/home",
+    "/doc/:path*",
+    "/artifacts/:path*",
+    "/home",
+    "/projects/:path*",
     // "/",
   ],
 }
