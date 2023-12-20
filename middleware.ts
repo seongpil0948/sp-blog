@@ -16,7 +16,7 @@ export const config = {
     "/artifacts/:path*",
     "/home",
     "/projects/:path*",
-    // "/",
+    "/",
   ],
 }
 const IGNORE_PATHS = ['icon/', 'sitemap.xml', 'robots.txt', 'favicon.ico', 'svg', 'manifest', 'sw.js', 'worker.js', 'peach-service-worker.js', 'workbox',]
