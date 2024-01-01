@@ -1,0 +1,195 @@
+삽질이 정말 아까워서 기록을 남긴다.
+## Util command
+
+####  Get the API groups and resource names from command
+```sh
+kubectl api-resources
+```
+
+
+## Query kube
+[관련링크](https://jqlang.github.io/jq/manual/#conditionals-and-comparisons)
+```sh
+# get cluster role bindings and extract user | group
+kubectl get clusterrolebindings -o go-template='{{range .items}}{{range .subjects}}{{.kind}}-{{.name}} {{end}} {{" - "}} {{.metadata.name}} {{"\n"}}{{end}}' | grep "^Group-system:masters"
+# kubectl get no -o go-template="{{range .items}}{{if .spec.unschedulable}}{{.metadata.name}} {{.spec.externalID}}:{{end}}{{end}}" | tr ":" "\n"$
+```
+
+```sh
+# get cluster role bindings and extract user | group
+kubectl get clusterrolebindings -o json | jq -r '.items[] | select(.subjects != null)  | .subjects[] |select(.name=="system:masters")'
+
+```
+
+
+
+## Cluster information
+아래 링크들을 보면 클러스터의 정보들을 확인 할 수 있다.
+하지만 좀 더 자세한 정보를 알 수 있도록 정리한다.
+
+- [kubernetes.io](https://kubernetes.io/docs/reference/kubectl/quick-reference/#kubectl-context-and-configuration)
+- [k8s.io](https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-cluster-info-em-)
+- `kubectl cluster-info`
+- `kubectl config view`
+- `cat .kube/config`
+- `ps -aux | grep etcd`
+- `ps -aux | grep kubelet | grep container`
+
+
+#### 1. `k get nodes -o wide` 를 통해 노드들의 ip 정보들을 확인
+#### 2. find network interface to witch ip address is assigned
+`ip a | grep -B2 192.168.0.103 # node ip`
+ output
+```sh
+2: enp2s0f0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 94:40:c9:26:37:0c brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.103/24 brd 192.168.0.255 scope global dynamic enp2s0f0
+```
+#### 3. find mac address of interface 
+`ip link show eth0`
+output
+```sh
+02:42:c0:17:7d:09
+```
+#### 4. Containerd interface/bridge 
+`ip address show type bridge` 를 통해 containerd 의 bridge 를 확인 할 수 있다.
+
+#### 5. find gateway ip address
+외부로 나가는 gateway ip 를 확인하기 위해 `ip route show | grep default` 를 통해 확인 할 수 있다.
+
+#### 6. find specific port is using
+```sh
+# what is port using by kube-scheduler
+netstat -npl | grep schedule
+# tcp        0      0 127.0.0.1:10259         0.0.0.0:*               LISTEN      3683/kube-scheduler 
+```
+#### 7. number of specific port using by etcd
+```sh
+netstat -npa | grep etcd | grep 2379 | wc -l
+```
+
+###  클러스터의 노드들이 속한 IP 범위 확인
+```sh
+ip a | grep eth0
+ipcalc -b 192.11.181.3/24
+```
+192.11.181.3/24 실제 네트워크 범위다
+
+### CNI
+k8s 의 network plugin 들은 CNI(Container Network Interface) 를 구현한 것이다. CNI 는 k8s 에서 network plugin 을 구현하기 위한 표준이다. CNI 를 구현한 plugin 들은 k8s 에서 사용할 수 있다.  
+
+`/etc/cni` 경로에는 각 CNI 가 구성한 파일들이 있다.
+container 생성/삭제등 CNI 는 `/etc/cni/net.d` 경로에 있는 파일들을 읽어서 network 를 구성한다. 
+
+```sh
+
+BRIDGE=v-net-0
+NAME_SPACE_IP=192.168.15.5/24
+# 1. make bridge
+ip link add name $BRIDGE type bridge
+# or
+brctl addbr $BRIDGE
+
+
+# 2.up a bridge
+ip link set $BRIDGE up
+
+# 3. bind a bridge to ip
+ip addr add $NAME_SPACE_IP dev $BRIDGE
+
+# 4. add a veth pair
+ip link add veth0 type veth peer name veth1
+
+# 5. bind a veth pair to namespace
+ip link set veth1 netns red
+
+# 6. up a veth pair
+ip link set veth0 up
+
+ip link set veth-red-br master v-net-0
+# link bwtween two private ip address
+ip link set veth-red-br upip netns exec blue route add 192.168.1.0/24 via 192.168.15.5 
+
+iptables -t nat -A POSTROUTING -s 192.168.15.0/24 -j MASQUERADE
+
+ip -n $NAMESPACE addr add ... 
+ip -n $NAMESPACE route add  ...
+ip -n $NAMESPACE link se t
+```
+
+
+
+
+## network
+```sh
+# docker network ls
+iptables -nvL -t nat
+```
+
+```sh
+# etc
+k get nodes -o wide
+ip link
+ip addr | grep 192.16.71.9
+
+arp | grep 192.16.71.9
+arp controlplane
+arp | grep 192.16.71.12
+
+ip addr | grep 192.16.71.12
+iptables -nvL
+```
+
+
+### 파드들에 할당되는 IP 범위
+```
+k describe  pod weave-net-llhfb -n kube-system | grep RANGE
+``` 
+
+### 서비스들의 IP 범위
+```sh
+#  static pod 을 실행시키는 kubelet 은 --service-cluster-ip-range 옵션을 통해 서비스들의 IP 범위를 지정한다.
+cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep -B3  service-cluster-ip-range
+```
+
+### 특정 serviceaccount 에 할당된 role 목록
+```sh
+# following command could help. It basically gets the RoleBindings and ClusterRoleBindings which .subjects[0] is the name of the ServiceAccoun
+kubectl get rolebinding,clusterrolebinding --all-namespaces -o jsonpath='{range .items[?(@.subjects[0].name=="SERVICE_ACCOUNT_NAME")]}[{.roleRef.kind},{.roleRef.name}]{end}'
+
+#  if weave-net is deployed as the network plugin, you can get the Role and ClusterRole used by the weave-net ServiceAccount:
+kubectl get rolebinding,clusterrolebinding --all-namespaces -o jsonpath='{range .items[?(@.subjects[0].name=="weave-net")]}[{.roleRef.kind},{.roleRef.name}]{end}'
+[Role,weave-net][ClusterRole,weave-net]
+```
+
+```sh
+kubectl get rolebindings,clusterrolebindings \
+--all-namespaces  \
+-o custom-columns='KIND:kind,NAMESPACE:metadata.namespace,NAME:metadata.name,SERVICE_ACCOUNTS:subjects[?(@.kind=="ServiceAccount")].name'
+```
+
+
+### Kube-proxy mode
+쿠버네티스에서 서비스를 만들었을 때 Cluster IP나 NodePort로 접근할 수 있게 하는 실제 조작을 하는 컴포넌트입니다. 쿠버네티스 클러스터의 노드마다 실행되면서 클러스터 내부 IP로 연결하려는 요청을 적절한 파드로 전달합니다.
+모드는 `iptables`, `ipvs`, `userspace`가 있다. 기본적으로는 `iptables` 모드로 동작한다. `ipvs` 모드는 `kube-proxy` 의 `mode` 를 `ipvs` 로 설정하면 된다. 
+> IPVS(IP Virtual Server) 모드는 리눅스 커널에 있는 L4 로드밸런싱 기술
+
+어떤 모드로 동작하는지는 `kube-proxy` 의 `mode` 를 통해 확인 할 수 있다.
+```sh
+k get configmap kube-proxy -n kube-system -o yaml | grep mode
+```
+위명령어에 출력 되면 좋지만 아닐경우 디폴트는 `iptables` 모드이다.
+좀더 확실히 알아보자
+```sh
+k logs pods/kube-proxy-7jn79 -n kube-system 
+```
+```
+I0101 09:42:01.146187       1 server_others.go:551] "Using iptables proxy"
+I0101 09:42:01.218006       1 server_others.go:190] "Using iptables Proxier"
+```
+이 로그를 통해 `iptables` 모드로 동작하는 것을 확인 할 수 있다.
+
+
+## Refer
+- https://stackoverflow.com/questions/54602224/how-to-view-the-permissions-roles-associated-with-a-specific-service-account-in
+- https://jqlang.github.io/jq/manual/#conditionals-and-comparisons
