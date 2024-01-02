@@ -1,4 +1,5 @@
 import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
+import Content from './content.mdx'
 
 export async function generateStaticParams() {
   return AVAIL_LOCALES.map((lang) => ({ lang }))
@@ -9,5 +10,10 @@ interface Param {
 }
 
 export default async function SSGPage({ params: { lang } }: Param) {
-  return <section className="flex-center-col">{lang} Vscode</section>
+  return (
+    <section>
+      {lang}
+      <Content />
+    </section>
+  )
 }
