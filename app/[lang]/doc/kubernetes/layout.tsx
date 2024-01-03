@@ -14,19 +14,10 @@ import { getTree } from '@/app/_utils/dir-tree'
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.name,
+    default: `Documentation`,
     template: `%s - ${siteConfig.name}`,
   },
-  description: siteConfig.description,
-  // themeColor: [
-  //   { media: "(prefers-color-scheme: light)", color: "white" },
-  //   { media: "(prefers-color-scheme: dark)", color: "black" },
-  // ],
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
-  },
+  description: 'fucking k8s',
 }
 
 export default function RootLayout({
@@ -35,7 +26,6 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const tree = getTree('app/[lang]/doc/kubernetes', { extensions: /\.mdx$/ })
-  console.log(tree)
   return (
     <div className={layout()}>
       <CommonNavbar
@@ -44,12 +34,12 @@ export default function RootLayout({
         links={siteConfig.links}
         prefix={
           <CommonDrawer
-            title="Home"
+            title="Documentation"
             sheetProps={{
               placement: 'left',
             }}
           >
-            <TreeSection treeProps={tree.children ?? []} />
+            <TreeSection treeProps={tree?.children ?? []} />
           </CommonDrawer>
         }
       ></CommonNavbar>

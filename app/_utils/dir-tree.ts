@@ -16,7 +16,6 @@ const callback: DirectoryTreeCallback<TDirCustom> = (item, path) => {
     path = path.replace(/\.[^/.]+$/, '')
     path = path.replace(/\/index$/, '')
     path = path.replace(/\/content$/, '')
-    console.log(path)
   }
   item.custom = {
     href: path,
@@ -24,15 +23,18 @@ const callback: DirectoryTreeCallback<TDirCustom> = (item, path) => {
 }
 
 export function getTree(dir: string, options?: DirectoryTreeOptions) {
-  const libTree = dirTree(dir, options, callback, callback)
+  const libTree = dirTree(dir, options, undefined, callback)
   return dirTreeToTree(libTree)
   
 }
-function dirTreeToTree(dirTree: DirectoryTree<TDirCustom>): TreeSectionProps {
-    dirTree.name = dirTree.name.replace('.mdx', '').replace('.tsx', '')
+function dirTreeToTree(obj: DirectoryTree<TDirCustom>): TreeSectionProps | undefined {
+  // obj.name = dirTree.name.replace('.mdx', '').replace('.tsx', '')
+  if (obj.type === 'file' || !obj.custom || !obj.custom.href) return 
+  if (obj.path.includes('/_')) return
   return {
-    label: dirTree.name,
-    href: dirTree.custom.href,
-    children: dirTree.children?.map(dirTreeToTree).filter(obj => !obj.label.includes('content')),
+    label: obj.name,
+    href: obj.custom.href,
+    // children: obj.children?.map(dirTreeToTree).filter(o => !o.label.includes('content')),
+    children: obj.children?.map(dirTreeToTree).filter(o => o) as TreeSectionProps[] ?? [],
   }
 }
