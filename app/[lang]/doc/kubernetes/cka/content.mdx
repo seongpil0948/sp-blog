@@ -11,4 +11,21 @@ CKA 시험 준비간 필요한 내용을 정리합니다.
 국룰인 UDemy 강의를 들었습니다.
 
 ## 오답 노트
+읽기목록
 
+3:59 AM 성필 Step1. Check the status of services on the nodes.
+
+Step2. Check the service logs using journalctl -u kubelet.
+
+Step3. If it's stopped then start the stopped services.
+
+Alternatively, run the command:
+
+ssh node01 "service kubelet start"
+4:01 AM 성필 Since the kubelet is not running, attempt to start it by running the following command:
+
+systemctl start kubelet
+systemctl status containerd
+systemctl status kubelet
+4:22 AM 성필 journalctl -u kubelet
+4:48 AM 성필 각 주요파드들이 떠있는 주소와 파드 보는법

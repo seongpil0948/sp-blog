@@ -1,0 +1,68 @@
+# Summary
+### User
+https://kubernetes.io/docs/reference/access-authn-authz/authentication/#users-in-kubernetes
+유저는 클러스터의 certificate authority (CA) 로부터 인가 받을 수 있어야합니다.
+이때 k8s는 인증서(crt) - 'subject'의 일반 이름 필드에서 사용자 이름을 결정합니다 (예 "/CN=seongpil.kim")
+그리고 그 유저의 역할(RBAC)에 따라 특정 행동을 할 수 있게 됩니다.
+
+반대로 Service Account 의 경우 네임스페이스내 한정, k8s api-server에 의해 생성되며 인증(credentials)을 위한 토큰이 Secret에 의해 관리됩니다.
+
+
+### TSL
+Kubernetes 클러스터에서 작업자 노드의 구성 요소 - kublet 및 kube-proxy - 는 Kubernetes 제어 평면 구성 요소,  특히 kube-apiserver와 통신해야 합니다.  
+통신이 방해받지 않고 비공개로 유지되며 클러스터의 각 구성 요소가 신뢰할 수 있는 다른 구성 요소와 통신하고 있는지 확인하기 위해 노드에서 클라이언트 TLS 인증서를 사용하는 것이 좋습니다.
+
+기존 TLS 통신 지원을 위해 필수 세팅작업 즉, certificate 과정(인증서 확인(Certificate Authority), 인증서 서명 요청(crt), 인증서 서명(key))를 각 주요 컴포넌트, 노드 별로 세팅해야 했었습니다.  
+이에 쿠버네티스는 이작업을 단순화하기 위해 1.4 버전 이후, Kubernetes는 인증서 요청 및 서명 API를 도입했습니다. 제안서는 [여기](https://papago.naver.net/apis/site/proxy?url=https%3A%2F%2Fgithub.com%2Fkubernetes%2Fkubernetes%2Fpull%2F20439)에서 확인할 수 있습니다.
+
+
+## Client Certificate Authentication
+X509 client certificates는 클라이언트가 서버에 대한 신원을 증명하는 데 사용할 수 있는 표준 방법입니다.
+이는 `--client-ca-file` 플래그를 사용하여 kube-apiserver에 전달됩니다.  
+클라이언트 인증서는 인증서의 조직 필드를 사용하여 사용자의 그룹 멤버십을 나타낼 수도 있습니다. 사용자의 여러 그룹 멤버십을 포함하려면 인증서에 여러 조직 필드를 포함하세요.
+
+```sh
+# Create a private key for the user
+# "app1"과 "app2"라는 두 그룹에 속하는 사용자 이름 "jbeda"에 대한
+openssl req -new -key jbeda.pem -out jbeda-csr.pem -subj "/CN=jbeda/O=app1/O=app2"
+```
+클라이언트 인증서를 생성하는 방법은 [인증서 관리](https://kubernetes.io/docs/tasks/administer-cluster/certificates)를 참조하세요.
+
+
+### 부트스트랩 초기화 
+부트스트랩 초기화 프로세스에서는 다음이 발생합니다.
+
+1. kubelet begins
+2. kubelet sees that it does not have a kubeconfig file
+3. kubelet searches for and finds a bootstrap-kubeconfig file
+4. kubelet reads its bootstrap file, retrieving the URL of the API server and a limited usage "token"
+5. kubelet connects to the API server, authenticates using the token
+6. kubelet now has limited credentials to create and retrieve a certificate signing request (CSR)
+7. kubelet creates a CSR for itself with the signerName set to `kubernetes.io/kube-apiserver-client-kubelet`
+8. CSR is approved in one of two ways:
+   1. If configured, kube-controller-manager automatically approves the CSR
+   2. If configured, an outside process, possibly a person, approves the CSR using the Kubernetes API or via kubectl
+9. Certificate is created for the kubelet
+10. Certificate is issued to the kubelet
+11. kubelet retrieves the certificate
+12. kubelet creates a proper kubeconfig with the key and signed certificate
+13. kubelet begins normal operation
+14. Optional: if configured, kubelet automatically requests renewal of the certificate when it is close to expiry
+15. The renewed certificate is approved and issued, either automatically or manually, depending on configuration.
+
+이 문서의 나머지 부분에서는 TLS 부트스트래핑을 구성하는 데 필요한 단계와 제한 사항을 설명합니다.
+
+### 설정
+TLS 부트스트래핑 및 선택적 자동 승인을 구성하려면 다음 구성 요소에 대한 옵션을 구성해야 합니다.
+* kube-apiserver
+* kube-controller-manager
+* kubelet
+* in-cluster resources: ClusterRoleBinding and potentially ClusterRole
+* Kubernetes 인증 기관(CA)
+
+
+
+
+## References
+* https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/
+* 
