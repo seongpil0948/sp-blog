@@ -155,7 +155,13 @@ function Camera({ mouseX, mouseY, ...props }: any) {
   }, [camera, cameraRef, set])
 
   useLayoutEffect(() => {
-    return cameraX.onChange(() => camera.lookAt(scene.position))
+    const unsubscribeX = cameraX.on('change', () =>
+      camera.lookAt(scene.position),
+    )
+
+    return () => {
+      unsubscribeX()
+    }
   }, [cameraX, camera, scene.position])
 
   return (
