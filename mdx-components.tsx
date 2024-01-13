@@ -11,13 +11,14 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     a: (props: React.HTMLAttributes<HTMLAnchorElement>) => <Link {...props} />,
     blockquote: (props) => (
       <blockquote
-        className="my-6 rounded-xl border border-default-200 bg-default-200/20 px-4 py-3 dark:border-default-100 [&>p]:m-0"
+        // className="my-6 rounded-xl border border-default-200 bg-default-200/20 px-4 py-3 dark:border-default-100 [&>p]:m-0"
         {...props}
       />
     ),
     code: (props) => (
       <code
-        className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent px-0 py-0 font-mono text-small font-normal text-sky-400 before:content-['`'] after:content-['`']"
+        // className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent px-0 py-0 font-mono text-small font-normal text-sky-400 before:content-['`'] after:content-['`']"
+        className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent "
         {...props}
       />
     ),

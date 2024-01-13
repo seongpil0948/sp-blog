@@ -133,17 +133,17 @@ Iptables는 Linux 커널에서 IP 패킷 필터 규칙 테이블을 설정, 유�
 ## CLI
 이제 `iptables` 사용 양식에 대해 알아볼 차례이다.
 
-| Command                                                    | Description                                                                                                                                                                    |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `iptables -t <table> <command> <chain> <match> <target>`   | This is the general syntax for using the `iptables` command. It specifies the table, command, chain, match criteria, and target for the rule.                                  |
-| `iptables -I chain [rulenum] rule-specification [options]` | Inserts a rule in the target chain. If `rulenum` is specified as 1, the rule will be inserted at the beginning of the chain. If no rule number is specified, it defaults to 1. |
-| `iptables -R chain rulenum rule-specification [options]`   | Replaces an existing rule in the target chain with a new rule.                                                                                                                 |
-| `iptables -D chain rulenum [options]`                      | Deletes a rule from the target chain.                                                                                                                                          |
-| `iptables -[LFZ] [chain] [options]`                        | Lists, flushes, or zeroes the packet and byte counters in the specified chain.                                                                                                 |
-| `iptables -N chain`                                        | Creates a new user-defined chain with the specified name.                                                                                                                      |
-| `iptables -X [chain]`                                      | Deletes a user-defined chain.                                                                                                                                                  |
-| `iptables -P chain target [options]`                       | Sets the default policy for the specified chain to the specified target.                                                                                                       |
-| `iptables -E old-chain-name new-chain-name`                | Renames a user-defined chain from `old-chain-name` to `new-chain-name`.                                                                                                        |
+| Command                                                         | Description                                                                                                                                                                    |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ```sh iptables -t <table> <command> <chain> <match> <target>``` | This is the general syntax for using the `iptables` command. It specifies the table, command, chain, match criteria, and target for the rule.                                  |
+| `iptables -I chain [rulenum] rule-specification [options]`      | Inserts a rule in the target chain. If `rulenum` is specified as 1, the rule will be inserted at the beginning of the chain. If no rule number is specified, it defaults to 1. |
+| `iptables -R chain rulenum rule-specification [options]`        | Replaces an existing rule in the target chain with a new rule.                                                                                                                 |
+| `iptables -D chain rulenum [options]`                           | Deletes a rule from the target chain.                                                                                                                                          |
+| `iptables -[LFZ] [chain] [options]`                             | Lists, flushes, or zeroes the packet and byte counters in the specified chain.                                                                                                 |
+| `iptables -N chain`                                             | Creates a new user-defined chain with the specified name.                                                                                                                      |
+| `iptables -X [chain]`                                           | Deletes a user-defined chain.                                                                                                                                                  |
+| `iptables -P chain target [options]`                            | Sets the default policy for the specified chain to the specified target.                                                                                                       |
+| `iptables -E old-chain-name new-chain-name`                     | Renames a user-defined chain from `old-chain-name` to `new-chain-name`.                                                                                                        |
 
 
 
@@ -169,10 +169,12 @@ iptables -A FORWARD -i eth1 -j ACCEPT
 
 ### 패킷 수정
 #### TTL
-* `iptables -t mangle -A PREROUTING -i eth0 -p tcp -d 192.168.1.100 -j TTL --ttl-set 10`
-  * eth0 인터페이스를 통해 들어오는 경우 적용됩니다.
-  * 프로토콜이 TCP이고 목적지 IP 주소가 192.168.1.100인 경우 적용됩니다.
-  * TTL 값을 10으로 설정합니다.
+```sh 
+iptables -t mangle -A PREROUTING -i eth0 -p tcp -d 192.168.1.100 -j TTL --ttl-set 10 
+```
+* eth0 인터페이스를 통해 들어오는 경우 적용됩니다.
+* 프로토콜이 TCP이고 목적지 IP 주소가 192.168.1.100인 경우 적용됩니다.
+* TTL 값을 10으로 설정합니다.
 
 
 ## References
