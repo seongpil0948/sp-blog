@@ -16,6 +16,10 @@
         "title": "쿠버네티스",
         "description": "사내 서버 구축 Part 1"
       },
+      "cka": {
+        "title": "CKA",
+        "description": "쿠버네티스 관리자 자격증"
+      },      
       "workloads": {
         "title": "워크 로드",
         "description": "워크로드란?"
@@ -43,7 +47,15 @@
           "title": "container network",
           "description": "container network"
         }
-      }
+      },
+      "user-group": {
+        "title": "유저 & 그룹 관리",
+        "description": "리눅스 유저 및 그룹 관리"
+    },
+    "essential-commands": {
+        "title": "필수 커맨드",
+        "description": "리눅스 필수 커맨드"
+    }      
     }    
   },
 

@@ -115,7 +115,7 @@ dependencies:
     version: 3.8.8(react@18.2.0)
   '@react-three/fiber':
     specifier: ^8.15.13
-    version: 8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.160.0)
+    version: 8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.135.0)
   '@reduxjs/toolkit':
     specifier: ^2.0.1
     version: 2.0.1(react-redux@9.1.0)(react@18.2.0)
@@ -157,7 +157,7 @@ dependencies:
     version: 10.18.0(react-dom@18.2.0)(react@18.2.0)
   framer-motion-3d:
     specifier: ^10.18.0
-    version: 10.18.0(@react-three/fiber@8.15.14)(react-dom@18.2.0)(react@18.2.0)(three@0.160.0)
+    version: 10.18.0(@react-three/fiber@8.15.14)(react-dom@18.2.0)(react@18.2.0)(three@0.135.0)
   intl-messageformat:
     specifier: ^10.5.8
     version: 10.5.8
@@ -219,8 +219,8 @@ dependencies:
     specifier: 3.4.1
     version: 3.4.1
   three:
-    specifier: ^0.160.0
-    version: 0.160.0
+    specifier: 0.135.0
+    version: 0.135.0
   typescript:
     specifier: 5.3.3
     version: 5.3.3
@@ -4909,7 +4909,7 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@react-three/fiber@8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.160.0):
+  /@react-three/fiber@8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.135.0):
     resolution: {integrity: sha512-Mtc/qG0OMFvXFttzKmYdbKU2vjiTuyJMNfm4nmiKhwd7Hmql+gk9mwhtoofFLLyANrNW8UgTFmCTjf7Fz5h00Q==}
     peerDependencies:
       expo: '>=43.0'
@@ -4946,7 +4946,7 @@ packages:
       react-use-measure: 2.1.1(react-dom@18.2.0)(react@18.2.0)
       scheduler: 0.21.0
       suspend-react: 0.1.3(react@18.2.0)
-      three: 0.160.0
+      three: 0.135.0
       zustand: 3.7.2(react@18.2.0)
     dev: false
 
@@ -9793,7 +9793,7 @@ packages:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
     dev: false
 
-  /framer-motion-3d@10.18.0(@react-three/fiber@8.15.14)(react-dom@18.2.0)(react@18.2.0)(three@0.160.0):
+  /framer-motion-3d@10.18.0(@react-three/fiber@8.15.14)(react-dom@18.2.0)(react@18.2.0)(three@0.135.0):
     resolution: {integrity: sha512-iU+54hOpOUyQGg2iI1yOmo66vQhtJtddE4vomGhQAQd0/8nIcoxfLmmYinEeuNjv8RizLnckLgTrxk1KqLQ4wQ==}
     peerDependencies:
       '@react-three/fiber': ^8.2.2
@@ -9801,12 +9801,12 @@ packages:
       react-dom: '>=18.0'
       three: '>=0.133'
     dependencies:
-      '@react-three/fiber': 8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.160.0)
+      '@react-three/fiber': 8.15.14(react-dom@18.2.0)(react@18.2.0)(three@0.135.0)
       framer-motion: 10.18.0(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       react-merge-refs: 2.1.1
-      three: 0.160.0
+      three: 0.135.0
     dev: false
 
   /framer-motion@10.18.0(react-dom@18.2.0)(react@18.2.0):
@@ -14496,8 +14496,8 @@ packages:
       any-promise: 1.3.0
     dev: false
 
-  /three@0.160.0:
-    resolution: {integrity: sha512-DLU8lc0zNIPkM7rH5/e1Ks1Z8tWCGRq6g8mPowdDJpw1CFBJMU7UoJjC6PefXW7z//SSl0b2+GCw14LB+uDhng==}
+  /three@0.135.0:
+    resolution: {integrity: sha512-kuEpuuxRzLv0MDsXai9huCxOSQPZ4vje6y0gn80SRmQvgz6/+rI0NAvCRAw56zYaWKMGMfqKWsxF9Qa2Z9xymQ==}
     dev: false
 
   /through2@2.0.5:

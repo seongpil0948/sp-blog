@@ -16,6 +16,10 @@
         "title": "kubernetes on-premise",
         "description": "construct kubernetes on-premise"
       },
+      "cka": {
+        "title": "CKA",
+        "description": "Certified Kubernetes Administrator (CKA)"
+      },
       "workloads": {
         "title": "workloads",
         "description": "What is workloads"
@@ -43,6 +47,14 @@
           "title": "container network",
           "description": "container network"
         }
+      },
+      "user-group": {
+          "title": "user & group",
+          "description": "manage user & group"
+      },
+      "essential-commands": {
+          "title": "essential commands",
+          "description": "linux essential commands"
       }
     }
   },  

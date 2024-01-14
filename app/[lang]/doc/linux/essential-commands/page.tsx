@@ -19,8 +19,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const dict = await getDictionary(lang)
   return {
-    title: dict['doc']['kubernetes']['cka']['title'],
-    description: dict['doc']['kubernetes']['cka']['description'],
+    title: dict['doc']['linux']['essential-commands']['title'],
+    description: dict['doc']['linux']['essential-commands']['description'],
   }
 }
 
