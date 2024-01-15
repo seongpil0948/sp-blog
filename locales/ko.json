@@ -46,7 +46,11 @@
         "container": {
           "title": "container network",
           "description": "container network"
-        }
+        },
+        "ufw": {
+          "title": "UFW",
+          "description": "uncomplicated firewall"
+        }        
       },
       "user-group": {
         "title": "유저 & 그룹 관리",
