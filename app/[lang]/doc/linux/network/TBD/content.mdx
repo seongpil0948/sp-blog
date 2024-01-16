@@ -1,0 +1,185 @@
+# Summary
+이곳은 배치 전 일단 정리해둔 곳입니다.
+
+## TODO
+- `apropos` 에 정규식 사용하는 예제 추가
+
+
+#### Configure static resolution so that example.com hostname resolves to IP address 8.8.8.8
+```bash
+echo "8.8.8.8         example.com" >> /etc/hosts
+``` 
+
+#### Our system uses dynamic network configuration. Leave it as it is, dynamically configured, but add an extra IP to eth1 interface on this system
+
+```bash
+sudo ip a add 10.0.0.50/24 dev eth1
+#  if you needed
+sudo nmcli device reapply eth1
+```
+#### Get the list of all incoming open ports on this system and store the output in /home/bob/incoming.txt file.
+```bash
+sudo netstat -tulpn | grep LISTEN > /home/bob/incoming.txt
+```
+
+#### Add a new DNS resolver 8.8.8.8 on this system.
+```bash
+sudo echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
+```
+
+#### Identify the transient hostname of this system and save the value in /home/bob/t-hostname file.
+`hostnamectl` 을 실행시키면 `hostname` 과 `static hostname` 을 확인할 수 있다.
+```bash
+hostnamectl | grep "Transient" | awk '{print $3}' > /home/bob/t-hostname
+```
+
+#### Now, update the static hostname to match the transient hostname on this system.
+```bash
+sudo hostnamectl set-hostname dev-host01
+```
+
+
+
+### routing table example
+#### ip route
+```bash
+# 매칭이 안될경우 default route 를 사용한다.
+# 어디든 가려면 eth1를사용해 192.168.0.1 을 통해 가라
+default via 192.168.0.1 dev enp2s0f0 proto static
+# 이 줄은 enp2s0f0 인터페이스에 직접 연결된 네트워크 172.25.0.0/24에 대한 경로를 지정합니다. 
+# proto 커널 범위 링크는 이 경로가 커널에 의해 자동으로 생성되었음을 나타냅니다.
+# src 172.25.0.47 부분은 이 네트워크의 Gateway ip 가 172.25.0.47임을 나타냅니다.
+# 192.168.0.1 로 가는 모든 패킷은 enp2s0f0 인터페이스를 통해 172.25.0.0/24 로 가라
+172.25.0.0/24 dev enp2s0f0 proto kernel scope link src 192.168.0.1
+
+10.4.0.0/24 dev nerdctl0 proto kernel scope link src 10.4.0.1 linkdown
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown
+172.28.0.0/16 dev br-dff5b71ada96 proto kernel scope link src 172.28.0.1
+172.30.0.0/16 dev br-a48ffc8d8f56 proto kernel scope link src 172.30.0.1
+172.31.0.0/16 dev br-4f950b7f01d8 proto kernel scope link src 172.31.0.1
+# 192.168.0.1 로 가는 모든 패킷은 enp2s0f0 인터페이스를 통해 192.168.0.0/24 로 가라
+192.168.0.0/24 dev enp2s0f0 proto kernel scope link src 192.168.0.101
+192.168.49.0/26 via 192.168.0.102 dev enp2s0f0 proto 80 onlink
+192.168.80.128/26 via 192.168.0.100 dev enp2s0f0 proto 80 onlink
+192.168.133.64 dev cali8a6b142ea4e scope link
+blackhole 192.168.133.64/26 proto 80
+192.168.190.0/26 via 192.168.190.0 dev vxlan.calico onlink
+``` 
+
+#### Temporarily route all traffic that must reach the 192.168.0.* network through the device that has the IP 172.28.128.100(RNIC)
+```bash
+sudo ip route add 192.168.0.0/24 via 172.28.128.100
+```
+
+
+#### route 
+```bash
+# 목적지, 게이트웨이, 서브넷마스크
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         _gateway        0.0.0.0         UG    0      0        0 enp2s0f0
+10.4.0.0        0.0.0.0         255.255.255.0   U     0      0        0 nerdctl0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+172.28.0.0      0.0.0.0         255.255.0.0     U     0      0        0 br-dff5b71ada96
+172.30.0.0      0.0.0.0         255.255.0.0     U     0      0        0 br-a48ffc8d8f56
+172.31.0.0      0.0.0.0         255.255.0.0     U     0      0        0 br-4f950b7f01d8
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 enp2s0f0
+192.168.49.0    192.168.0.102   255.255.255.192 UG    0      0        0 enp2s0f0
+192.168.80.128  192.168.0.100   255.255.255.192 UG    0      0        0 enp2s0f0
+192.168.133.64  0.0.0.0         255.255.255.255 UH    0      0        0 cali8a6b142ea4e
+192.168.133.64  0.0.0.0         255.255.255.192 U     0      0        0 *
+192.168.190.0   192.168.190.0   255.255.255.192 UG    0      0        0 vxlan.calico
+```
+아래는 `ip addr` 의 결과이다.
+```text
+2: enp2s0f0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 94:40:c9:26:39:7c brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.101/24 brd 192.168.0.255 scope global enp2s0f0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::9640:c9ff:fe26:397c/64 scope link
+       valid_lft forever preferred_lft forever
+4: br-a48ffc8d8f56: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:65:f0:8b:2d brd ff:ff:ff:ff:ff:ff
+    inet 172.30.0.1/16 brd 172.30.255.255 scope global br-a48ffc8d8f56
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:65ff:fef0:8b2d/64 scope link
+       valid_lft forever preferred_lft forever
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:bf:1c:27:5d brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:bfff:fe1c:275d/64 scope link
+       valid_lft forever preferred_lft forever
+```
+만약  1.2.3.4 주소로 리디렉션한다고 상상해 보세요. 이는 위의 네트워크 범위에 맞지 않습니다.  
+이경우 패킷은 `route` 테이블의 Gateway(router)를 확인하여(없을경우 default) destination 찾습니다.
+그래서 커널은 패킷을 1.2.3.4로 
+
+## Packet Filter
+항상 방화벽 설정 전에는 ssh 연결조차 끊길 수 있다.
+대비를 마련하자.
+
+ufw의 한계를 극복하기 위해 iptables를 사용한다.
+하지만 확장된 기능을 제공하는 ufw-framework 를 통해 사용성을 최대화 시킬 수 있다.
+```sh
+man ufw-framework
+```
+
+```bash
+sudo ufw status
+# Status: inactive
+```
+inactive 상태이면 아래 명령어로 활성화 시킨다.
+```bash
+sudo ufw enable
+# Firewall is active and enabled on system startup
+```
+#### Allow Permanent TCP incoming connections to port 7869
+```bash
+sudo ufw deny 7869/tcp
+sudo ufw status
+```
+or for centos
+```bash
+sudo firewall-cmd --add-port=7869/tcp --permanent
+sudo firewall-cmd --reload
+```
+
+#### Add a permanent firewall rule to allow the https service.
+```bash
+sudo ufw allow https
+```
+or for centos
+```bash
+sudo firewall-cmd --add-service=https --permanent
+```
+
+#### You will see that there is only one port allowing UDP traffic, remove it using below given command:
+```bash
+sudo ufw delete allow 53/udp
+```
+or for centos
+```bash
+# not permanent
+sudo firewall-cmd --remove-port=53/udp
+# to make all permanent
+sudo firewall-cmd --runtime-to-permanent
+```
+
+#### (10.11.12.0 ~ 10.11.12.255(예: 10.11.12.0/24))의 모든 IP에서 들어오는 모든 트래픽을 허용하고 신뢰할 수 있는 영역에 필요한 규칙을 추가하며 규칙은 영구적이어야 합니다.
+```bash
+# sudo ufw allow from 
+```
+or for centos
+```bash
+sudo firewall-cmd --add-source=10.11.12.0/24 --zone=trusted --permanent
+```
+
+## Port Redirection & NAT
+
+### Setup
+#### check port forwarding
+```bash
+sudo sysctl net.ipv4.ip_forward
+sudo sysctl -a | grep forward
+```
+

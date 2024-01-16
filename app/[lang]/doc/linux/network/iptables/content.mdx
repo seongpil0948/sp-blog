@@ -16,6 +16,9 @@
     - [Target](#target)
   - [CLI](#cli)
   - [예시](#예시)
+    - [영구 적용](#영구-적용)
+    - [셋 업](#셋-업)
+    - [조회](#조회)
     - [차단](#차단)
     - [패킷 수정](#패킷-수정)
       - [TTL](#ttl)
@@ -23,6 +26,8 @@
 
 
 # IP TABLE
+
+
 IPv4 패킷을 필터링하고 NAT 를 설정하는데 사용되는 리눅스 커널의 서브시스템이다.
 ufw 와 같은 방화벽 프로그램이 있지만, `iptables` 을 직접 사용하는 것이 더 좋다. 더 어렵고 더 복잡하지만, 더 많은 것을 할 수 있기 때문이다.
 아래는 하나의 예시이다.
@@ -60,14 +65,47 @@ FORWARD(박스를 통해 라우팅되는 패킷용) 및 OUTPUT(로컬 생성 패
 #### NAT
 이 테이블은 새로운 연결을 생성하는 패킷이 발견될 때 참조됩니다.
 이는 PREROUTING(패킷이 들어오자마자 변경), OUTPUT(라우팅 전에 로컬에서 생성된 패킷 변경) 및 POSTROUTING(패킷이 나가려고 할 때 변경)의 세 가지 내장 기능으로 구성됩니다.
-* PREROUTING : 패킷을 INPUT rule 로 보내기 전 ip 와 port를 변경하는 역할을 한다.
+* PREROUTING : (외부 수신용)패킷을 INPUT rule 로 보내기 전 ip 와 port를 변경하는 역할을 한다.
 *  INPUT : filter 테이블과 같은 역할이나, 먼저 적용
 *  OUTPUT : filter 테이블과 같은 역할이나, 나중에 적용
-*  POSTROUTING : 패킷이 OUTPUT rule 에서 나온 이후 ip 와 port 를 변경하는 역할을 한다.
+*  POSTROUTING : 패킷(내보내는 역할)을 보내패킷이 OUTPUT rule 에서 나온 이후 ip 와 port 를 변경하는 역할을 한다.
 
 
 ##### MASQUERADE
-* POSTROUTING 체인의 nat 테이블에서만 유효합니다.
+만약 아래 명령어를 적용했다 치자.
+```sh
+sudo iptables \
+-t nat \
+-A PREROUTING \
+# input interface
+-i enp2s0f0  \
+-s 10.0.0.0/24  \
+-p tcp \
+--dport 8080 \
+-j DNAT \
+--to-destination 192.168.0.5:80
+```
+PREROUTING 은 오직 external server 에서 들어오는 패킷에만 적용된다.
+
+10.0.0.9(enp2s0f0)로 부터 서버의 8080 포트로 패킷을 전송할 경우 인터페이스(192.168.0.5:80) 로 갈것이다.
+하지만? response 를 줄때 10.0.0.0/24로 주지만, 출발지 10.0.0.9에 대한 정보가 없다.  
+우리는 예시로 `10.0.0.0/24` 에 `192.168.0.1` 라는 로컬 호스트 IP 를 임시로 할당하여 
+response 에 `192.168.0.1`를 받을 수 있도록 패킷의 소스를 변경해야한다.
+
+이 때 사용하는 것이 `MASQUERADE` 이다.
+주목해야 할 중요한 점은 `-o`을 사용한다는 것입니다. 이번에는 출력 인터페이스를 선택합니다.
+```sh
+sudo iptables \
+-t nat \
+-A POSTROUTING \
+-s 10.0.0.0/24
+-o enp2s0f0 \
+-j MASQUERADE
+```
+서버의 IP를 지정할 필요는 없습니다. 알아서 소스 IP를 자체 IP로 교체합니다.
+
+
+* POSTROUTING(network packets just before they leave the network.) 체인의 nat 테이블에서만 유효합니다.
 * 동적 바인딩 되는 IP 주소가 아닐경우 SNAT를 사용해야 합니다.
 * NAT 테이블의 POSTROUTING chain 에서만 사용할 수 있는 target으로, 패킷이 나가는 인터페이스와 IP를 매핑하는 역할을 한다.
 * interface 가 down 되면 connection 이 끊긴다.
@@ -163,6 +201,29 @@ Iptables는 Linux 커널에서 IP 패킷 필터 규칙 테이블을 설정, 유�
 ## 예시
 이제 우리는 `iptables` 을 사용할 준비가 되었다.
 어떤 예시들이 있을지 알아보자.
+### 영구 적용
+```sh
+sudo apt install iptables-persistent
+
+sudo netfilter-persistent save
+```
+
+### 셋 업
+1. SSH 트래픽을 포트 22로 허용. 
+2. 방화벽을 활성화한 특정 네트워크 패킷이 전달될 수 있도록 경로를 추가하겠습니다.
+```sh
+sudo ufw allow 22
+sudo ufw enable
+
+sudo ufw route allow from 10.0.0.0/24 to 192.168.0.5
+```
+
+### 조회
+```sh
+sudo iptables -L
+sudo iptables --list-rules --table nat --numeric
+```
+
 ### 차단
 
 ```sh
