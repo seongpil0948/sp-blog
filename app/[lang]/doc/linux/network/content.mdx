@@ -3,6 +3,81 @@
 내용이 좀 많아져서 [network-container](https://www.peachhub.love/doc/linux/network-container)
 로 분리했습니다.
 
+## Setup
+서버 세팅 과정에서 고려되어야 할 네트워크 관련 주요 요소는 다음과 같습니다.
+- IP 주소, 서브넷 마스크, 게이트웨이
+- DNS 서버
+- 인증서
+- 방화벽
+- 네트워크 장치
+- Time zone
+
+먼저 time zone을 확인 해보겠습니다.
+```bash
+sudo timedatectl
+```
+result is
+```
+Local time: Wed 2024-01-17 17:42:37 UTC 
+Universal time: Wed 2024-01-17 17:42:37 UTC
+RTC time: Wed 2024-01-17 17:42:37
+Time zone: Etc/UTC (UTC, +0000)
+System clock synchronized: yes
+systemd-timesyncd.service active: yes
+RTC in local TZ: no
+```
+음 한국 시간이 아닌 것 같습니다.
+어떤 시간대가 있는지 확인해보겠습니다.
+```bash
+timedatectl list-timezones | grep -i Asia
+```
+`Asia/Seoul` 이 있네요. 이걸로 바꿔보겠습니다.
+> by a slash character, then the name of the city, usually the capital city of a country or state.
+도쿄나베이징 처럼 도시 이름을 주로 사용하는 듯 보입니다.
+```bash
+sudo timedatectl set-timezone Asia/Seoul
+```
+다시 확인해보겠습니다.
+```bash
+sudo timedatectl
+```
+result is
+```
+Local time: Thu 2024-01-18 02:49:47 KST  -> ㄹㅇ 한국 시간
+Universal time: Wed 2024-01-17 17:49:47 UTC
+RTC time: Wed 2024-01-17 17:49:47
+Time zone: Asia/Seoul (KST, +0900)
+System clock synchronized: yes
+systemd-timesyncd.service active: yes
+RTC in local TZ: no
+```
+이제 한국 시간이 되었습니다.
+아래 필드들이 yes가 아니라면, 다음 명령을 실행하여 시간 동기화를 활성화할 수 있습니다.
+```bash
+sudo apt install systemd-timesyncd
+sudo timedatectl set-ntp true
+# System clock synchronized: yes
+# systemd-timesyncd.service active: yes
+```
+#### 그래서 NTP(Network Time Protocol)가 뭔데?
+지연이 있을 수 있는 네트워크 상에서, 컴퓨터와 컴퓨터간의 시간을 동기화 하기 위한 네트워크 프로토콜이다.
+즉, 네트워크 장치의 시계를 동기화하는 서버 클러스터입니다. 
+NTP는 수억 대의 컴퓨터와 장치에서 인터넷을 통해 시계를 동기화하는 데 사용됩니다.
+
+동기화 되는 로그시간을 확인해 보죠
+```bash
+sudo journalctl -u systemd-timesyncd
+# systemctl status systemd-timesyncd.service
+```
+음 잘되네염, 여느 데몬을 수정하듯 이것도 수정할 수 있습니다.
+npt 서버 추가, fallback 서버 추가, poll interval 변경 등등 
+```bash
+timedatectl timesync-status
+## edit
+# sudo vi /etc/systemd/timesyncd.conf
+# sudo systemctl restart systemd-timesyncd
+```
+
 ## Utilities
 ### ip
 ip 명령어를 포함하여 다양한 네트워크 관련 유틸리티를 제공합니다.
