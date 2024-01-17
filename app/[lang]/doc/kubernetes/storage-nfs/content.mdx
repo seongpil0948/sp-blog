@@ -1,0 +1,81 @@
+# Summary
+k8s 의 storage class를 왜 써야할까?
+- persistent volume을 수동으로 생성하지 않는다.
+- persistent volume claim 생성시 class 필드에 해당하는 provider 타입에 맞게 volume을 자동으로 생성한다.
+- 
+k8s 는 CSI(Container Storage Interface)를 준수 하는 드라이버를 provisioner 로 지정하여 사용한다.
+우리는 NFS storage를 사용할 것이다.
+
+## 구성 전략
+- master node에 NFS server를 구성한다.
+- worker node에 NFS client를 구성한다.
+- nfs.csi.k8s.io 드라이버를 설치한다.
+
+## NFS Server 구성
+
+Setup NFS Server
+```bash
+sudo apt update
+sudo apt install nfs-kernel-server
+
+sudo mkdir /nfs_shared
+sudo chmod 777 /nfs_shared/*
+sudo echo '/nfs_shared 192.168.0.0/255.255.255.0(rw,sync,no_root_squash)' >> /etc/exports
+
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server.service
+
+systemctl start nfs-server
+systemctl enable --now nfs
+sudo systemctl enable --now nfs-server
+
+# check status
+systemctl status nfs-server.service
+```
+`Active: active (exited)` 가 출력되면 정상적으로 구성된 것이다.
+
+```bash
+# Show the NFS server's export list
+showmount -e 192.168.0.103
+```
+
+아래와 같이 출력되면 정상이다.
+```
+Export list for 192.168.0.103:
+/nfs_shared 192.168.0.10
+```
+
+## NFS Client 구성
+
+set up
+```bash
+sudo apt-get install nfs-common
+```
+아래 명령어는 임시로 nfs 디렉토리를 마운트하는 명령어다. 
+동기화가 잘 되는지 확인해보자
+```bash
+sudo mkdir  /nfs_shared
+sudo mount -t nfs 192.168.0.103:/nfs_shared /nfs_shared
+
+# check directory sync
+ls /nfs_shared/
+```
+동기화를 확인 했다면 영구 저장을 위해 fstab 에 등록한다.
+```bash
+sudo echo '192.168.0.103:/nfs_shared   /nfs_shared   nfs    defaults   0 0' | sudo tee -a /etc/fstab
+sudo mount -a
+
+# check mounted
+df | grep 192.168.0.103:/nfs_shared
+```
+전 worker node에서 성공을 확인했다면, 
+
+
+
+
+
+
+
+
+
+
