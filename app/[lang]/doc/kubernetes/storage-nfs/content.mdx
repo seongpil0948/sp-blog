@@ -9,7 +9,7 @@ k8s 는 CSI(Container Storage Interface)를 준수 하는 드라이버를 provis
 ## 구성 전략
 - master node에 NFS server를 구성한다.
 - worker node에 NFS client를 구성한다.
-- nfs.csi.k8s.io 드라이버를 설치한다.
+- [nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) 드라이버를 설치한다.
 
 ## NFS Server 구성
 
@@ -68,7 +68,15 @@ sudo mount -a
 # check mounted
 df | grep 192.168.0.103:/nfs_shared
 ```
-전 worker node에서 성공을 확인했다면, 
+전 worker node에서 성공을 확인했다면, [nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) 드라이버를 설치한다.
+
+## Kubernetes NFS Subdir External Provisioner
+Kubernetes 영구 볼륨의 동적 프로비저닝을 지원하기 위해 기존 및 이미 구성된 NFS 서버를 사용하는 자동 프로비저닝 프로그램입니다.  
+영구 볼륨은 다음과 같이 프로비저닝됩니다. `${namespace}-${pvcName}-${pvName}.`
+
+
+
+
 
 
 
