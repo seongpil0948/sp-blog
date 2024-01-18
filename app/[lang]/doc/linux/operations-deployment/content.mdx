@@ -113,9 +113,59 @@ sudo systemctl isolate multi-user.target
 ## Trouble shoot boot failures
 one of the first programs that loads up when we power up a computer, it's called a bootloader  
 one purpose of the bootloader is to start the Linux kernel, which is the core part of the operating system  
-
+컴퓨터 전원을 켤 때 로드되는 첫 번째 프로그램 중 하나를 부트로더라고 합니다. 부트로더의 목적 중 하나는 운영 체제의 핵심 부분인 Linux 커널을 시작하는 것입니다.
 
 the most popular bootloader on Linux is called Grub, which stands for the Grand Unified Bootloader.  
 Linux에서 가장 인기 있는 부트로더는 Grand Unified Bootloader의 약자인 Grub입니다.
 When we installed CentOS, we downloaded an ISO file and created a bootable USB stick CD or DVD
-~1:34
+이건 좀 문서로 작성하기 애매해서 작성중.. 우선 더 살펴보자
+```sh
+$ cat /etc/grub.d/README
+이 디렉터리의 모든 실행 파일은 셸 확장 순서로 처리됩니다.
+
+00_*: 00_header로 예약되었습니다.
+10_*: 네이티브 부팅 항목입니다.
+20_*: 타사 앱(예: memtest86+).
+
+$ ls /etc/grub.d
+00_header  05_debian_theme  10_linux  20_linux_xen  30_os-prober  30_uefi-firmware  40_custom  41_custom  README
+```
+
+레거시 BIOS 모드를 통해 시스템을 부팅할 때 새 grub 구성 파일을 생성하기 전에 어떤 파일을 편집하시겠습니까?
+이 파일은 뭘까
+```sh
+$ cat /etc/default/grub
+# If you change this file, run 'update-grub' afterwards to update
+# /boot/grub/grub.cfg.
+# For full documentation of the options in this file, see:
+#   info -f grub -n 'Simple configuration'
+```
+`info -f grub -n 'Simple configuration'` 가 보이네요 
+확인해보니 grub2-mkconfig 명령어를 통해 grub.cfg 파일을 생성하는 것 같습니다.
+```
+배포를 업그레이드하고 사용 가능한 커널을 검색합니다
+메뉴 항목을 생성하려고 시도합니다.
+```
+
+#### command would be used to generate the new grub configuration file.
+grub 구성 파일을 생성하는 데 사용됩니다...
+```sh
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+```
+
+#### Install grub to /dev/vda. Make sure to save the installation command output to /home/bob/grub.txt file.
+```sh
+# 설치 과정의 출력과 에러 메시지가 /home/bob/grub.txt 파일에 기록됩니다.
+sudo grub2-install /dev/vda > /home/bob/grub.txt 2>&1
+```
+
+#### Find out what is the system's current default boot target and save the value in /home/bob/boot-target.txt file.
+
+```sh
+systemctl get-default > /home/bob/boot-target.txt
+```
+
+#### Refs
+- [How to change the default runlevel on CentOS 7?](https://www.cyberciti.biz/faq/rhel-centos-7-change-default-runlevel/)
+- https://nice-engineer.tistory.com/entry/Linux-GRUB%EC%9D%98-%EC%9D%B4%ED%95%B4
+- 

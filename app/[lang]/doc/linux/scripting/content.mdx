@@ -1,0 +1,136 @@
+# Intro
+for bash, sh
+
+### Help
+아래 명령어를 입력하면 출력과 같이 다양한 bash 명령어를 확인할 수 있다.
+빠르게 레퍼런스가 필요하다면 아래 목록을 참조하자
+- `cat /etc/cron.daily`
+- `cat /usr/lib/update-notifier/package-data-downloader`
+
+```sh
+$ help
+[[ expression ]]                                                                               local [option] name[=value] ...
+alias [-p] [name[=value] ... ]                                                                 logout [n]
+bg [job_spec ...]                                                                              mapfile [-d delim] [-n count] [-O origin] [-s count] [-t] [-u fd] [-C callback] [-c quantum>  
+bind [-lpsvPSVX] [-m keymap] [-f filename] [-q name] [-u name] [-r keyseq] [-x keyseq:shell->  popd [-n] [+N | -N]
+break [n]                                                                                      printf [-v var] format [arguments]
+builtin [shell-builtin [arg ...]]                                                              pushd [-n] [+N | -N | dir]
+caller [expr]                                                                                  pwd [-LPW]
+case WORD in [PATTERN [| PATTERN]...) COMMANDS ;;]... esac                                     read [-ers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout>  
+cd [-L|[-P [-e]] [-@]] [dir]                                                                   readarray [-d delim] [-n count] [-O origin] [-s count] [-t] [-u fd] [-C callback] [-c quant>  
+command [-pVv] command [arg ...]                                                               readonly [-aAf] [name[=value] ...] or readonly -p
+compgen [-abcdefgjksuv] [-o option] [-A action] [-G globpat] [-W wordlist] [-F function] [-C>  return [n]
+complete [-abcdefgjksuv] [-pr] [-DEI] [-o option] [-A action] [-G globpat] [-W wordlist] [-F>  select NAME [in WORDS ... ;] do COMMANDS; done
+compopt [-o|+o option] [-DEI] [name ...]                                                       set [-abefhkmnptuvxBCEHPT] [-o option-name] [--] [-] [arg ...]
+continue [n]                                                                                   shift [n]
+coproc [NAME] command [redirections]                                                           shopt [-pqsu] [-o] [optname ...]
+declare [-aAfFgiIlnrtux] [name[=value] ...] or declare -p [-aAfFilnrtux] [name ...]            source filename [arguments]
+dirs [-clpv] [+N] [-N]                                                                         suspend [-f]
+disown [-h] [-ar] [jobspec ... | pid ...]                                                      test [expr]
+echo [-neE] [arg ...]                                                                          time [-p] pipeline
+enable [-a] [-dnps] [-f filename] [name ...]                                                   times
+eval [arg ...]                                                                                 trap [-lp] [[arg] signal_spec ...]
+exec [-cl] [-a name] [command [argument ...]] [redirection ...]                                true
+exit [n]                                                                                       type [-afptP] name [name ...]
+export [-fn] [name[=value] ...] or export -p                                                   typeset [-aAfFgiIlnrtux] name[=value] ... or typeset -p [-aAfFilnrtux] [name ...]
+false                                                                                          ulimit [-SHabcdefiklmnpqrstuvxPRT] [limit]
+fc [-e ename] [-lnr] [first] [last] or fc -s [pat=rep] [command]                               umask [-p] [-S] [mode]
+fg [job_spec]                                                                                  unalias [-a] name [name ...]
+for NAME [in WORDS ... ] ; do COMMANDS; done                                                   unset [-f] [-v] [-n] [name ...]
+for (( exp1; exp2; exp3 )); do COMMANDS; done                                                  until COMMANDS; do COMMANDS-2; done
+function name { COMMANDS ; } or name () { COMMANDS ; }                                         variables - Names and meanings of some shell variables
+getopts optstring name [arg ...]                                                               wait [-fn] [-p var] [id ...]
+hash [-lr] [-p pathname] [-dt] [name ...]                                                      while COMMANDS; do COMMANDS-2; done
+help [-dms] [pattern ...]                                                                      { COMMANDS ; }
+```
+
+특정 문법이 알고 싶을땐
+```sh
+$ help for
+for: for NAME [in WORDS ... ] ; do COMMANDS; done
+    Execute commands for each member in a list.
+
+    The `for' loop executes a sequence of commands for each member in a
+    list of items.  If `in WORDS ...;' is not present, then `in "$@"' is
+    assumed.  For each element in WORDS, NAME is set to that element, and
+    the COMMANDS are executed.
+
+    Exit Status:
+    Returns the status of the last command executed.
+```
+요론 느낌이다.
+
+### If
+예시 파일을 만들어보자.
+```
+$help if
+if: if COMMANDS; then COMMANDS; [ elif COMMANDS; then COMMANDS; ]... [ else COMMANDS; ] fi
+    Execute commands based on conditional.
+    
+    if COMMUNDS' 목록이 실행됩니다. 종료 상태가 0이면 'then COMMUNDS' 목록이 실행됩니다. 그렇지 않으면 각 'elif COMMUNDS' 목록이 차례로 실행 됌 
+
+    Exit Status:
+    Returns the status of the last command executed.
+```
+
+```sh
+echo '
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "No argument supplied"
+  exit 1
+else
+  echo "Argument supplied $1"
+fi
+' > if.sh
+```
+> -z 는 문자열의 길이가 0이면 참이다.  
+> -n 은 문자열의 길이가 0이 아니면 참이다.  
+> `>` 는 stdout 을 redirection 하여 파일로 출력하는 기능을 하는데 `>> `일 경우 append 를 의미한다.  
+
+#### 인자가 없을 경우
+```sh
+$ chmod +x if.sh
+$ ./if.sh
+No argument supplied
+```
+``
+
+#### 인자가 있을 경우
+```sh
+$ ./if.sh 'hello'
+Argument supplied hello
+```
+
+
+조금 더 실전에 사용할 수 있는 예시를 만들어보자.
+#### setup
+```sh
+mkdir temp
+mv if.sh temp
+cp temp/if.sh temp/if2.sh
+cp temp/if.sh temp/if3.sh
+```
+주기적으로 백업을 하는 프로그램을 제작할 때
+기존 백업 파일이 있을 경우  zip.OLD 로 이전 백업 파일을 남기고 새로운 백업 파일을 만들어야 한다.
+스크립트 파일을 작성해보자
+```sh
+echo '
+#!/bin/bash
+FILE="temp.tar.gz"
+if test -f "$FILE"; then
+  mv $FILE $FILE.OLD
+  tar acf $FILE ./temp/
+else 
+  tar acf $FILE ./temp/
+fi
+' > backup.sh
+```
+주기적으로 실행하기 위해 배치로 등록하여 실행할 수 있지만,
+우리는 테스트만 해보자.
+```sh
+$ chmod +x backup.sh
+$ ./backup.sh
+```
+잘되네요
