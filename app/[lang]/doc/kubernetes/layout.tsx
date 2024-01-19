@@ -1,10 +1,5 @@
 import { Metadata } from 'next'
-import {
-  LANDING_PATH,
-  NAV_ITEMS_HOME,
-  NAV_ITEMS_HOME_MOBILE,
-  siteConfig,
-} from '@/config/site'
+import { LANDING_PATH, siteConfig } from '@/config/site'
 import CommonNavbar from '@/app/_components/server-client/navbar'
 import { TreeSection } from '@/app/_components/client-only/tree-section'
 import { layout, main } from '@/app/_components/server-only/primitives'
@@ -29,7 +24,7 @@ export default function RootLayout({
   return (
     <div className={layout()}>
       <CommonNavbar
-        navItems={NAV_ITEMS_HOME}
+        tree={tree}
         landingPath={LANDING_PATH}
         links={siteConfig.links}
         prefix={

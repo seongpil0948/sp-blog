@@ -13,20 +13,20 @@ import {
   TwitterIcon,
   GithubIcon,
   DiscordIcon,
-  HeartFilledIcon,
 } from '@/app/_components/server-only/icons'
 import { Logo } from '@/app/_components/server-only/icons'
-import { THrefLinks } from '@/types'
+
 import { SearchInput } from '@/app/_components/client-only/input/search'
 import { clsx, type ClassValue } from 'clsx'
 import { navbar } from './theme'
+import { TreeSectionProps } from '../../client-only/tree-section'
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
 }
 
 export default function CommonNavbar(props: {
-  navItems: THrefLinks
+  tree?: TreeSectionProps
   children?: React.ReactNode
   prefix?: React.ReactNode
   landingPath: string
@@ -37,7 +37,7 @@ export default function CommonNavbar(props: {
     sponsor?: string
   }
 }) {
-  const { navItems, children, prefix, landingPath, links } = props
+  const { tree, children, prefix, landingPath, links } = props
   const { base, content, brand, item } = navbar()
   const extendedClassNames = {
     base: cn(base()),
@@ -60,13 +60,15 @@ export default function CommonNavbar(props: {
             <p className="font-bold">Sp Blog</p>
           </NextLink>
         </NavbarBrand>
-        <ul>
-          {navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink href={item.href}>{item.label}</NextLink>
-            </NavbarItem>
-          ))}
-        </ul>
+        {tree && tree.children && (
+          <ul>
+            {tree.children.map((item) => (
+              <NavbarItem key={item.href}>
+                <NextLink href={item.href}>{item.label}</NextLink>
+              </NavbarItem>
+            ))}
+          </ul>
+        )}
         {children}
       </NavbarContent>
 

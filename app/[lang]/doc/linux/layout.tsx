@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { LANDING_PATH, NAV_ITEMS_HOME, siteConfig } from '@/config/site'
+import { LANDING_PATH, siteConfig } from '@/config/site'
 import CommonNavbar from '@/app/_components/server-client/navbar'
 import CommonDrawer from '@/app/_components/client-only/drawer'
 import { TreeSection } from '@/app/_components/client-only/tree-section'
@@ -26,7 +26,7 @@ export default function RootLayout({
     <div className="relative flex h-screen flex-col">
       <CommonNavbar
         landingPath={LANDING_PATH}
-        navItems={NAV_ITEMS_HOME}
+        tree={tree}
         prefix={
           <CommonDrawer title="Linux">
             <TreeSection treeProps={tree?.children ?? []} />

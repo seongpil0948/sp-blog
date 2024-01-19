@@ -17,6 +17,9 @@ const callback: DirectoryTreeCallback<TDirCustom> = (item, path) => {
     path = path.replace(/\/index$/, '')
     path = path.replace(/\/content$/, '')
   }
+  if (!path || path === '') {
+    path = '/'
+  }
   item.custom = {
     href: path,
   }
@@ -29,7 +32,7 @@ export function getTree(dir: string, options?: DirectoryTreeOptions) {
 }
 function dirTreeToTree(obj: DirectoryTree<TDirCustom>): TreeSectionProps | undefined {
   // obj.name = dirTree.name.replace('.mdx', '').replace('.tsx', '')
-  if (obj.type === 'file' || !obj.custom || !obj.custom.href) return 
+  if ((obj.type && obj.type === 'file') || !obj.custom || !obj.custom.href) return 
   if (obj.path.includes('/_')) return
   return {
     label: obj.name,

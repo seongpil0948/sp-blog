@@ -7,6 +7,7 @@ import { tree } from './theme'
 export interface TreeSectionProps {
   label: string
   href: string
+  icon?: string
   children?: TreeSectionProps[]
 }
 

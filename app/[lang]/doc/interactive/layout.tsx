@@ -7,9 +7,9 @@ import { docWrapper } from '@/app/_components/server-only/primitives'
 import { getTree } from '@/app/_utils/dir-tree'
 
 export const metadata: Metadata = {
-  description: 'Abacus NextFramework Documentation',
+  description: 'Interactive Documentation',
   title: {
-    default: `Abacus Next Framework`,
+    default: `Js Interactive`,
     template: `%s - ${siteConfig.name}`,
   },
 }
@@ -19,7 +19,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const tree = getTree('app/[lang]/doc/framework-next', {
+  const tree = getTree('app/[lang]/doc/interactive', {
     extensions: /\.mdx$/,
   })
   return (
@@ -29,7 +29,7 @@ export default function RootLayout({
           landingPath={LANDING_PATH}
           tree={tree}
           prefix={
-            <CommonDrawer title="Framework Next">
+            <CommonDrawer title="Interactive">
               <TreeSection treeProps={tree?.children ?? []} />
             </CommonDrawer>
           }
