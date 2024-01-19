@@ -10,6 +10,7 @@ k8s 는 CSI(Container Storage Interface)를 준수 하는 드라이버를 provis
 - master node에 NFS server를 구성한다.
 - worker node에 NFS client를 구성한다.
 - [nfs-subdir-external-provisioner](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner) 드라이버를 설치한다.
+- mysql deployment를 생성한다.
 
 ## NFS Server 구성
 
@@ -74,16 +75,99 @@ df | grep 192.168.0.103:/nfs_shared
 Kubernetes 영구 볼륨의 동적 프로비저닝을 지원하기 위해 기존 및 이미 구성된 NFS 서버를 사용하는 자동 프로비저닝 프로그램입니다.  
 영구 볼륨은 다음과 같이 프로비저닝됩니다. `${namespace}-${pvcName}-${pvName}.`
 
+[Helm 으로 설치하기](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner/blob/master/charts/nfs-subdir-external-provisioner/README.md)
+### Install
+```sh
+helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+helm install nfs-shared-class nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+  --set nfs.server=192.168.0.103 \
+  --set nfs.path=/nfs_shared \
+  --set storageClass.archiveOnDelete=true \
+  --set storageClass.name=nfs-shared-client \
+  --set storageClass.defaultClass=true \
 
+k describe storageclasses.storage.k8s.io
+Name:                  nfs-shared-client
+IsDefaultClass:        Yes
+Annotations:           meta.helm.sh/release-name=nfs-shared-class,meta.helm.sh/release-namespace=default,storageclass.kubernetes.io/is-default-class=true
+Provisioner:           cluster.local/nfs-shared-class-nfs-subdir-external-provisioner
+Parameters:            archiveOnDelete=true
+AllowVolumeExpansion:  True
+MountOptions:          <none>
+ReclaimPolicy:         Delete
+VolumeBindingMode:     Immediate
+Events:                <none>
+```
 
+### Test
+1. test pvc, pod 생성
+```sh
+$ kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
 
+2. test pv, pvc 확인
+- storageclass 가 `nfs-client` 로 생성되었는지 확인한다.
+- STATUS가 `Bound` 인지 확인한다.
 
+```
+$ k get pv,pvc
+NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                STORAGECLASS   REASON   AGE
+persistentvolume/pvc-515c4733-e843-4be8-a15a-20fcb7f454e6   1Mi        RWX            Delete           Bound    default/test-claim   nfs-shared-client              10m
 
+NAME                               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/test-claim   Bound    pvc-515c4733-e843-4be8-a15a-20fcb7f454e6   1Mi        RWX            nfs-shared-client     10m
+```
 
+3. pod 명세 확인
+```sh
+$ k describe pod test-pod 
+    Command:
+      /bin/sh
+    Args:
+      -c
+      touch /mnt/SUCCESS && exit 0 || exit 1
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 19 Jan 2024 01:01:18 +0000
+      Finished:     Fri, 19 Jan 2024 01:01:18 +0000
+    Mounts:
+      /mnt from nfs-pvc (rw)    
+Volumes:
+  nfs-pvc:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  test-claim
+    ReadOnly:   false        
+```
+pod은 정상적으로 생성되었고, pod가 생성한 `/mnt/SUCCESS` 파일이 가 `nfs_shared` 디렉토리에  반영되었는지 확인하자.
+```sh
+$ ls /nfs_shared/default-test-claim-pvc-515c4733-e843-4be8-a15a-20fcb7f454e6/
+SUCCESS
+```
+성공이다.
+지우는 것 또한 덕목. 
+#### 파드 제거
+```sh
+kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-claim.yaml -f https://raw.githubusercontent.com/kubernetes-sigs/nfs-subdir-external-provisioner/master/deploy/test-pod.yaml
+```
+pvc 제거시 클레임에 의헤 생성된 폴더가 제거되지 않고 prefix `archived-` 가 붙는다.
+```sh
+$ stat /nfs_shared/archived-default-test-claim-pvc-515c4733-e843-4be8-a15a-20fcb7f454e6
+File: /nfs_shared/archived-default-test-claim-pvc-515c4733-e843-4be8-a15a-20fcb7f454e6
+Size: 4096      	Blocks: 8          IO Block: 4096   directory
+Device: fd00h/64768d	Inode: 4063235     Links: 2
+Access: (0777/drwxrwxrwx)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2024-01-19 01:26:19.784210592 +0000
+Modify: 2024-01-19 01:01:18.375471645 +0000
+Change: 2024-01-19 01:25:15.803744698 +0000
+```
+이제 release를 삭제하자.
+```sh
+$ helm delete nfs-shared-class
+$ k get all,pv,pvc
+```
+잘 삭제된 것 같다. 후..
+이제 디비를 생성할거다.. 드디어..!
 
-
-
-
-
-
-
+## MySQL Deployment
+```
