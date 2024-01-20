@@ -37,9 +37,15 @@ module.exports = {
       //     'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       // },
     },
+    hljs: {
+      // https://highlightjs.org/examples
+      // theme: 'atom-one-light',
+      theme: 'github',
+    },
   },
   darkMode: 'class',
   plugins: [
+    require('tailwind-highlightjs'),
     nextui({
       layout: {
         // disabledOpacity: "0.3", // opacity-[0.3]
@@ -96,5 +102,10 @@ module.exports = {
         },
       })
     }),
+  ],
+  safelist: [
+    {
+      pattern: /hljs+/,
+    },
   ],
 }

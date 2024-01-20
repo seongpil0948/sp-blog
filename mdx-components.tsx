@@ -4,6 +4,7 @@ import { parseNumber } from './app/_utils'
 import { Link as NextLink } from '@nextui-org/link'
 import { Snippet } from '@nextui-org/snippet'
 // import CmTitle from '@/app/_components/server-only/title'
+import CodeHeader from '@/app/_components/server-only/CodeHeader'
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -79,8 +80,15 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     pre: (props) => {
       return (
-        <Snippet size="sm" hideSymbol className="my-10 flex w-full">
-          <span className="flex whitespace-pre-wrap p-7 text-sm leading-6">
+        <Snippet
+          size="sm"
+          radius="none"
+          hideSymbol
+          className="flex w-full"
+          variant="bordered"
+        >
+          {/* <span className="flex whitespace-pre-wrap p-7 text-sm leading-6"> */}
+          <span className="flex whitespace-pre-wrap text-sm leading-6">
             {props.children}
           </span>
         </Snippet>
@@ -100,6 +108,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     td: (props) => (
       <td className="border border-gray-200 px-4 py-2">{props.children}</td>
     ),
+    CodeHeader,
   }
 }
 
