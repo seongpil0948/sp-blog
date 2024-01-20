@@ -86,6 +86,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
           hideSymbol
           className="flex w-full"
           variant="bordered"
+          style={{
+            backgroundColor: '#282c34'
+          }}
         >
           {/* <span className="flex whitespace-pre-wrap p-7 text-sm leading-6"> */}
           <span className="flex whitespace-pre-wrap text-sm leading-6">

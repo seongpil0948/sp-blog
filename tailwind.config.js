@@ -39,8 +39,26 @@ module.exports = {
     },
     hljs: {
       // https://highlightjs.org/examples
-      // theme: 'atom-one-light',
-      theme: 'github',
+      theme: 'atom-one-dark',
+      // theme: 'github',
+      // custom: {
+      //   base: {
+      //     // background: '#011627',
+      //     background: 'transparent',
+      //     // color: '#d6deeb',
+      //   },
+        // general: {
+        //   keyword: {
+        //     color: '#c792ea',
+        //     fontStyle: 'italic',
+        //   },
+        //   built_in: {
+        //     color: '#addb67',
+        //     fontStyle: 'italic',
+        //   },
+        //   // other general styles
+        // },
+      // },
     },
   },
   darkMode: 'class',
