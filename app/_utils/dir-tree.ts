@@ -31,7 +31,7 @@ export interface IGetTreeArgs {
   options?: DirectoryTreeOptions
 }
 export function getTree(args: IGetTreeArgs) {
-  const libTree = dirTree(args.dir, args.options, undefined, callback)
+  const libTree = dirTree(args.dir, {exclude: /home/,...args.options}, undefined, callback)
   return dirTreeToTree(libTree)
   
 }

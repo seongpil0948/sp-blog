@@ -8,7 +8,9 @@ export interface CommonNavbarProps {
   children?: React.ReactNode
   
   leftTreeOptions: IGetTreeArgs
+  treeLeft?: TreeSectionProps
   prefix?: React.ReactNode
+
   landingPath?: string
   links?: {
     twitter?: string

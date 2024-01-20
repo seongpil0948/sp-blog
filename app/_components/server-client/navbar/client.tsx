@@ -17,14 +17,16 @@ import { Logo } from '@/app/_components/server-only/icons'
 import { SearchInput } from '@/app/_components/client-only/input/search'
 import { CommonNavbarProps } from './types'
 import { LANDING_PATH } from '@/config/site'
+import { AccordionItem, Accordion } from '@nextui-org/accordion'
+import CommonDrawer from '../../client-only/drawer'
+import { TreeSection } from '../../client-only/tree-section'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
-  const { tree, children, prefix, landingPath, links, classes } = props
-
+  const { tree, children, landingPath, links, classes } = props
   return (
     <NextUINavbar classNames={classes} maxWidth="xl" position="sticky">
       <NavbarContent>
-        {prefix && prefix}
+        <PrefixComp {...props} />
         <NavbarBrand as="li">
           <NextLink href={landingPath ?? LANDING_PATH}>
             <Logo />
@@ -120,4 +122,48 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
       </NavbarMenu> */}
     </NextUINavbar>
   )
+}
+
+function PrefixComp(props: CommonNavbarProps): React.ReactNode {
+  if (props.prefix) {
+    return props.prefix
+  }
+  const { treeLeft } = props
+
+  if (!treeLeft) return <></>
+  else if (
+    treeLeft.children &&
+    treeLeft.children.map((c) => c.children).flat().length > 0
+  ) {
+    const items = treeLeft.children.map((item, idx) => {
+      return (
+        <AccordionItem key={item.href + idx} title={item.label}>
+          <TreeSection treeProps={item.children ?? []} />
+        </AccordionItem>
+      )
+    })
+    return (
+      <CommonDrawer
+        title="Home"
+        sheetProps={{
+          placement: 'left',
+        }}
+        {...props.drawerProps}
+      >
+        <Accordion>{...items}</Accordion>
+      </CommonDrawer>
+    )
+  } else {
+    return (
+      <CommonDrawer
+        title="Home"
+        sheetProps={{
+          placement: 'left',
+        }}
+        {...props.drawerProps}
+      >
+        <TreeSection treeProps={treeLeft?.children ?? []} />
+      </CommonDrawer>
+    )
+  }
 }

@@ -1,7 +1,7 @@
 import CmTitle from '@/app/_components/server-only/title'
 import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
 import { getDictionary } from '../dictionaries'
-import CmButton from '@/app/_components/server-only/button'
+// import CmButton from '@/app/_components/server-only/button'
 import HiButton from '@/app/_components/client-only/three-d/intro-button'
 
 export async function generateStaticParams() {
@@ -14,7 +14,7 @@ interface Param {
 
 export default async function SSGPage({ params: { lang } }: Param) {
   const dict = await getDictionary(lang)
-  const storyComp = () => <CmButton>{dict['button']['button']}</CmButton>
+  // const storyComp = () => <CmButton>{dict['button']['button']}</CmButton>
   return (
     <section className="flex-center-col">
       <div className="inline-block justify-center text-center">
