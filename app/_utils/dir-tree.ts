@@ -9,6 +9,7 @@ import { TreeSectionProps } from '../_components/client-only/tree-section'
 type TDirCustom = {
   href: string
 }
+
 const callback: DirectoryTreeCallback<TDirCustom> = (item, path) => {
   if (path.includes('[lang]')) {
     path = path.split('[lang]')[1]
@@ -25,8 +26,12 @@ const callback: DirectoryTreeCallback<TDirCustom> = (item, path) => {
   }
 }
 
-export function getTree(dir: string, options?: DirectoryTreeOptions) {
-  const libTree = dirTree(dir, options, undefined, callback)
+export interface IGetTreeArgs {
+  dir: string
+  options?: DirectoryTreeOptions
+}
+export function getTree(args: IGetTreeArgs) {
+  const libTree = dirTree(args.dir, args.options, undefined, callback)
   return dirTreeToTree(libTree)
   
 }

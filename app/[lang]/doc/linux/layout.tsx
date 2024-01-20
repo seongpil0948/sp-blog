@@ -19,19 +19,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const tree = getTree('app/[lang]/doc/linux', {
-    extensions: /\.mdx$/,
-  })
+  // const tree = getTree('app/[lang]/doc/linux', { extensions: /\.mdx$/ })
   return (
     <div className="relative flex h-screen flex-col">
       <CommonNavbar
-        landingPath={LANDING_PATH}
-        tree={tree}
-        prefix={
-          <CommonDrawer title="Linux">
-            <TreeSection treeProps={tree?.children ?? []} />
-          </CommonDrawer>
-        }
+        leftTreeOptions={{
+          dir: 'app/[lang]/doc/linux',
+        }}
+        drawerProps={{
+          title: 'Linux',
+        }}
       />
 
       <main className={docWrapper()}>{children}</main>

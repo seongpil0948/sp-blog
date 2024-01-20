@@ -30,23 +30,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const tree = getTree('app/[lang]/', { depth: 1 })
+  // const tree = getTree('app/[lang]/', { depth: 1 })
   return (
     <div className={layout()}>
       <CommonNavbar
-        tree={tree}
-        landingPath={LANDING_PATH}
-        links={siteConfig.links}
-        prefix={
-          <CommonDrawer
-            title="Home"
-            sheetProps={{
-              placement: 'left',
-            }}
-          >
-            <TreeSection treeProps={tree?.children ?? []} />
-          </CommonDrawer>
-        }
+        leftTreeOptions={{
+          dir: 'app/[lang]/',
+        }}
+        drawerProps={{
+          title: 'home',
+        }}
       ></CommonNavbar>
       <main id="content-container" className={main()}>
         {children}

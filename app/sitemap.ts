@@ -5,7 +5,7 @@ import { APP_DOMAIN, reduceChildLinks, siteConfig } from '@/config/site'
 
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const tree = getTree('app')
+  const tree = getTree({dir: 'app'})
   if (!tree) return []
   const links = reduceChildLinks(tree)
   

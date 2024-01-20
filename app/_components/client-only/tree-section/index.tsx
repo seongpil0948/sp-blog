@@ -36,7 +36,7 @@ export function TreeSection(props: {
                 <div className={menuItem()}>
                   {/* <Icon path={mdiFolder} size={0.8} /> */}
                   <Link key={item.href} href={item.href}>
-                    {item.label}
+                    <div className={`pl-${startDepth! * 2}`}>{item.label}</div>
                   </Link>
                 </div>
                 {item.children && (

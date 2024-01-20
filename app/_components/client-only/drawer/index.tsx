@@ -13,11 +13,12 @@ import { useDisclosure } from '@nextui-org/modal'
 import { mdiMenuClose, mdiMenuOpen } from '@mdi/js'
 import CmButton from '@/app/_components/server-only/button'
 
-export default function CommonDrawer(props: {
+export interface CommonDrawerProps {
   children: React.ReactNode
   title?: string
   sheetProps?: Partial<SheetProps>
-}) {
+}
+export default function CommonDrawer(props: CommonDrawerProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure()
   const { children, sheetProps, title } = props
   const handleClick = () => {
@@ -30,7 +31,14 @@ export default function CommonDrawer(props: {
         <Icon path={isOpen ? mdiMenuClose : mdiMenuOpen} size={1} />
       </CmButton>
 
-      <Sheet isOpen={isOpen} onOpenChange={onOpenChange} {...sheetProps}>
+      <Sheet
+        classNames={{
+          body: 'overflow-auto',
+        }}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        {...sheetProps}
+      >
         <SheetContent>
           {(onClose) => (
             <>
