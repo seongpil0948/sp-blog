@@ -169,5 +169,222 @@ $ k get all,pv,pvc
 잘 삭제된 것 같다. 후..
 이제 디비를 생성할거다.. 드디어..!
 
-## MySQL Deployment
+## MySQL DB (Stateless) 
+OIDC, ARGO 등 여러 도구들은 영구적 상태 저장을 위해 DB가 필요하다.
+다용도로 사용할 수 있는 MySQL을 사용하자.
+생성 후, 샘플 데이터를 추가한 후, 쿠버네티스 리소스를 제거 후 생성시에도 동일한 데이터가 유지되는지 확인해보자.
+
+### 1. specification 작성
+먼저 난 한 파일(`manifests/storage/db-mysql/mysql-spec.yaml`)에 모두 작성 했다.
+
+#### PersistentVolumeClaim
+앞서 만든 storageclass를 활용 할 차례이다.
+걍 만들면 알아서 PV 만들어주죠? 개이득이죠?
+최소 5Gi 이상의 용량을 이 PVC에 할당하자.
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-shared-client
 ```
+
+#### Deployment
+이제 mysql deployment를 생성하자.
+이전 pvc를 마운트하고, mysql 이미지를 사용하자.
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: common-mysql
+  namespace: db
+  labels:
+    app: common-mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - image: mysql:5.6
+          name: mysql
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "512m"
+            limits:
+              memory: "2Gi"
+              cpu: "1024m"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+            # - name: MYSQL_PASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: mysql-secret
+            #       key: password
+            # - name: MYSQL_DATABASE # 구성할 database명
+            #   value: common
+            # - name: MYSQL_USER # database에 권한이 있는 user
+            #   value: admin
+            # - name: MYSQL_ALLOW_EMPTY_PASSWORD
+            #   value: "false"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+```
+
+#### Service
+고정된 IP를 가지는 서비스를 생성하자.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: common-mysql
+  name: common-mysql
+  namespace: db
+spec:
+  ports:
+    - port: 3306
+      protocol: TCP
+      targetPort: 3306
+  selector:
+    app: mysql
+  type: ClusterIP
+```
+
+
+### 2. script 작성
+기존에 있는 경우 `--force` 옵션 사용해서 지워버리고 다시만들자
+
+<CodeHeader text="ignite.sh" /> 
+
+```sh
+kubectl delete ns db
+kubectl create ns db
+kubectl -n db create secret generic mysql-secret --from-literal=password=1234qwer!!
+kubectl -n db apply -f ./deployment.yaml 
+kubectl describe deployment.apps/common-mysql -n db
+```
+
+생성했다면 테스트를 위해 접속하여 상황을 좀 보자
+### POD 접속 테스트
+```sh
+$ kubectl exec -it common-mysql-59fb8bf9c7-77m9k --namespace db --container mysql -- bash
+$ mysql -uroot -p
+```
+패스워드를 직접 입력하자. 참고로 decoded 된 평문을 입력 해야한다. `1234qwer!!`
+
+sql client 를 사용할 수 있다.
+```sql
+mysql> show databases;
++--------------------+
+
+mysql> show tables from mysql;
+```
+음 대충 이런구조구나 알 수 있다.
+이제 로컬에서 커넥션 세팅을 위해 서비스 IP를 테스트 해보자.
+```sh
+$ kubectl get svc -n db
+```
+위 명령어에서 출력된 ClusterIP를 확인하자.
+만약  POD 테스트 과정을 서비스로도 확인하고 싶다면, 로컬 혹은 서버에 mysql client를 설치하고, 아래 명령어를 실행하자.
+```sh
+SVC_IP=$(kubectl -n db get svc common-mysql --no-headers | awk '{print $3}')
+echo "go go connect mysql~ $SVC_IP "
+mysql  --host=$SVC_IP --user=root -p 
+```
+
+### 데이터 유지 테스트
+
+가장 중요한건 파드가 삭제되어도 데이터가 유지되는지 확인하는 것이다.
+
+### create data to test.users table
+```sql
+CREATE DATABASE test;
+USE test;
+CREATE TABLE users (
+  id int NOT NULL AUTO_INCREMENT,
+  name varchar(255) NOT NULL,
+  email varchar(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO users (name, email)
+VALUES
+  ('John Doe', 'johndoe@example.com'),
+  ('Jane Doe', 'janedoe@example.com'),
+  ('Peter Smith', 'petersmith@example.com');
+```
+
+### select data from test.users table
+```mysql> SELECT * FROM users;
++----+-------------+------------------------+
+| id | name        | email                  |
++----+-------------+------------------------+
+|  1 | John Doe    | johndoe@example.com    |
+|  2 | Jane Doe    | janedoe@example.com    |
+|  3 | Peter Smith | petersmith@example.com |
++----+-------------+------------------------+
+3 rows in set (0.00 sec)
+
+```
+
+음 잘 생성된 것 같군요.
+이제 파드를 삭제해보자.
+```sh
+kubectl -n db delete service/common-mysql
+kubectl -n db delete deployments.apps/common-mysql 
+```
+mysql-spec.yaml 에서 pvc 선언부분을 주석처리 후 다시 생성해보자.
+```sh
+$ kubectl -n db apply -f manifests/storage/db-mysql/mysql-spec.yaml
+service/common-mysql created
+deployment.apps/common-mysql created
+```
+
+다시 mysql 클라이언트에 접속후 쿼리를 날려보자
+```sql
+SHOW TABLES FROM test;
+SELECT * FROM test.users;
+```
+데이터가 유지되었다. 성공이다.
+```
++----+-------------+------------------------+
+| id | name        | email                  |
++----+-------------+------------------------+
+|  1 | John Doe    | johndoe@example.com    |
+|  2 | Jane Doe    | janedoe@example.com    |
+|  3 | Peter Smith | petersmith@example.com |
++----+-------------+------------------------+
+```
+
+이제 잘 사용들 해봅시다 후후
+만약 운영 환경에서 사용한다면 statefulset을 사용하여 고 가용성, 백업, master-slave 구조를 등을 고려하여 구성해야한다.
+하지만 우리는 제한된 리소스로 여러 어플리케이션을 활용해야 한다.
+사용자는 없을거라 생각하기 때문에 이정도로 충분하다.
+
+읽어줘서 땡큐
