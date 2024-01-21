@@ -12,7 +12,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     a: (props: React.HTMLAttributes<HTMLAnchorElement>) => <Link {...props} />,
     blockquote: (props) => (
       <blockquote
-        // className="my-6 rounded-xl border border-default-200 bg-default-200/20 px-4 py-3 dark:border-default-100 [&>p]:m-0"
+        className="my-6 rounded-xl border border-default-200 bg-default-200/20 px-4 py-3 dark:border-default-100 [&>p]:m-0"
         {...props}
       />
     ),
@@ -87,7 +87,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
           className="flex w-full"
           variant="bordered"
           style={{
-            backgroundColor: '#282c34'
+            backgroundColor: '#282c34',
           }}
         >
           {/* <span className="flex whitespace-pre-wrap p-7 text-sm leading-6"> */}

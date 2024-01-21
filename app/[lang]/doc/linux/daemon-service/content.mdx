@@ -1,0 +1,175 @@
+# 서론
+
+
+## Daemon Service란?
+데몬은 백그라운드에서 실행되는 프로그램으로, 사용자가 직접적으로 제어하지 않고 백그라운드에서 돌면서 여러 작업을 하는 프로그램을 말한다. 사용자의 요청을 기다리고 있다가 요청이 발생하면 이에 적절히 대응하는 리스너와 같은 역할을 한다. 즉, 메모리에 상주하면서 특정 요청이 오면 즉시 대응 할 수 있도록 대기중인 프로세스를 말한다. 
+출처: https://inpa.tistory.com/entry/프로세스-데몬-서비스-정리 [Inpa Dev 👨‍💻:티스토리]
+Window 환경에서 위 개념을 Service 명칭으로 관리한다.
+
+## Create systemd service
+우리는 간단히 `echo`` 명령어를 실행하는 MyApp이라는 서비스를 만들어보겠습니다.
+```bash
+$ sudo vi /usr/local/bin/myapp.sh
+
+#!/bin/bash
+echo 'MyApp is Started' | systemd-cat -t MyApp -p info
+sleep 5
+echo 'MyApp is Crashed' | systemd-cat -t MyApp -p err
+```
+
+### Options
+
+#### Restart 
+`man systemd.service` 메뉴얼을 확인 해봅시다.
+Options 의 Restart= 옵션 섹션을 보면 어플리케이션의 종료 상태에 따라 재시작 여부를 결정할 수 있습니다.
+에러, 타임아웃, 성공 등의 상태에 따라 재시작 여부를 결정할 수 있습니다.
+default 는 no 입니다. 우리는 always 로 설정하겠습니다.
+
+#### RestartSec
+Options 의 RestartSec= 옵션 섹션을 보면 어플리케이션의 재시작 시간을 설정할 수 있습니다.
+이슈가 있을때 분당 100번의 재시작을 시도하면 시스템에 부하가 걸릴 수 있습니다.
+default 는 100ms 입니다. 우리는 5초로 설정하겠습니다.
+
+다음은 Examples를 통해 어떤 설정을 할 수 있는지 확인해봅시다.
+```bash
+EXAMPLES
+       Example 1. Simple service
+
+       The following unit file creates a service that will execute /usr/sbin/foo-daemon. Since no Type= is specified, the default Type=simple will be assumed.
+       systemd will assume the unit to be started immediately after the program has begun executing.
+
+           [Unit]
+           Description=Foo
+
+           [Service]
+           ExecStart=/usr/sbin/foo-daemon
+
+           [Install]
+           WantedBy=multi-user.target
+```
+서비스는 세개의 섹션으로 구성되네요
+* Unit: 서비스의 이름, 설명, 종속성 등을 설정합니다.
+* Service: 서비스를 실행할 명령어, 환경 변수, 작업 디렉토리 등을 설정합니다.
+* Install: 서비스를 어떻게 설치할지 설정합니다.
+
+이제 어떤 서비스가 있는지 확인해봅시다.
+
+> We can use one of the already existing service unit files so we can use something from this location
+> 아래 명령어를 통해 기본적으로 설치되어 있는 서비스들을 확인할 수 있습니다.
+성격이 유사한 서비스를 참고하여 설정할 수 있습니다.
+```bash
+ls /lib/systemd/system
+```
+ㅋㅋ 우린 `sshd.service` 를 참고해보겠습니다.
+<CodeHeader text="$ sudo cp /etc/systemd/system/sshd.service  /etc/systemd/system/myapp.service" /> 
+
+```bash
+[Unit]
+Description=OpenBSD Secure Shell server
+After=network.target auditd.service
+ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+EnvironmentFile=-/etc/default/ssh
+ExecStartPre=/usr/sbin/sshd -t
+ExecStart=/usr/sbin/sshd -D $SSHD_OPTS
+ExecReload=/usr/sbin/sshd -t
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=notify
+RuntimeDirectory=sshd
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+Alias=sshd.service
+```
+ssh daemon 서비스의 세가지 섹션을 확인할 수 있습니다.
+- __[Unit]__
+  - After: 서비스가 실행되기 전에 실행되어야 하는 서비스를 설정합니다.
+    - network.target: 네트워크가 준비되어야 합니다.
+    - auditd.service: auditd 서비스가 실행되어야 합니다.
+  - ConditionPathExists: 서비스가 실행되기 전에 특정 경로에 파일이 존재하는지 확인합니다.
+    - !/etc/ssh/sshd_not_to_be_run: 해당 경로에 파일이 존재하지 않아야 합니다.
+- __[Service]__
+  - ExecReload: 관리자가 `systemctl reload myapp.service` 명령어를 실행했을 때 실행할 명령어를 설정합니다.
+  - KillMode: 서비스가 종료(`systemctl stop`)될 때 어떻게 종료할지 설정합니다.
+    - process: main 프로세스를 종료합니다.
+    - control-group: 프로세스 그룹(이 프로세스에 의해 생성된 모든 프로세스)를 종료합니다.
+    - mixed: 프로세스 그룹을 종료하고, 프로세스가 종료되지 않으면 프로세스를 종료합니다.
+    - none: 프로세스를 종료하지 않습니다.
+  - RestartPreventExitStatus: 서비스가 종료될 때 어떤 상태에서는 재시작하지 않도록 설정합니다.
+    - 애플리케이션이 255와 같은 종료 코드를 던지면 systemd에게 서비스를 다시 시작하지 말라고 말하세요.
+  - Type: 서비스의 종류를 설정합니다.
+    - simple: 기본값입니다. 서비스가 시작되면 해당 프로세스가 시작됩니다.
+    - forking: 해당 프로세스가 자식 프로세스를 생성합니다. 부모 프로세스는 종료됩니다.
+    - oneshot: 해당 프로세스가 foreground에서 한 번 실행되고 종료됩니다.
+    - notify: 해당 프로세스가 시작되면 systemd에게 알립니다. 애플리케이션이 시작되었는지 확인하려면 sd_notify()를 사용하세요. 
+    - dbus: 해당 프로세스가 D-Bus 서비스를 제공합니다.
+
+
+음 나머진 메뉴얼보면서 참고하면 될 것 같습니다.
+
+그래서 우리는 다음과 같이 설정하겠습니다.
+```bash
+[Unit]
+Description=My App created by seongpilChoi
+After=network.target auditd.service
+
+[Service]
+ExecStartPre=/usr/local/bin/myapp-pre.sh
+ExecStart=/usr/local/bin/myapp.sh
+KillMode=process
+Restart=always
+RestartSec=1
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+```
+wq 로 저장하고 나옵시다.. 해볼까요?
+```bash
+$ sudo systemctl daemon-reload
+$ sudo systemctl start myapp.service
+$ sudo systemctl status myapp.service
+
+● myapp.service - My App created by seongpilChoi
+   Loaded: loaded (/etc/systemd/system/myapp.service; disabled; vendor preset: enabled)
+   Active: active (running) since Mon 2024-01-22 01:46:13 KST; 2s ago
+  Process: 19216 ExecStartPre=/usr/local/bin/myapp-pre.sh (code=exited, status=0/SUCCESS)
+ Main PID: 19222 (myapp.sh)
+    Tasks: 2 (limit: 4915)
+   CGroup: /system.slice/myapp.service
+           ├─19222 /bin/bash /usr/local/bin/myapp.sh
+           └─19227 sleep 5
+
+Jan 22 01:46:13 michelle myapp-pre.sh[19216]: Systemd is preparing to start MyApp
+Jan 22 01:46:13 michelle systemd[1]: Started My App created by seongpilChoi.
+Jan 22 01:46:13 michelle MyApp[19225]: MyApp is Started
+```
+생성된 메인 PID, forked 된 PID 들이 보인다
+설정한 로그들도 잘 보이니 참 좋다.
+```bash
+$ journalctl -u myapp.service
+```
+하지만 정상 로그만 표시되고 에러 로그는 보이지 않는 것을 확인 할 수 있다.  
+-f 옵션을 주면 실시간으로 로그를 확인할 수 있다.
+```bash
+journalctl -f
+```
+
+막상 만들고 보니, 어려운 부분은 필요한 옵션을 찾는 것이었다.  
+하지만 시스템이 무엇을 하기를 원하는지 아는 한, 모든 옵션을 찾을 수 있다는 문구가 보인다..
+18
+
+
+
+
+
+
+
+
+
+
