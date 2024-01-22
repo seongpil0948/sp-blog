@@ -3,7 +3,7 @@
 
 ## Daemon Service란?
 데몬은 백그라운드에서 실행되는 프로그램으로, 사용자가 직접적으로 제어하지 않고 백그라운드에서 돌면서 여러 작업을 하는 프로그램을 말한다. 사용자의 요청을 기다리고 있다가 요청이 발생하면 이에 적절히 대응하는 리스너와 같은 역할을 한다. 즉, 메모리에 상주하면서 특정 요청이 오면 즉시 대응 할 수 있도록 대기중인 프로세스를 말한다. 
-출처: https://inpa.tistory.com/entry/프로세스-데몬-서비스-정리 [Inpa Dev 👨‍💻:티스토리]
+출처: [Inpa Dev 👨‍💻:티스토리](https://inpa.tistory.com/entry/프로세스-데몬-서비스-정리)
 Window 환경에서 위 개념을 Service 명칭으로 관리한다.
 
 ## Create systemd service
@@ -20,8 +20,10 @@ echo 'MyApp is Crashed' | systemd-cat -t MyApp -p err
 ### Options
 
 #### Restart 
-`man systemd.service` 메뉴얼을 확인 해봅시다.
-Options 의 Restart= 옵션 섹션을 보면 어플리케이션의 종료 상태에 따라 재시작 여부를 결정할 수 있습니다.
+```bash
+man systemd.service
+``` 
+메뉴얼을 확인 해봅시다. Options 의 Restart= 옵션 섹션을 보면 어플리케이션의 종료 상태에 따라 재시작 여부를 결정할 수 있습니다.
 에러, 타임아웃, 성공 등의 상태에 따라 재시작 여부를 결정할 수 있습니다.
 default 는 no 입니다. 우리는 always 로 설정하겠습니다.
 
@@ -165,11 +167,139 @@ journalctl -f
 18
 
 
+# Questions
+
+### Make sure rpcbind.service unit automatically starts up after Linux boots.
+```bash
+Make sure rpcbind.service unit automatically starts up after Linux boots.
+[bob@centos-host ~]$ systemctl status rpcbind.service
+● rpcbind.service - RPC Bind
+   Loaded: loaded (/usr/lib/systemd/system/rpcbind.service; disabled; vendor preset: enabled)
+   Active: active (running) since Mon 2024-01-22 10:29:52 UTC; 37min ago
+     Docs: man:rpcbind(8)
+ Main PID: 599 (rpcbind)
+    Tasks: 1 (limit: 1340692)
+   Memory: 1.1M
+   CGroup: /system.slice/rpcbind.service
+           └─599 /usr/bin/rpcbind -w -f
+
+```
+disabled 된 것을 확인할 수 있다.  
+인자 보고 대충 맞는거 보자
+```bash
+systemctl --help
+sudo systemctl enable rpcbind.service
+```
 
 
+### Create a script called script.sh. This script should create a tar archive called archive.tar.gz. The script should archive the directory called dir1.
+흠 gz 방식의 압축을 해야한다. `tar --help`중 
+suffix에 따라 auto compress 지원하는 항목(a)이 있다.
+새로운 파일을 생성하는 c와  압축 대상을 지정하는 f를 사용하여 tar 파일을 생성한다.
+<CodeHeader text="script.sh" /> 
+
+```bash
+#!/bin/bash
+
+tar acf archive.tar.gz dir1
+```
+지금까지 통과가왜이리 안되나 했더니
+```bash
+$ chmod a+x script.sh
+```
+즉시 실행 할 수 있도록 만들었어야 했다..
 
 
+### Under bob's home: Create script2.sh script that displays if the sshd.service unit is enabled or disabled.
+```bash
+$ sudo systemctl --help
+
+Unit File Commands:
+  list-unit-files [PATTERN...]        List installed unit files
+  enable [UNIT...|PATH...]            Enable one or more unit files
+  disable UNIT...                     Disable one or more unit files
+  reenable UNIT...                    Reenable one or more unit files
+  preset UNIT...                      Enable/disable one or more unit files
+                                      based on preset configuration
+  preset-all                          Enable/disable all unit files based on
+                                      preset configuration
+  is-enabled UNIT...                  Check whether unit files are enabled
+  mask UNIT...                        Mask one or more units
+  unmask UNIT...                      Unmask one or more units
+  link PATH...                        Link one or more units files into
+                         
+```
+`Check whether unit files are enabled` 이거다
+
+<CodeHeader text="script2.sh" /> 
+
+```bash
+#!/bin/bash
+sudo systemctl is-enabled sshd.service
+```
+
+### Create a script /home/bob/perm.sh. This script should set permissions on /home/bob/dir8 directory so that user owner only has x (execute) permissions, group owner and others must not have any permissions at all. 
+
+Create perm.sh script:
+
+```bash
+vi /home/bob/perm.sh
+```
+add below given code in it:
+
+```bash
+#!/bin/bash
+chmod 0100 /home/bob/dir8
+```
 
 
+Make it executable:
+```bash
+chmod u+x /home/bob/perm.sh
+```
 
 
+### httpd is already installed, mask its service.
+```bash
+$ sudo systemctl mask httpd.service
+```
+
+### Now unmask the httpd service.
+```bash
+$ sudo systemctl unmask httpd.service
+```
+
+
+### We made some changes on httpd unit file i.e /usr/lib/systemd/system/httpd.service and after that we are getting some warnings while running systemctl status httpd command. Fix the same and make sure this command works without any warning.
+
+```bash
+$ systemctl status httpd
+Warning: The unit file, source configuration file or drop-ins of httpd.service changed changed on disk. Run 'systemctl daemon-reload '
+
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled; vendor preset: disabl>
+   Active: active (running) since Mon 2024-01-22 11:50:59 UTC; 1min 22s ago
+     Docs: man:httpd.service(8)
+ Main PID: 4595 (httpd)
+   Status: "Running, listening on: port 80"
+    Tasks: 213 (limit: 1340692)
+   Memory: 19.6M
+   CGroup: /system.slice/httpd.service
+           ├─4595 /usr/sbin/httpd -DFOREGROUND
+           ├─4609 /usr/sbin/httpd -DFOREGROUND
+           ├─4610 /usr/sbin/httpd -DFOREGROUND
+           ├─4611 /usr/sbin/httpd -DFOREGROUND
+           └─4612 /usr/sbin/httpd -DFOREGROUND
+```
+음 딱히 이상한건 안보이는디..
+```bash
+sudo journalctl -u httpd
+```
+ㅋㅋㅋ 있었네
+
+
+다시 올려보자
+```bash
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart httpd
+```
