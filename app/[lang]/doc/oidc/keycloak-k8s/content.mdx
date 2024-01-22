@@ -1,13 +1,80 @@
 # 소개 
 OIDC란 OpenID Connect의 약자로, OAuth 2.0 위에 구축된 인증 프로토콜입니다.
 OAuth 2.0의 인증 기능을 확장하여, 인증과 권한 부여를 위한 표준 프로토콜을 제공합니다.
-
+우리는 kubeadm 환경에서 Keycloak을 구축하여 OIDC를 통해 인증을 구현해보겠습니다.
 
 ## Keycloak 이란?
 Keycloak은 Red Hat에서 제공하는 오픈소스 인증 및 권한 부여 서버입니다.
+### 전략
+- 기존 데이터를 수용하여 LDAP 인증 방식과 통합하겠습니다.
+- K8S 환경에서 구축하고 kube-apiserver 와 연동하여 인증된 유저만 k8s 리소스에 접근할 수 있도록 구성하겠습니다.
+- 기본 인증 방식은 OIDC를 사용하겠습니다.
+
+
+## 구축하기
+먼저 서버에 맞게 values.yaml을 수정합니다.
+```yaml
+# values-keycloak.yaml
+resources:
+  limits:
+    cpu: 500m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 1Gi
+
+auth:
+  ## @param auth.adminUser Keycloak administrator user
+  ##
+  adminUser: admin
+  ## @param auth.adminPassword Keycloak administrator password for the new user
+  ##
+  adminPassword: ""
+
+## Service configuration
+##
+service:
+  #   ## @param service.type Kubernetes service type
+  #   ##
+  type: LoadBalancer
+  #   ## @param service.http.enabled Enable http port on service
+  #   ##
+  http:
+    enabled: true
+  #   ## @param service.ports.http Keycloak service HTTP port
+  #   ## @param service.ports.https Keycloak service HTTPS port
+  #   ##
+  ports:
+    http: 30851
+    https: 443
+# stateful 하게  자동 구성을 원한다면 true로 설정합니다.
+postgresql:
+  enabled: false
+externalDatabase:
+  host: "10.111.117.190"
+  port: 5432
+  user: admin
+  database: keycloak
+  password: ""
+```
+
+helm을 통해 keycloak을 구축해보겠습니다.
+```bash
+kubectl delete namespace oidc
+kubectl create namespace oidc
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm upgrade keycloak bitnami/keycloak --version=18.2.1  --namespace oidc --values /home/abacus/infra/values-keycloak.yaml
+```
+
+### 서비스 링크에 접속하여 keycloak을 구성합니다.
+Realm name: sample
+
 
 
 ## Refer
 - [Keycloak](https://www.keycloak.org/)
 - https://www.keycloak.org/docs/latest/securing_apps
 - https://www.baeldung.com/spring-boot-keycloak
+- https://seungjuitmemo.tistory.com/299
+- https://www.ssemi.net/sso-configuration/
