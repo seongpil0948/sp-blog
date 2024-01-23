@@ -1,0 +1,167 @@
+# 소개 
+Linux 운영 체제는 주로 서버 지향적이며 서버에서는 항상 무슨 일이 일어났는지 알고 싶어합니다.  
+누가 무엇을 했는지, 무엇이 효과가 있었는지, 무엇이 작동하지 않았는지, 어떤 오류가 발생했는지, 누가 시스템에 액세스했는지 Linux 시스템에서 발생하는 모든 중요한 일은 다음 위치에 문자 메시지를 로그라고 부릅니다.  
+
+리눅스 커널과 이 커널에서 실행되는 대부분의 프로그램은 상태 메시지, 오류 메시지, 경고를 생성합니다.  
+그리고 이 모든 메시지를 생성하는 수십 개의 다양한 프로그램이 항상 있을 수 있습니다.
+이 모든 것들을 모아서 파일에 잘 정리할 수 있는 방법이 필요합니다.  
+
+이것이 `daemon rsyslog`(rocket-fast system for log processing)가 하는 일입니다.
+데몬은 모든 로그를 `/var/log` 디렉토리에있는 파일에 기록합니다.
+
+만약 어떤 유저가 `ssh`를 사용해 접근했는지 확인하고 싶고,  
+당신은 파일 위치를 모를때,  아래와 같이 찾아보면 됩니다.
+
+```bash
+$ sudo grep -r 'ssh' /var/log/
+
+# if you want exclude binary file
+$ sudo grep -r 'ssh' /var/log/ | grep -v 'Binary file'
+
+# if you want to see only file name
+$ sudo grep -r 'ssh' /var/log/ | grep -v 'Binary file' | cut -d ':' -f 1 | uniq
+
+
+```
+`less /var/log/auth.log.1` 명령어를 사용하면 파일의 내용을 볼 수 있습니다.
+pam_unix(cron:session): session opened for user root by (uid=0) 
+음 루트가 로그인 했네요. 끝.  
+이밖에 다른 로그도 확인해보세요.  
+- 어떠한 유저가 어떤 주소로 부터 어떤 포트를 사용해 접근했는지 확인할 수 있습니다.
+- 어떤 유저가 패스워드가 틀렸는지
+- 어떤 유저가 어떤 디렉토리에서 어떤 명령어를 실행했는지 모두 기억합니다.
+
+어디 실시간으로 살펴볼까요? 
+
+```bash
+$ sudo tail -f /var/log/auth.log
+
+/var/log/auth.log.1:Jan 18 18:28:40 michelle sudo:   abacus : TTY=pts/0 ; PWD=/usr/share/doc/tar ; USER=root ; COMMAND=/bin/tar xvf THANKS.gz -c ./thank
+/var/log/auth.log.1:Jan 18 18:28:44 michelle sudo:   abacus : TTY=pts/0 ; PWD=/usr/share/doc/tar ; USER=root ; COMMAND=/bin/tar -xvf THANKS.gz -c ./thank
+/var/log/auth.log.1:Jan 18 18:29:28 michelle sudo:   abacus : TTY=pts/0 ; PWD=/usr/share/doc/tar ; USER=root ; COMMAND=/bin/tar jxvf THANKS.gz -c ./thank
+/var/log/auth.log.1:Jan 18 20:37:16 michelle sudo:   abacus : TTY=pts/0 ; PWD=/home/abacus ; USER=root ; COMMAND=/usr/bin/mandb
+```
+
+journalctl은 좀더 효과적으로 로그를 볼 수 있습니다.
+우리는 sudo를 사용하는 사람들을 확인하고싶습니다.
+```bash
+# 헤이 이 바이너리 파일이 사용되는 정보를 보여줘
+sudo journalctl $(which sudo)
+
+# ssh daemon이 사용되는 정보를 보여줘
+sudo journalctl -u ssh.service
+
+# 마지막 로그 들을 보여줘
+journalctl -xef
+
+# 에러만 보여줘
+journalctl -p err -f
+journalctl -p 0 -fe
+#  emerg (0), alert (1), crit (2), err (3), warning (4), notice (5), info (6), debug (7).
+
+# 최근 3개월전 부터 어제까지의 로그를 michelle 메세지가 포함된 로그를 보여줘
+journalctl --since "3 months ago" --until "yesterday" -u ssh.service -f
+
+# 2번째 전의 부팅시 로그 정보를 보여줘
+journalctl -b -2 
+```
+우리는 각 유저들의 마지막 로그 정보도 확인할 수 있습니다.
+```bash
+$ last
+$ lastlog
+```
+
+# Exercise
+
+### 현재 프로세스의 NICE 값과 함께 트리 구조로 프로세스를 보여줘
+```bash
+$ ps -alf
+```
+
+### 프로그램 실행과, 실행중인 프로세스에 우선순위(나이스)를 부여해보자
+```bash
+$ renice -n 19 -p 1 # 1번 프로세스에 우선순위를 19로 변경
+$ nice -n 19 ./my_program # my_program을 실행하면서 우선순위를 19로 변경
+# assign 9 nice value to ssh process
+$ sudo renice -n 9 -p $(ps aux | grep ssh | awk ' { print  $2 } ')
+or 
+$ pgrep ssh
+```
+
+### List all files that are opened by process with PID 1, this process is owned by the root user. Save the output in /home/bob/files.txt file.
+```bash
+$ sudo lsof -p 1 > /home/bob/files.txt
+```
+
+### Search the logs for entries related to the SSH daemon i.e sshd. Find out what IP address last connected to this daemon successfully.
+Save that IP in /home/bob/ip.txt file.
+
+```bash
+$ sudo journalctl -u ssh.service | grep 'Accepted password for' | tail -n 1 | awk '{print $11}' | cut -d ':' -f 1 > /home/bob/ip.txt
+```
+or
+Execute below given command:
+`sudo journalctl --unit=sshd.service -n 20 --no-pager`  
+and look for the logs entries like
+`sshd[1790]: Accepted publickey for root from ....`    
+
+Copy the IP address and save the same in /home/bob/ip.txt file:  
+`vi /home/bob/ip.txt`
+
+
+### Identify the PID of the process named rpcbind 
+```bash
+$ pgrep -a rpcbind
+630 /usr/bin/rpcbind -w -f
+```
+
+### With the systemctl command, find out the PID of the process currently managed by the sshd.service. Send the SIGHUP signal to this process.
+HUP(hangup) signal is used to reload configuration files.
+목매달다 라는 뜻으로, 프로세스에게 재시작하라는 신호를 보내는 것입니다...
+
+```bash
+$ systemctl status sshd.service
+$ systemctl kill -s SIGHUP sshd.service
+```
+
+
+### Under /var/log directory, search for all files containing the reboot string and save the search result in /home/bob/reboot.log file.
+
+```bash
+sudo grep -r 'reboot' /var/log/ > reboot.log
+```
+
+
+### Analiyze the error logs through journalctl with the priority flag and copy the output to /home/bob/.priority/priority.log.
+```bash
+$ sudo journalctl -p err > /home/bob/.priority/priority.log
+```
+
+### Analyse the info priority logs through journalctl that begin with letter c and store the output in /home/bob/.priority/boot.log file.
+```bash
+$ sudo journalctl -p info -g '^c' > .priority/boot.log
+or
+$ sudo journalctl -p info | grep '^c' > /home/bob/.priority/boot.log
+$ sudo journalctl -p info | grep -E '^c' > /home/bob/.priority/boot.log
+```
+
+### Using ps command, identify the CPU and Memory usage by only the process having PID 1 and save the entire command output in /home/bob/resources.txt file.
+```bash
+ps u 1 > /home/bob/resources.txt
+```
+
+Run a command to sleep for 3000 seconds and make sure its running in the background.  
+```bash
+$ sleep 3000 &
+```
+이후 백그라운드 프로세스를 보면
+```bash
+$ jobs
+[1]+  Running                 sleep 3000 &
+```
+이렇게 나옵니다.
+이후 다시 foreground로 가져오고 싶다면
+```bash
+$ fg %1
+```
+
