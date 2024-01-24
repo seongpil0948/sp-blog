@@ -1,0 +1,46 @@
+# 서론
+
+
+## Find Process
+
+### ps
+
+```bash
+$ ps aux
+$ ps -ef
+```
+
+### pgrep
+
+```bash
+$ pgrep -u root
+$ pgrep -a bash
+```
+
+### lsof
+
+```bash
+$ lsof -i :80 -t
+$ lsof -p 1
+$ lsof ./test.txt
+$ sudo lsof /var/log/messages
+
+```
+
+### pkill
+  
+```bash
+$ pkill -u root
+$ pkill -a bash
+```
+
+
+### Jobs
+  
+  ```bash
+  $ sleep 100 &
+  $ jobs
+  $ fg %1
+  ```
+
+
