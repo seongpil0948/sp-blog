@@ -19,8 +19,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const dict = await getDictionary(lang)
   return {
-    title: 'User & Group in Linux',
-    description: 'User & Group management in Linux',
+    title: dict['doc']['linux']['user-group']['title'],
+    description: dict['doc']['linux']['user-group']['description'],
   }
 }
 
