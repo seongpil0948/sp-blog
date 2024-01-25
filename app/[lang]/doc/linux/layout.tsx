@@ -25,6 +25,9 @@ export default function RootLayout({
       <CommonNavbar
         leftTreeOptions={{
           dir: 'app/[lang]/doc/linux',
+          options: {
+            depth: 1,
+          },
         }}
         drawerProps={{
           title: 'Linux',

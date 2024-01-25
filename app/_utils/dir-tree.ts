@@ -32,13 +32,14 @@ export interface IGetTreeArgs {
 }
 export function getTree(args: IGetTreeArgs) {
   const libTree = dirTree(args.dir, {exclude: /home/,...args.options}, undefined, callback)
-  return dirTreeToTree(libTree)
-  
+  const tree =  dirTreeToTree(libTree)
+  return tree
 }
 function dirTreeToTree(obj: DirectoryTree<TDirCustom>): TreeSectionProps | undefined {
   // obj.name = dirTree.name.replace('.mdx', '').replace('.tsx', '')
   if ((obj.type && obj.type === 'file') || !obj.custom || !obj.custom.href) return 
   if (obj.path.includes('/_')) return
+  if (obj.name.startsWith('_')) return
   return {
     label: obj.name,
     href: obj.custom.href,

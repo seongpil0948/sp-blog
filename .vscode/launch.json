@@ -8,6 +8,12 @@
       "command": "pnpm dev"
     },
     {
+      "name": "Next.js: build server-side",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm build"
+    },
+    {
       "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",

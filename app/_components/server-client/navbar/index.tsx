@@ -13,7 +13,7 @@ export default function CommonNavbar(props: CommonNavbarProps) {
   const { tree, links, leftTreeOptions } = props
   const { base, content, brand, item } = navbar()
 
-  const treeTop = tree ?? getTree({ dir: 'app/[lang]', options: { depth: 1 } })
+  const treeTop = tree ?? getTree({ dir: 'app/[lang]', options: { depth: 3 } })
   const treeLeft = getTree(leftTreeOptions)
 
   const landingPath = props.landingPath ?? LANDING_PATH

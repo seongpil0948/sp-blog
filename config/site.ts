@@ -26,19 +26,25 @@ export const siteConfig = {
     apple: '/apple-touch-icon.png',
   },
 }
-
+// return children links recursively
 export const reduceChildLinks = (tree: TreeSectionProps): string[] => {
-  if (!tree || !tree.children) return []
+  // return child links
+  if (!tree || !tree.href) return []
+  if (!tree.children) return [tree.href]
 
   return tree.children.reduce((acc, link) => {
+    console.info("link: ", link)
+    console.info("acc: ", acc)
     if (link.children) {
-      return [...acc, ...reduceChildLinks(link)]
+      acc.push( ...reduceChildLinks(link))
     }
-    return [...acc, link.href]
+    acc.push(link.href)
+    return acc
   }, [] as string[])
 }
-
 
 // if (process.env.NEXT_PUBLIC_ENV === 'production') {
 //   console.info("getAllLinks: ", ALL_LINKS)
 // }
+
+
