@@ -9,9 +9,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const tree = getTree({dir: 'app'})
   if (!tree) return []
   const links = reduceChildLinks(tree)
-  const allLinks: MetadataRoute.Sitemap = uniqueFilter([...links, '/', APP_DOMAIN, ...[...Object.values(siteConfig.links) as string[]]].map((url) => {
+  const allLinks: MetadataRoute.Sitemap = uniqueFilter([...links, APP_DOMAIN, ...[...Object.values(siteConfig.links) as string[]]].map((url) => {
     return {
-      url: url,
+      url: APP_DOMAIN + url,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
