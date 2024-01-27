@@ -147,6 +147,7 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
         title="Home"
         sheetProps={{
           placement: 'left',
+          defaultOpen: true,
         }}
         {...props.drawerProps}
       >

@@ -71,6 +71,7 @@ export const Sheet = forwardRef<ElementRef<typeof Modal>, SheetProps>(
         ref={ref}
         classNames={extendedClassNames}
         motionProps={motionProps}
+        backdrop="transparent"
         portalContainer={
           isSsr
             ? undefined

@@ -32,6 +32,13 @@ export default function CommonNavbar(props: CommonNavbarProps) {
       links={links ?? siteConfig.links}
       landingPath={landingPath}
       treeLeft={treeLeft}
+      drawerProps={{
+        sheetProps: {
+          isDismissable: true,
+          isKeyboardDismissDisabled: true,
+          shouldBlockScroll: false,
+        },
+      }}
     />
   )
 }

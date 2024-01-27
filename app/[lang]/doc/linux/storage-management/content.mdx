@@ -1,3 +1,35 @@
+- [Intro](#intro)
+  - [Terminology](#terminology)
+    - [Mount](#mount)
+    - [LVM(Logical Volume Manager)](#lvmlogical-volume-manager)
+  - [Partition](#partition)
+    - [cfdisk](#cfdisk)
+  - [Swap](#swap)
+    - [Command](#command)
+      - [free = 현재 메모리상태 확인](#free--현재-메모리상태-확인)
+      - [스왑 중지](#스왑-중지)
+      - [부팅시 생성한 swap 영역을 자동으로 설정](#부팅시-생성한-swap-영역을-자동으로-설정)
+  - [Usage](#usage)
+  - [Configure systems to mount file systems at boot by Universally Unique ID (UUID) or label](#configure-systems-to-mount-file-systems-at-boot-by-universally-unique-id-uuid-or-label)
+    - [Mounting](#mounting)
+- [Practice](#practice)
+    - [How do we display block devices, such as disks or partitions?](#how-do-we-display-block-devices-such-as-disks-or-partitions)
+    - [How do we format a partition as swap space?](#how-do-we-format-a-partition-as-swap-space)
+    - [Identify the partition name of the virtual disk where / is mounted on this system.](#identify-the-partition-name-of-the-virtual-disk-where--is-mounted-on-this-system)
+    - [Find out the swapfile used on this system and save its exact path in `/home/bob/swap` file.](#find-out-the-swapfile-used-on-this-system-and-save-its-exact-path-in-homebobswap-file)
+    - [Create three primary partitions on /dev/vdb.](#create-three-primary-partitions-on-devvdb)
+    - [Delete th `10MB` partition on `/dev/vdb`](#delete-th-10mb-partition-on-devvdb)
+    - [Format the 21MB partition as swap. Next, make it active, tell Linux to start using it as swap memory.](#format-the-21mb-partition-as-swap-next-make-it-active-tell-linux-to-start-using-it-as-swap-memory)
+    - [Increase the existing swap (i.e /swapfile) size by 1GB.](#increase-the-existing-swap-ie-swapfile-size-by-1gb)
+    - [Resize the /dev/vdb3 partition (which you created earlier) to 21MB.](#resize-the-devvdb3-partition-which-you-created-earlier-to-21mb)
+    - [What file do we need to edit to tell the Linux OS which filesystems it should automatically mount when it boots up?](#what-file-do-we-need-to-edit-to-tell-the-linux-os-which-filesystems-it-should-automatically-mount-when-it-boots-up)
+    - [Create an xfs filesystem with the label "DataDisk" on /dev/vdb.](#create-an-xfs-filesystem-with-the-label-datadisk-on-devvdb)
+    - [Create an ext4 filesystem with a number of 2048 inodes on /dev/vdc](#create-an-ext4-filesystem-with-a-number-of-2048-inodes-on-devvdc)
+    - [Configure the system to automatically mount /dev/vdc when it boots up. This partition has an ext4 filesystem on it.](#configure-the-system-to-automatically-mount-devvdc-when-it-boots-up-this-partition-has-an-ext4-filesystem-on-it)
+    - [Change the label for /dev/vdb filesystem to SwapFS](#change-the-label-for-devvdb-filesystem-to-swapfs)
+  - [Refer](#refer)
+
+
 # Intro
 2TB Solid State Drive(SSD)가 있다고 상상해 보세요. 그리고 그 위에 윈도우를 설치하고 싶지만 또한 리눅스 배포판도 설치하고 싶습니다.  
 그리고 Windows는 NTFS 파일 시스템을 사용하고, Linux는 다른 ext4(extended file system 4) 시스템을 사용하기 때문에 문제가 있습니다.
@@ -5,6 +37,25 @@
 윈도우용으로 1TB, 리눅스용으로 1TB를 예약합니다.
 이러한 방식으로 스토리지 장치를 분할하는 것을 파티션이라고 합니다. 따라서 시나리오에서는 두 개의 파티션이 있습니다
 각각 1TB의 크기입니다. 이제는 파티션과 사물이 논리적으로 분리되어 각 운영 체제가 자유롭게 자신의 일을 할 수 있습니다.  
+
+## Terminology
+
+### Mount 
+리눅스에서 mount란 물리적인 장치를 파일 시스템의 일부로 연결하는 것을 의미합니다.  
+```bash
+$ sudo mount -t nfs 192.168.0.103:/nfs_shared /nfs_shared
+```
+아래 명령어를 통해 마운트된 장치를 확인할 수 있습니다.
+```bash
+$ df -Th
+# example
+Filesystem     Type      Size  Used Avail Use% Mounted on
+udev           devtmpfs  1.9G  1.8G  0.1G   99% /dev
+```
+
+### LVM(Logical Volume Manager)
+물리적인 하드디스크를 논리적인 하드디스크로 나누어서 사용하는 기술입니다.
+
 
 
 ## Partition
@@ -135,8 +186,10 @@ GPT의 파티션 테이블은 손상될 가능성이 적고 더 많은 기본 �
 또 다른 시나리오는 부팅 파티션을 생성해야 하는 경우입니다. 이 경우 부팅 파티션의 경우 EFI(`/dev/nvme0n1p1`)를 사용하여 수행했다면 EFI 시스템을 선택합니다. 
 
 ## Swap
-Swap 이란 Linux가 컴퓨터의 임의 액세스(RAM), 메모리에서 일부 데이터를 일시적으로 이동할 수 있는 영역입니다.  
+Swap 이란 Linux가 컴퓨터의 임의 액세스(RAM), 메모리에서 일부 데이터를 일시적으로 이동할 수 있는 영역입니다.
 스왑 파티션은 프로세스가 할당된 메모리를 사용하는 데 필요한 메모리가 부족한 경우 사용됩니다.
+> 보통 스왑 파티션은 RAM의 2배로 설정합니다.
+> 확실히 Random Access Memory(RAM)이 더 빠릅니다.
 
 예로 우리는 4GB의 RAM을 가진 컴퓨터를 가지고 있다고 가정해 봅시다.  
 먼저 Video editor를 실행하고 2GB의 RAM을 사용합니다. 
@@ -230,8 +283,418 @@ mkswap , swapon 명령을 통해 스왑영역을 활성화 시킨 뒤 재부팅�
 $ sudo vim /etc/fstab
 ```
 
- 
+## Usage 
+So to be able to store files and directories inside a partition, we first need to create a file system on it.
+어떤 파티션에 어떤 파일 시스템을 사용할지 결정해야 합니다.
+파티션을 만들었지만, 파일 시스템을 만들지 않았기 때문에 파일이나 디렉토리를 저장할 수 없습니다.
+파일 시스템을 만들기 위해선 `mkfs` 명령을 사용합니다.
+```bash
+# ext4 파일 시스템을 사용하는 파티션을 만들어 보겠습니다.
+$ sudo mkfs.ext4 /dev/nvme0n1p4
 
- ## Refer
+# xfs 파일 시스템을 사용하는 파티션을 만들어 보겠습니다.
+$ sudo mkfs.xfs /dev/nvme0n1p4
+```
+- 위 명령어는 default로 파일 시스템을 만들기 때문에, 파일 시스템의 옵션을 변경하고 싶다면 `-t` 옵션을 사용합니다.
+- `-i` inode에는 파일 속성과 같은 것들이 저장될 수 있습니다. 예를 들어 파일 생성 날짜입니다. 따라서 더 큰 inode 크기를 사용하면 확장 속성과 같은 더 많은 속성을 저장할 수 있습니다. 나중에 배울 내용을 살펴보겠습니다.
+- `-L` 레이블은 파일 시스템에 이름을 지정합니다. 이것은 파일 시스템을 마운트할 때 사용됩니다.
+
+```bash
+$ sudo mkfs -t ext4 -i size=512 -L myFilesystem /dev/nvme0n1p4
+$ sudo mkfs.xfs -i size=512 -L myFilesystem /dev/nvme0n1p4
+# Output
+meta-data=/dev/nvme0n1p4        isize=512    agcount=4, agsize=65536 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1 bigtime=1 inobt=1, quota=1
+data     =                       bsize=4096   blocks=262144, imaxpct=25
+          =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+          =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
+
+ 만약 xfs 파일 시스템을 사용한다면,  명령을 사용합니다.
+ `xfs` 를 타이핑하고 탭을 누르면 가능한 모든 옵션을 볼 수 있습니다.
+ ```bash
+$ xfs_ + tab
+xfs_admin      xfs_copy       xfs_estimate   xfs_fsr        xfs_info       xfs_logprint   xfs_metadump   xfs_ncheck     xfs_repair     xfs_scrub      xfs_spaceman   
+xfs_bmap       xfs_db         xfs_freeze     xfs_growfs     xfs_io         xfs_mdrestore  xfs_mkfile     xfs_quota      xfs_rtcp       xfs_scrub_all  
+ ```
+우리는 `/dev/nvme0n1p4` 의 레이블링을 변경하고 싶습니다.
+```bash
+$ sudo xfs_admin -L "fffffirst" /dev/nvme0n1p4
+```
+
+만약 ext4 파일 시스템을 사용한다면, 명령을 사용합니다.
+```bash
+$ man mkfs.ext4
+$ sudo e2label /dev/nvme0n1p4
+
+# with 50000 inodes
+$ sudo mkfs.ext4 -N 50 -L "fffffirst" /dev/nvme0n1p4
+```
+이상합니다.. 아직 이 파티션에는  700GB의 빈 공간이 남아 있습니다. 
+하지만 파일이 생성되지 않습니다.. 뭐죠?
+원인은 inode 입니다. 위에서 50개로 설정한 inode는 파일 시스템에 저장할 수 있는 파일의 수입니다.  
+1개의 inode에 1GB의 파일을 저장할 수 있다면, 50개의 inode는 50GB의 파일을 저장할 수 있습니다.
+
+메뉴얼에서 관련된 명령어를 보기위해 /SEE ALSO 를 검색하니 나옵니다.
+```
+SEE ALSO
+       mke2fs.conf(5), badblocks(8), dumpe2fs(8), e2fsck(8), tune2fs(8), ext4(5)
+```
+여기 `tune2fs` 명령어가 있습니다. 이 명령어는 파일 시스템의 속성을 변경하는 데 사용됩니다.
+```bash
+$ sudo tune2fs -l /dev/nvme0n1p4
+```
+각 메뉴얼을 읽고 친숙해지는 것을 추천한다.  
+
+## Configure systems to mount file systems at boot by Universally Unique ID (UUID) or label
+파일 시스템을 만들었지만, 어떻게 접근하란건데? 그곳에 어케 파일과 디렉토리를 만들면되는데??
+어떻게 액세스 하는데?!!!
+
+### Mounting
+기본적으로 파일 시스템을 디렉토리 중 하나에 연결(Plugging)하는 것을 의미합니다.  
+먼저, 디렉토리를 만들고, 파일 시스템을 마운트하겠습니다.  
+
+```bash
+$ sudo mkdir -p /mnt/myMountPoint
+$ sudo mount /dev/nvme0n1p4 /mnt/myMountPoint
+$ sudo touch /mnt/myMountPoint/myFile
+ls -l /mnt/myMountPoint
+```
+/mnt/myMountPoint` 디렉토리에 `myFile` 이라는 파일이 생성되었습니다.
+그리고 이 파일은 `/dev/nvme0n1p4` 시스템에 저장되어 있습니다.  
+`lsblk` 명령을 실행하면 MOUNTPOINT 컬럼에 `/mnt/myMountPoint` 가 표시됩니다.  
+
+언제든지 마운트를 해제할 수 있습니다.  
+```bash
+$ sudo umount /mnt/myMountPoint
+$ lsblk
+```
+이처럼 `lsblk`는 파일시스템, 사용량, 마운트 포인트 등을 보여줍니다.  
+
+그리고 Linux 운영 체제가 부팅되면 일부 파일 시스템이 자동으로 마운트됩니다.
+MOUNTPOINT 컬럼에 `/boot` 와 `/` 가 표시됩니다.  
+`/mnt/myMountPoint`는 현재는 부팅되면 다시 마운트되지 않습니다.
+`/etc/fstab` 파일을 수정하여 부팅시 자동으로 마운트되도록 할 수 있습니다.  
+```bash  
+$ sudo cat  /etc/fstab
+/dev/mapper/ubuntu--vg-ubuntu--lv /               ext4    errors=remount-ro 0       1
+/dev/mapper/cs-root /               xfs    errors=remount-ro 0       1 
+UUID=1a2b3c4d-5e6f-7g8h-9i10-jk11lm12no13 /boot           ext4    defaults        0       2
+```
+* 1번째 컬럼은 마운트할 장치를 나타냅니다.
+* 2번째 컬럼은 마운트할 디렉토리를 나타냅니다.
+* 3번째 컬럼은 파일 시스템의 유형을 나타냅니다.
+* 4번째 컬럼은 마운트 옵션을 나타냅니다.
+* 마지막 컬럼은 dump 옵션을 나타냅니다. 이것은 백업여부를 나타냅니다.
+  * 최근들어 많이 사용하지 않습니다. 보통 0으로 설정합니다.
+  * 시스템이 때때로 손상될 수 있으며 오류가 발생하면 마지막 필드에 따라 어떻게 되는지가 결정됩니다.(**0**은 파일 시스템에서 오류를 검사해서는 안 된다는 의미입니다. **1**는 다른 파일 시스템보다 먼저 이 파일 시스템에서 오류를 검색해야 함을 의미합니다. **2**는 값이 **1**인 파일 시스템을 스캔한 후 이 파일 시스템을 스캔해야 함을 의미합니다.) 
+
+```bash
+$ echo '/dev/nvme0n1p4 /mnt/myMountPoint ext4 defaults 0 2' | sudo tee -a /etc/fstab
+# apply changes
+$ sudo systemctl reboot
+```
+이제 재부팅 후 `lsblk` 명령을 실행하면 `/mnt/myMountPoint` 가 마운트되어 있습니다.  
+언제든 방법을 까먹는다면 `man fstab` 을 참고하면 됩니다.   
+
+---
+우리는 위에서 스왑 파티션을 만들었습니다. 이것은 우리가 직접 만든 것이 아니라 우리가 만든 파일 시스템을 사용하는 것입니다.  
+`/etc/fstab` 파일을 살펴보면 스왑 파티션이 마운트되어 있지 않습니다.  
+```bash
+$ sudo echo '/dev/nvme0n1p4 none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+* 스왑의 경우 2컬럼은 직접 마운트를 하지않기 때문에 none으로 설정합니다.  
+* 백업, 스캔은 필요없기 때문에 0으로 설정합니다. 
+
+이제 재부팅 후에도 스왑이 적용된 것 을 확인 할 수 있습니다.
+```bash
+$ sudo swapon --show
+/dev/nvme0n1p4 partition 1G 0B -4
+```
+`/etc/fstab` 에는 UUID에 대한 정보도 있습니다.  
+리눅스가 재부팅하면, 마더보드에 연결된 순서대로 이러한 이름을 서명합니다. 따라서 장치 이름이 변경되었기 때문에 잘못된 것을 잘못된 위치에 장착하면 불량이 발생할 수 있습니다.
+파일 시스템의 UUID는 `blkid` 에서 확인할 수 있습니다.  
+```bash
+$ sudo blkid
+/dev/nvme0n1p1: UUID="1a2b3c4d-5e6f-7g8h-9i10-jk11lm12no13" TYPE="ext4" PARTUUID="16C5F11C-CF26-48B4-A8B5-3D7F4F0E8BE2"
+```
+UUID를 사용해서 마운트를 설정하면, 장치 이름이 변경되어도 문제가 발생하지 않습니다.  
+```bash
+$ sudo echo 'UUID=1a2b3c4d-5e6f-7g8h-9i10-jk11lm12no13 /mnt/myMountPoint ext4 defaults 0 2' | sudo tee -a /etc/fstab
+```
+
+
+
+---
+
+# Practice
+
+### How do we display block devices, such as disks or partitions?
+```bash
+
+$ apropos block devices
+badblocks (8)        - search a device for bad blocks
+blkdeactivate (8)    - utility to deactivate block devices
+blkid (8)            - locate/print block device attributes
+blkmapd (8)          - pNFS block layout mapping daemon
+loop-control (4)     - loop devices
+losetup (8)          - set up and control loop devices
+lp (4)               - line printer devices
+lsblk (8)            - list block devices
+```
+
+### How do we format a partition as swap space?
+파티션을 스왑 공간으로 포맷하려면 어떻게 해야 합니까?
+
+```bash
+$ man mkswap
+mkswap은 장치나 파일에 Linux 스왑 영역을 설정합니다. 장치 인수는 일반적으로 디스크 파티션(/dev/sdb7과 같은)이지만 파일일 수도 있습니다.
+```
+
+### Identify the partition name of the virtual disk where / is mounted on this system.
+이 시스템에서 /가 마운트된 가상 디스크의 파티션 이름을 식별하십시오.
+
+```bash
+$ df -TH
+or
+$ lsblk
+```
+
+### Find out the swapfile used on this system and save its exact path in `/home/bob/swap` file.
+이 시스템에서 사용하는 스왑 파일을 찾아서 `/home/bob/swap` 파일에 정확한 경로를 저장하십시오.
+
+```bash
+$ swapon -h
+
+Usage:
+ swapon [options] [<spec>]
+
+Enable devices and files for paging and swapping.
+
+Options:
+ -a, --all                enable all swaps from /etc/fstab
+ -d, --discard[=<policy>] enable swap discards, if supported by device
+ -e, --ifexists           silently skip devices that do not exist
+ -f, --fixpgsz            reinitialize the swap space if necessary
+ -o, --options <list>     comma-separated list of swap options
+ -p, --priority <prio>    specify the priority of the swap device
+ -s, --summary            display summary about used swap devices (DEPRECATED)
+     --show[=<columns>]   display summary in definable table
+     --noheadings         don't print table heading (with --show)
+     --raw                use the raw output format (with --show)
+     --bytes              display swap size in bytes in --show output
+ -v, --verbose            verbose mode
+
+ -h, --help               display this help
+ -V, --version            display version
+```
+
+```bash
+$ swapon --show
+NAME      TYPE SIZE USED PRIO
+/swapfile file   2G   7M   -2
+
+```
+### Create three primary partitions on /dev/vdb.
+
+First should have 10MB, second should have 21MB and the third should have 15MB.
+```bash
+$ lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  11G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb    253:16   0   1G  0 disk 
+vdc    253:32   0   1G  0 disk 
+vdd    253:48   0   1G  0 disk 
+vde    253:64   0   1G  0 disk 
+
+
+$ sudo fdisk /dev/vdb  
+Command (m for help): m
+
+Help:
+
+  DOS (MBR)
+   a   toggle a bootable flag
+   b   edit nested BSD disklabel
+   c   toggle the dos compatibility flag
+
+  Generic
+   d   delete a partition
+   F   list free unpartitioned space
+   l   list known partition types
+   n   add a new partition
+   p   print the partition table
+   t   change a partition type
+   v   verify the partition table
+   i   print information about a partition
+
+```
+
+n 를 눌러 새로운 파티션을 만들고, p 를 눌러 파티션을 출력합니다.  
+```bash
+Command (m for help): n
+Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p): p
+Partition number (1-4, default 1): 1
+First sector (2048-2097151, default 2048): 
+Last sector, +sectors or +size{K,M,G,T,P} (2048-2097151, default 2097151): +10M
+
+Created a new partition 1 of type 'Linux' and of size 10 MiB.
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+
+```
+
+오 생김
+```bash
+$ lsblk
+vdb    253:16   0   1G  0 disk 
+└─vdb1 253:17   0  10M  0 part 
+```
+
+반복
+```bash
+Last sector, +sectors or +size{K,M,G,T,P} (22528-2097151, default 2097151): +21M
+Created a new partition 2 of type 'Linux' and of size 21 MiB.
+
+Last sector, +sectors or +size{K,M,G,T,P} (22528-2097151, default 2097151): +15M
+Created a new partition 2 of type 'Linux' and of size 15 MiB.
+
+$ lsblk
+vdb    253:16   0   1G  0 disk 
+├─vdb1 253:17   0  10M  0 part 
+├─vdb2 253:18   0  21M  0 part 
+└─vdb3 253:19   0  15M  0 part 
+```
+
+### Delete th `10MB` partition on `/dev/vdb` 
+```bash
+$ sudo fdisk /dev/vdb
+Partition number (1-3, default 3): 1
+
+Partition 1 has been deleted.
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+```
+
+### Format the 21MB partition as swap. Next, make it active, tell Linux to start using it as swap memory.
+```bash
+$ sudo mkswap /dev/vdb2
+Setting up swapspace version 1, size = 21 MiB (22016000 bytes)
+no label, UUID=788afed7-d895-43ad-9ded-cdd874f08815
+
+$ sudo swapon /dev/vdb2
+$ sudo swapon --show
+NAME      TYPE      SIZE USED PRIO
+/swapfile file        2G 6.8M   -2
+/dev/vdb2 partition  21M   0B   -3
+```
+
+### Increase the existing swap (i.e /swapfile) size by 1GB.
+1기가 늘려보자.
+
+```bash
+sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+dd: failed to open '/swapfile': Text file busy
+```
+스왑 영역을 비활성화하고 다시 시도해보자.
+
+```bash
+$ sudo swapoff -v /swapfile
+$ sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+$ sudo chmod 600 /swapfile
+$ sudo mkswap /swapfile
+$ sudo swapon /swapfile
+$ sudo swapon --show
+NAME      TYPE  SIZE USED PRIO
+/swapfile file 1024M   0B   -2
+```
+아 대체되어서 1G가 되어버렸다.. ㅠㅠ  
+append 옵션을 사용하면 된다.
+
+```bash
+sudo dd if=/dev/zero of=/swapfile bs=1M count=1024 oflag=append conv=notrunc
+sudo swapoff /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+요시!
+
+### Resize the /dev/vdb3 partition (which you created earlier) to 21MB.
+이번엔 `cfisk` 를 사용해보자.
+```bash
+$ sudo cfdisk /dev/vdb
+```
+걍 방향키로 이동하고 수정하고 write 하면 됌 ㅋ
+
+### What file do we need to edit to tell the Linux OS which filesystems it should automatically mount when it boots up? 
+-> /etc/fstab
+
+
+### Create an xfs filesystem with the label "DataDisk" on /dev/vdb. 
+```bash
+$ sudo mkfs.xfs -L DataDisk /dev/vdb
+```
+
+### Create an ext4 filesystem with a number of 2048 inodes on /dev/vdc
+```bash
+$ man mkfs.ext4 | grep inodes
+-N number-of-inodes
+      Overrides the default calculation of the number of inodes that should be reserved for the filesys‐
+      to specify the number of desired inodes directly.
+
+$ sudo mkfs.ext4 -N 2048 /dev/vdc
+```
+
+### Configure the system to automatically mount /dev/vdc when it boots up. This partition has an ext4 filesystem on it. 
+It should mount the filesystem to the /test directory. 
+```bash
+$ sudo mkdir -p /test
+$ echo '/dev/vdc  /test ext4 defaults 0 2' | sudo tee --append /etc/fstab
+```
+
+### Change the label for /dev/vdb filesystem to SwapFS
+파일 시스템 타입별로 방법은 다르다.
+`df -TH ` 명령어로 확인하자.
+```bash
+$ df -TH 
+Filesystem     Type      Size  Used Avail Use% Mounted on
+devtmpfs       devtmpfs  490M     0  490M   0% /dev
+tmpfs          tmpfs     509M  6.9M  502M   2% /run
+tmpfs          tmpfs     509M     0  509M   0% /sys/fs/cgroup
+/dev/vda1      xfs        11G  4.5G  6.3G  42% /
+```
+
+
+```bash
+#  if /dev/vdb is ext4
+$ man mkfs.ext4 | label
+$ sudo e2label /dev/vdb SwapFS
+
+# if xfs
+$ sudo xfs_admin -L SwapFS /dev/vdb
+
+```
+
+
+
+
+
+
+## Refer
  * https://wiseworld.tistory.com/entry/%EB%A6%AC%EB%88%85%EC%8A%A4-swap-%EC%83%9D%EC%84%B1-%EB%B0%8F-%EA%B4%80%EB%A6%AC-mkswap-dd
  * [디스크 쿼터 사용법 (quotacheck, repquota)](https://wiseworld.tistory.com/entry/%EB%A6%AC%EB%88%85%EC%8A%A4-%EB%94%94%EC%8A%A4%ED%81%AC-%EC%BF%BC%ED%84%B0-%EC%82%AC%EC%9A%A9%EB%B2%95-quotacheck-repquota?category=852155)

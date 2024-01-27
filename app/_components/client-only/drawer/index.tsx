@@ -19,8 +19,11 @@ export interface CommonDrawerProps {
   sheetProps?: Partial<SheetProps>
 }
 export default function CommonDrawer(props: CommonDrawerProps) {
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure()
   const { children, sheetProps, title } = props
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure({
+    defaultOpen: sheetProps?.defaultOpen ?? true,
+  })
+
   const handleClick = () => {
     console.log('clicked', isOpen)
     isOpen ? onClose() : onOpen()
@@ -36,6 +39,7 @@ export default function CommonDrawer(props: CommonDrawerProps) {
           body: 'overflow-auto',
         }}
         isOpen={isOpen}
+        defaultOpen={sheetProps?.defaultOpen ?? true}
         onOpenChange={onOpenChange}
         {...sheetProps}
       >
