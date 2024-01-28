@@ -3,8 +3,9 @@ import Image from 'next/image'
 import { parseNumber } from './app/_utils'
 import { Link as NextLink } from '@nextui-org/link'
 import { Snippet } from '@nextui-org/snippet'
-// import CmTitle from '@/app/_components/server-only/title'
 import CodeHeader from '@/app/_components/server-only/CodeHeader'
+import { DetailedHTMLProps, HTMLAttributes, createElement } from 'react'
+import clsx from 'clsx'
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -23,24 +24,33 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         {...props}
       />
     ),
-    h1: (props) => (
-      <h1
-        className="mb-5 text-5xl font-bold leading-tight text-slate-900 dark:text-slate-200"
-        {...props}
-      />
-    ),
-    h2: (props) => (
-      <h2
-        className="my-10 text-3xl font-bold text-slate-900 dark:text-slate-200"
-        {...props}
-      />
-    ),
-    h3: (props) => (
-      <h3
-        className="mb-8 mt-10 text-2xl font-semibold text-slate-900 dark:text-slate-200"
-        {...props}
-      />
-    ),
+    h1: (props) => {
+      return (
+        <HeaderWithLink
+          props={props}
+          level={1}
+          className="mb-5 text-5xl font-bold leading-tight text-slate-900 dark:text-slate-200"
+        />
+      )
+    },
+    h2: (props) => {
+      return (
+        <HeaderWithLink
+          props={props}
+          level={2}
+          className="my-10 text-3xl font-bold text-slate-900 dark:text-slate-200"
+        />
+      )
+    },
+    h3: (props) => {
+      return (
+        <HeaderWithLink
+          props={props}
+          level={3}
+          className="mb-8 mt-10 text-2xl font-semibold text-slate-900 dark:text-slate-200"
+        />
+      )
+    },
     h4: (props) => (
       <h4
         className="mb-2 text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200"
@@ -123,8 +133,45 @@ const Link = ({
   children?: React.ReactNode
 }) => {
   return (
-    <NextLink href={href} isExternal showAnchorIcon>
+    <NextLink
+      href={href}
+      // isExternal={!href?.startsWith('/') && !href?.includes(APP_DOMAIN)}
+      isExternal={false}
+      showAnchorIcon
+    >
       {children}
     </NextLink>
+  )
+}
+
+const HeaderWithLink = ({
+  props,
+  level,
+  className,
+}: {
+  props: DetailedHTMLProps<
+    HTMLAttributes<HTMLHeadingElement>,
+    HTMLHeadingElement
+  >
+  level: number
+  className: string
+}) => {
+  const text = typeof props.children === 'string' ? props.children : ''
+
+  const slug = text.toLowerCase()
+  return createElement(
+    `h${level}`,
+    {
+      ...props,
+      id: slug,
+      className: clsx(props.className, className),
+    },
+    [
+      createElement(
+        'a',
+        { href: `#${slug}`, key: props.id ?? slug },
+        props.children,
+      ),
+    ],
   )
 }

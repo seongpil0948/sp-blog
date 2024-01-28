@@ -10,13 +10,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   if (!tree) return []
   const links = reduceChildLinks(tree)
   const allLinks: MetadataRoute.Sitemap = uniqueFilter([...links, APP_DOMAIN, ...[...Object.values(siteConfig.links) as string[]]].map((url) => {
-    return {
-      url: APP_DOMAIN + url,
+    const obj = {
+      url: url.trim(),
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'weekly' as MetadataRoute.Sitemap[number]['changeFrequency'],
       priority: 1,
     }
+    if (url.startsWith('http')) return obj
+    else if (url.startsWith("/")) {
+      obj.url = `${APP_DOMAIN}${url}`
+      return obj
+    } else {
+      obj.url = `${APP_DOMAIN}/${url}`
+      return obj
+    }
   }))
-  // stop process
   return allLinks
 }

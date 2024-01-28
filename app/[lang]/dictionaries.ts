@@ -13,7 +13,6 @@ const dictionaries = Object.freeze({
 
 // auth/invalid-login-credentials
 export const getDictionary = async (locale: string) => {
-  console.info('===> getDictionary ===> ', locale)
   return dictionaries[isAvailableLocale(locale) ? locale : i18n.defaultLocale]()
 }
 

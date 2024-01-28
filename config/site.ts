@@ -33,8 +33,6 @@ export const reduceChildLinks = (tree: TreeSectionProps): string[] => {
   if (!tree.children) return [tree.href]
 
   return tree.children.reduce((acc, link) => {
-    console.info("link: ", link)
-    console.info("acc: ", acc)
     if (link.children) {
       acc.push( ...reduceChildLinks(link))
     }

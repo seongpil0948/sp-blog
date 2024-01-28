@@ -1,4 +1,33 @@
-# Summary
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [NFS in K8s with Auto FS](#nfs-in-k8s-with-auto-fs)
+  - [구성 전략](#구성-전략)
+  - [NFS Server 구성](#nfs-server-구성)
+  - [NFS Client 구성](#nfs-client-구성)
+  - [Kubernetes NFS Subdir External Provisioner](#kubernetes-nfs-subdir-external-provisioner)
+    - [Install](#install)
+    - [Test](#test)
+      - [파드 제거](#파드-제거)
+  - [MySQL DB (Stateless)](#mysql-db-stateless)
+    - [1. specification 작성](#1-specification-작성)
+      - [PersistentVolumeClaim](#persistentvolumeclaim)
+      - [Deployment](#deployment)
+      - [Service](#service)
+    - [2. script 작성](#2-script-작성)
+    - [POD 접속 테스트](#pod-접속-테스트)
+    - [데이터 유지 테스트](#데이터-유지-테스트)
+    - [create data to test.users table](#create-data-to-testusers-table)
+    - [select data from test.users table](#select-data-from-testusers-table)
+  - [AutoFs](#autofs)
+    - [Install](#install-1)
+    - [Usage](#usage)
+- [Practice](#practice)
+    - [Let's export `/etc` directory using `NFS` for `127.0.0.1` IP address. Also, the `ro` option should be applied, making this share `read-only`. Clients will only be able to read, but not write to this network shared directory.](#lets-export-etc-directory-using-nfs-for-127001-ip-address-also-the-ro-option-should-be-applied-making-this-share-read-only-clients-will-only-be-able-to-read-but-not-write-to-this-network-shared-directory)
+    - [Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist, `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.](#tell-autofs-to-auto-mount-a-directory-called-shares-if-this-directory-does-not-exist-autofs-should-automatically-create-it-the-shares-directory-should-be-defined-in-a-file-called-etcautoshares)
+  - [또한 autofs는 /shares/mynetworkshare/에 네트워크 공유 127.0.0.1:/etc를 자동으로 마운트하고 /shares/mynetworkshare/ 디렉토리에 127.0.0.1:/etc의 내용을 표시해야 합니다.](#또한-autofs는-sharesmynetworkshare에-네트워크-공유-127001etc를-자동으로-마운트하고-sharesmynetworkshare-디렉토리에-127001etc의-내용을-표시해야-합니다)
+
+
+# NFS in K8s with Auto FS
 k8s 의 storage class를 왜 써야할까?
 - persistent volume을 수동으로 생성하지 않는다.
 - persistent volume claim 생성시 class 필드에 해당하는 provider 타입에 맞게 volume을 자동으로 생성한다.
@@ -388,3 +417,93 @@ SELECT * FROM test.users;
 사용자는 없을거라 생각하기 때문에 이정도로 충분하다.
 
 읽어줘서 땡큐
+
+
+## AutoFs
+auto mounter 가 사용할 매핑 형식 즉, 유저의 요구에 따라 On-Demand로 Storage(보통 NFS)를 동적으로 마운트하고자 할 때 사용합니다.  
+예를 들어, 유저가 /nfs_shared/abc 를 사용하고자 할 때, /nfs_shared/abc 디렉토리에 접근하면 자동으로 서버에 마운트되어 사용할 수 있게 됩니다.  
+> 뭔가 하이젠베르크 불확정성 원리 아님? 관측전엔 없고.. 관측하면 생기는.. 
+아닌데 그냥 떠올라서 적어봤다 키득.   
+
+### Install
+--- 
+
+이 시스템에 autofs를 설치하고 해당 서비스를 시작합니다.
+```sh
+# centos, dnf is upgrade of yum
+# -y, --assumeyes: Automatically answer yes for all questions.
+$ sudo dnf install nfs-utils -y
+$ sudo dnf install autofs -y
+
+or 
+# ubuntu
+$ sudo apt-get install nfs-utils
+$ sudo apt-get install autofs
+```
+```sh
+sudo systemctl restart nfs-server.service
+sudo systemctl restart autofs
+```
+### Usage
+보통 `/etc/auto.master` 파일에 마운트할 디렉토리를 정의하고, `/etc/auto.디렉토리명` 파일에 마운트할 서버와 디렉토리를 정의합니다.  
+예를 들어, `/etc/auto.master` 파일에 `/shares` 디렉토리를 on-demand 마운트 할 것이라고 autofs에 알려줍니다.
+그리고 `/etc/auto.shares` 파일에 마운트할 서버와 디렉토리를 정의합니다. 
+아래 `[]` 표시는 optional 항목입니다.
+
+```sh
+# /etc/auto.share
+$ location [-mount_options] server:/path/to/share
+```
+- location: 마운트할 디렉토리: autofs 에서 관리할 디렉토리
+- mount_options: 마운트 옵션, --fstype=auto 를 사용하면 자동으로 파일 시스템을 탐지합니다. nfs, ext2 등 직접 명시 할 수 있습니다.
+- server: 공유하려는 디렉토리, NFS 서버의 IP 주소(`127.0.0.1:/etc`)가 될 수  있고 파일 시스템의 이름(`:/dev/sda1`)이 될 수 있습니다.
+
+auto.master 파일에 아래와 같이 `/shares` 디렉토리를 정의합니다.
+```sh 
+# /etc/auto.master
+$ man 5 auto.master
+$ /shares /etc/auto.shares
+```
+- 포맷은 `mount-point [map-type[,format]:]map [options]`
+- mount-point: 마운트할 디렉토리
+- map-type: 사용할 매핑 형식, `auto` 를 사용하면 자동으로 파일 시스템을 탐지합니다.
+- map: 사용할 매핑 파일(예: `/etc/auto.shares`)
+- 
+이제 `/shares` 폴더는 `/etc/auto.shares` 파일에 정의된 내용을 사용하여 마운트됩니다.
+수고하셧습니당.
+
+
+실습은 [Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist, `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.](#tell-autofs-to-auto-mount-a-directory-called-shares-if-this-directory-does-not-exist-autofs-should-automatically-create-it-the-shares-directory-should-be-defined-in-a-file-called-etcautoshares) 에서 진행합니다.
+
+# Practice
+
+### Let's export `/etc` directory using `NFS` for `127.0.0.1` IP address. Also, the `ro` option should be applied, making this share `read-only`. Clients will only be able to read, but not write to this network shared directory.  
+
+Edit /etc/exports file & add the required configuration:
+```bash
+$ echo '/etc 127.0.0.1(ro)' | sudo tee -a /etc/exports
+$ sudo systemctl reload nfs-server
+ 
+```
+
+### Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist, `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.
+
+Further, autofs should automatically mount a network share 127.0.0.1:/etc in /shares/mynetworkshare/ and should show us the contents of 127.0.0.1:/etc in /shares/mynetworkshare/ directory.  
+또한 autofs는 /shares/mynetworkshare/에 네트워크 공유 127.0.0.1:/etc를 자동으로 마운트하고 /shares/mynetworkshare/ 디렉토리에 127.0.0.1:/etc의 내용을 표시해야 합니다.  
+--- 
+Edit `/etc/auto.master` file first to tell autofs that we'll use a directory called /shares for auto-mounting. Further create /etc/auto.shares file to add the required configuration.  
+
+```bash
+`shares` 디렉토리를 on-demand 마운트 할 것이라고 autofs에 알려줍니다.
+$ echo 'mynetworkshare -fstype=auto 127.0.0.1:/etc' | sudo tee -a /etc/auto.shares
+
+`autofs` 가 관리할 디렉토리를 정의합니다.: `/shares` 폴더는 `/etc/auto.shares` 파일에 정의된 내용을 사용하여 마운트됩니다.
+$ echo '/shares /etc/auto.shares' |  sudo tee -a `/etc/auto.master`
+
+[bob@centos-host ~]$ sudo systemctl reload autofs
+[bob@centos-host ~]$ ls /shares/mynetworkshare
+adjtime                  dhcp                     kdump.conf                passwd-           shells
+aliases                  DIR_COLORS               kernel                    pkcs11            skel
+alternatives             DIR_COLORS.256color      krb5.conf                 pki               ssh
+anacrontab               DIR_COLORS.lightbgcolor
+```
