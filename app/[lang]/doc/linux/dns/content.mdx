@@ -3,11 +3,12 @@
 
 Domain Name System(DNS)은 인터넷에서 사람이 읽을 수 있는 도메인 이름을 컴퓨터가 읽을 수 있는 IP 주소로 변환하는 분산형 데이터베이스 시스템입니다.
 
-인터넷에 연결된 모든 컴퓨터에는 고유한 IP 주소가 있습니다. IP 주소는 숫자의 집합으로 이루어져 있으며, 사람이 기억하기 어렵습니다. 따라서 인터넷을 사용하기 쉽게 하기 위해 도메인 이름이 사용됩니다. 도메인 이름은 사람이 이해하기 쉬운 문자열로 이루어져 있으며, IP 주소에 매핑됩니다.
+인터넷에 연결된 모든 컴퓨터에는 고유한 IP 주소가 있습니다. IP 주소는 숫자의 집합으로 이루어져 있으며, 사람이 기억하기 어렵습니다.   
+따라서 인터넷을 사용하기 쉽게 하기 위해 도메인 이름이 사용됩니다. 도메인 이름은 사람이 이해하기 쉬운 문자열로 이루어져 있으며, IP 주소에 매핑됩니다.
 
-예를 들어, "google.com"은 "142.250.190.142"이라는 IP 주소에 매핑됩니다. 따라서 사용자가 "google.com"을 입력하면 DNS 시스템은 이를 "142.250.190.142"으로 변환하여 해당 IP 주소에 연결합니다.
+예를 들어, `google.com`은 "142.250.190.142"이라는 IP 주소에 매핑됩니다. 따라서 사용자가 `google.com`을 입력하면 DNS 시스템은 이를 "142.250.190.142"으로 변환하여 해당 IP 주소에 연결합니다.
 
-DNS는 다음과 같은 단계로 작동합니다.
+### DNS는 다음과 같은 단계로 작동합니다.
 
 1. 사용자는 브라우저에 도메인 이름을 입력합니다.
 2. 브라우저는 DNS 서버에 도메인 이름에 대한 정보를 요청합니다.
@@ -16,7 +17,7 @@ DNS는 다음과 같은 단계로 작동합니다.
 5. 브라우저는 IP 주소를 사용하여 해당 컴퓨터에 연결합니다.  
 DNS는 인터넷에서 매우 중요한 역할을 합니다. DNS가 없다면 사용자는 IP 주소를 입력해야 하기 때문에 인터넷을 사용하기 매우 어려울 것입니다.
 
-DNS는 다음과 같은 기능을 제공합니다.
+### DNS는 다음과 같은 기능을 제공합니다.
 
 * 도메인 이름과 IP 주소의 매핑
 * 웹사이트에 대한 접근
@@ -27,7 +28,9 @@ DNS는 분산형 데이터베이스 시스템입니다. 즉, DNS 서버는 전 �
 DNS는 인터넷의 필수 요소이며, 인터넷의 효율적이고 안정적인 운영에 기여하고 있습니다.
 
 ## DNS Zone?
-DNS zone은 도메인 이름 시스템에서 특정 조직이나 관리자가 관리하는 DNS 네임스페이스의 특정 부분입니다. DNS zone은 신뢰할 수 있는 이름 서버와 같은 DNS 구성 요소를 보다 세밀하게 제어할 수 있는 관리 공간입니다.
+DNS zone은 도메인 이름 시스템에서 특정 조직이나 관리자가 관리하는 DNS 네임스페이스의 특정 부분입니다.  
+DNS zone은 신뢰할 수 있는 이름 서버와 같은 DNS 구성 요소를 보다 세밀하게 제어할 수 있는 관리 공간입니다.
+예로 `google.com`
 
 DNS zone은 다음과 같은 두 가지 유형으로 나눌 수 있습니다.
 * **기본 zone**: 기본 zone은 도메인 이름의 최상위 수준을 나타냅니다. 예를 들어, "example.com"은 기본 zone입니다
@@ -220,9 +223,74 @@ google.com.		131	IN	A	142.251.222.206
 음 구글의 ip는 `142.251.222.206` 이군요
 네임서버는 `ns1.google.com.` 이었었고.. 쿼리된 DNS 서버는 `127.0.0.53` 였었군..
 
+# Practice
+
+### Which is the configuration file of our Bind DNS server? 
+`/etc/named.conf`
+
+### Where does bind DNS server store all zone files on a RedHat based linux machine?
+`/var/named/`
+
+### What is the default port number of DNS server?
+`53`
+
+### Install bind DNS server on this system.
+```bash
+$ sudo yum install bind bind-utils
+$ sudo dnf install bind bind-utils -y
+
+```
+
+### Configure the Bind daemon to accept queries from any IP on the Internet. Make sure to start named service after making required changes in the configuration.
+```bash
+# check keyword
+$ apropos named
+# check format
+$ man named.conf
+
+$ sudo vim /etc/named.conf
+
+# 반드시 서브넷 형태로 넣어야한다;; 오바임
+options {
+  allow-query { 0.0.0.0/0; };
+
+$ sudo systemctl restart named
+```
+### Query the local DNS server and identify the current `A` record value for `example.com` domain. (without updating any relevant configuration) and save the value in `/home/bob/a-record` file. (only the IP address)
+Query the local DNS server
+```bash
+$ dig @localhost example.com
+;; ANSWER SECTION:
+example.com.            86254   IN      A       93.184.216.34
+echo '93.184.216.34' > /home/bob/a-record
+```
+
+### You might have noticed that in the previous question, the A record value for `example.com` domain is different what we have in `/var/named/example.com.zone` DNS zone file. Which means, this file isn't in use yet or DNS server hasn't read it yet.
+Make the required changes so that the local zone file changes can take effect.
+
+---
+check current zone file
+```bash
+$ cat /var/named/example.com.zone
+@               NS      ns1.example.com.
+@               NS      ns2.example.com.
+ns1             A       10.11.12.9
+ns2             A       10.11.12.10
+@               A       203.0.113.15
+```
 
 
+```bash
+# check correctly applied
+$ sudo vi /etc/named.conf 
+# insert 
+zone "example.com" IN {
+        type master;
+        file "example.com.zone";
+};
 
+$ sudo systemctl restart named
+```
 
 
 

@@ -14,3 +14,6 @@ ul > li {
 li > ul {
   margin-left: 20px;
 }
+li > p { 
+  display: contents;
+}
