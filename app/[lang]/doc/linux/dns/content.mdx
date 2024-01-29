@@ -1,5 +1,6 @@
 
 # DNS란?
+> You don't get what you wish for. You get what you work for.
 
 Domain Name System(DNS)은 인터넷에서 사람이 읽을 수 있는 도메인 이름을 컴퓨터가 읽을 수 있는 IP 주소로 변환하는 분산형 데이터베이스 시스템입니다.
 
@@ -202,7 +203,13 @@ example.com.		86400	IN	NS ns2.example.com.
 ns1.example.com.	86400	IN	A 10.11.12.9
 ns2.example.com.	86400	IN	A 10.11.12.10
 ```
+참고로 사용가능한  DNS 서버는 다음과 같이 확인할 수 있습니다.
+```bash
+$ cat /etc/resolv.conf | grep nameserver
+```
+하지만 @localhost는 특별한 지시자로  시스템은 자체 DNS 서버를 사용하여 DNS 조회를 수행하게 됩니다. 이는 주로 로컬 DNS 서버를 테스트하거나 디버깅할 때 유용합니다.  
 
+---
 ```bash
 $ dig google.com SOA
 
@@ -258,12 +265,26 @@ $ sudo systemctl restart named
 ```
 ### Query the local DNS server and identify the current `A` record value for `example.com` domain. (without updating any relevant configuration) and save the value in `/home/bob/a-record` file. (only the IP address)
 Query the local DNS server
+
+응 ? 분명 `/var/named/example.com.zone` 와 값이 같아야 할텐데 왜 쿼리를 날리라고 하지? 굳이?  
+```bash
+$ sudo cat /var/named/example.com.zone
+
+@               NS      ns1.example.com.
+@               NS      ns2.example.com.
+ns1             A       10.11.12.9
+ns2             A       10.11.12.10
+@               A       203.0.113.15
+```
+음 쿼리도 날려볼까
 ```bash
 $ dig @localhost example.com
 ;; ANSWER SECTION:
 example.com.            86254   IN      A       93.184.216.34
 echo '93.184.216.34' > /home/bob/a-record
 ```
+다르네?? 다음문제에 나온다.
+
 
 ### You might have noticed that in the previous question, the A record value for `example.com` domain is different what we have in `/var/named/example.com.zone` DNS zone file. Which means, this file isn't in use yet or DNS server hasn't read it yet.
 Make the required changes so that the local zone file changes can take effect.
@@ -291,9 +312,79 @@ zone "example.com" IN {
 
 $ sudo systemctl restart named
 ```
+다시 `dig` 해보면 싱크되었다 >< 
 
 
 
+### Modify `/var/named/example.com.zone` and add a new entry so that this subdomain `database.example.com` has this IP address: `1.2.3.4`
+음 서브도메인(database)을 추가하면 되는 문제다.  
+entry 와 그에 대한 ip를 추가하면 된다.  
+
+```bash
+$ echo 'database IN A 1.2.3.4' | sudo tee -a /var/named/example.com.zone
+$ sudo systemctl restart named
+$ dig @localhost database.example.com
+```
+
+### Modify `/var/named/example.com.zone` and make `mysql.example.com` an alias for `database.example.com` by adding the proper CNAME entry.  
+Otherwise said, mysql.example.com should point to `database.example.com`.
+mysql.example.com 을 database.example.com 으로 리다이렉션 시키는 문제다.  
+친절히 CNAME까지 알려주니 걍 받아먹자.  `dig` 사용시 database.example.com 의 ip(`1.2.3.4`)가 나오면 된다.
+
+```bash
+$ echo 'mysql CNAME database' | sudo tee -a /var/named/example.com.zone
+$ sudo systemctl restart named
+$ dig @localhost mysql.example.com
+```
+
+### By default the bind server also fetches DNS data from other DNS servers on the Internet, when it does not have it available in its own cache. But somehow our bind server is not able to query the `kodekloud.com` domain data.
+> 기본적으로 바인드 서버는 자체 캐시에 사용할 수 없는 경우 인터넷의 다른 DNS 서버에서도 DNS 데이터를 가져옵니다. 어떻게 해도 바인드 서버가 `kodekloud.com`도메인 데이터를 쿼리할 수 없는 상태입니다.  
+
+바인딩 서버가 인터넷의 다른 DNS 서버에서도 DNS 데이터를 가져올 수 있도록 필요한 구성을 변경합니다.
+```bash
+# not found
+$ dig @localhost kodekloud.com
+# founded from /etc/resolv.conf
+$ dig 172.25.0.1 kodekloud.com
+```
+`@localhost` 에서 못 찾을경우 `/var/named/` 파일들을 모두 찾아볼 수 있도록
+`recursion yes;` 를 추가한다.
+```bash
+$ sudo vi /etc/named.conf
+# insert
+options {
+  recursion yes;
+  ...
+}
+...
+$ sudo systemctl restart named
+```
+
+### Using `dig` utility retrieve all record types (including MX, TXT etc) associated with our `example.com` domain and save the output in `/home/bob/records` file.
+
+`dig`의 포맷:  `dig @server name type`  중 타입은 아래와 같다
+- ANY: 모든 레코드를 반환합니다. 
+- A: 도메인 이름과 IP 주소의 매핑 정보를 반환합니다.
+- MX: 도메인 이름의 메일 서버 정보를 반환합니다.
+- SIG: DNSSEC에 사용되는 서명 정보를 반환합니다.
+- SOA: 해당 zone에 대한 정보를 반환합니다.
+- TXT: 도메인 이름에 대한 추가 정보를 반환합니다.
+- 뭐 이런 아까 나온 파일들의 타입들이다
+```bash
+$ man dig
+$ dig @localhost example.com ANY > /home/bob/records
+```
+
+### Change the TTL for `example.com` domain to tell other DNS servers that, they may query our zone to cache this data for 2 hours.
+> 다른 DNS 서버에게 2시간 동안 캐시할 수 있도록 `example.com` 도메인의 TTL을 변경합니다.
+
+```bash
+$ sudo vi /var/named/example.com.zone
+
+$TTL 1H
+@       IN SOA  @ administrator.example.com. (
+의 TTL을 2H로 변경한다.
+```
 
 ## References
 * https://blog.naver.com/techtrip/222154620404
