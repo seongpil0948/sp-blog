@@ -1,0 +1,50 @@
+
+# Extend Kubernetes
+소프트웨어를 구성할 때 품질을 좌우하는 가장 큰 요소중 하나는 확장성이다.  
+확장성이 좋은 소프트웨어는 새로운 기능을 추가하거나 기존 기능을 수정할 때, 기존 코드를 건드리지 않고 새로운 코드를 추가할 수 있다.  
+필자는 프로젝트에 반영할 오픈소스를 선택할 때, 다양한 경우의 POC를 진행하고, 확장성이 좋은 오픈소스를 선택한다.  
+더하여, 프로젝트를 구성할 때에도 모든 경우의 수를 고려하려 노력하며 확장성을 고려한다.    
+그렇다면 쿠버네티스는 어떻게 확장성을 고려하고 있을까? 알아보자.
+자세한 내용은 [extend k8s](https://kubernetes.io/ko/docs/concepts/extend-kubernetes)을 참고하자.  
+[extension point](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/#%EA%B7%B8%EB%A6%BC%EC%9D%98-%ED%95%B5%EC%8B%AC) 에 따르면
+`kubectl`, `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`, `kubelet`, `kube-proxy`, CNI 등 거의 모든 것이 확장 가능한 컴포넌트라고 한다.
+공부를 하며 느꼈지만 CRI, CNI, CSI 등 여러 인터페이스들에 따라 확장성에 대한 심도있는 discussion 들이 이루어지고 있고, 결과로서 엄청난 자유도를 가지고 있다.  
+
+## Custom Resource Definition, 
+쿠버네티스는 기본적으로 `Pod`, `Service`, `ReplicaSet` 등의 리소스를 제공한다.
+이러한 리소스들은 `kubectl` 을 통해  control(생성, 조회, 수정, 삭제..etc)할 수 있다.
+하지만, 사용자는 자신의 리소스를 정의하고 싶을 수 있다.  
+이때 사용하는 것이 `Custom Resource Definition` 이다.  
+
+## Operator
+우리는 종종 mysql, redis, argo, [keda](https://keda.sh/) 등의 오픈소스를 k8s 에서 사용한다.
+오픈소스 개발자들은 k8s 에서 더 쉽게 사용하기 위해 `container`를 제공할 뿐 아니라  `Custom Resource Definition` 을 정의하고, [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 를 제공한다.
+예로 mysql의 [operator manual](https://dev.mysql.com/doc/mysql-operator/en/) 페이지를 슬쩍 보고오자.
+숨이 막힌다.. 뭔데 그래서? -> `Custom Resource Definition` 을 통해 정의한 리소스들을 관리(control)하는 것이 [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 이다.  
+
+### 사용 예시
+마치 CLI 를 이용해 k8s 를 제어하는 것처럼, 거의 뭐 k8s 매크로다. 
+- CRD, Workload, Service, Ingress, ConfigMap, Secret 등 리소스 배포
+- 리소스 백업 및  복원
+- DB 스키마, 리소스 manifest 변경등에 따른 사이드이펙트 핸들링(예를 들어, DB 스키마 변경에 따른 pod rolling update)
+- 장애 시뮬레이션 및 가용성 테스트
+- 내부 멤버 선출 절차없이 분산 애플리케이션의 리더를 선택
+
+### 제작 계획
+java를 사용하는거? 아니면 go 를 사용하는거? 아니면 python? 언어는 자유다.
+당신은 자신만의 operator 를 만들 수 있다. 
+[writing-operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/#writing-operator)를 참고하자.  
+필자는 [k8s 오픈소스 프로젝트](https://github.com/kubernetes/kubernetes)의 주언어가 go 라는 것을 확인하고, [client-libraries](https://kubernetes.io/ko/docs/reference/using-api/client-libraries/) 의 [client-go](https://github.com/kubernetes/client-go/) 를 사용하기로 결정했다.  
+오픈소스 분석에 가장 쉽게 다가가는 길은 시작문서와 [example](https://github.com/kubernetes/client-go/tree/master/examples), [test](https://github.com/kubernetes/client-go/blob/master/testing/fake_test.go) 를 분석하는 것이다.  
+
+
+
+
+
+
+
+
+
+####
+- [k8s crd](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+

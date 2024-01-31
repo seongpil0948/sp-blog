@@ -7,7 +7,7 @@ import { CmFooter } from '@/app/_components/server-only/footers'
 export const metadata: Metadata = {
   title: {
     default: `Documentation`,
-    template: `%s - ${siteConfig.name}`,
+    template: `%s - kubernetes - ${siteConfig.name}`,
   },
   description: 'fucking k8s',
 }
