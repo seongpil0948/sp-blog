@@ -1,0 +1,17 @@
+# What is log rotate?
+> 로그 파일을 자동으로 백업하고, 압축하고, 삭제하는 유틸리티
+
+## Why do we need log rotate?
+로그 파일은 시간이 지남에 따라 커지게 되고, 이는 디스크 공간을 많이 차지하게 됩니다. 또한, 로그 파일이 커지면 로그 파일을 읽고 쓰는 데 시간이 오래 걸리게 됩니다. 따라서, 로그 파일을 자동으로 백업하고, 압축하고, 삭제하는 유틸리티가 필요합니다.
+
+
+
+## How to use log rotate?
+### 1. Install log rotate
+```bash
+sudo apt-get update
+sudo apt-get install logrotate
+```
+
+### 2. Configuration file
+`/etc/logrotate.conf` 파일을 수정합니다.
