@@ -20,6 +20,7 @@ import { LANDING_PATH } from '@/config/site'
 import { AccordionItem, Accordion } from '@nextui-org/accordion'
 import CommonDrawer from '../../client-only/drawer'
 import { TreeSection } from '../../client-only/tree-section'
+import { useRouter } from 'next/navigation'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
@@ -125,6 +126,7 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
 }
 
 function PrefixComp(props: CommonNavbarProps): React.ReactNode {
+  const router = useRouter()
   if (props.prefix) {
     return props.prefix
   }
@@ -137,7 +139,13 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   ) {
     const items = treeLeft.children.map((item, idx) => {
       return (
-        <AccordionItem key={item.href + idx} title={item.label}>
+        <AccordionItem
+          onDoubleClick={() => {
+            router.push(item.href)
+          }}
+          key={item.href + idx}
+          title={item.label}
+        >
           <TreeSection treeProps={item.children ?? []} />
         </AccordionItem>
       )

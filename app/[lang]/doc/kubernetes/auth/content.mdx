@@ -9,7 +9,7 @@ https://kubernetes.io/docs/reference/access-authn-authz/authentication/#users-in
 반대로 Service Account 의 경우 네임스페이스내 한정, k8s api-server에 의해 생성되며 인증(credentials)을 위한 토큰이 Secret에 의해 관리됩니다.
 
 
-### TSL
+### TLS
 Kubernetes 클러스터에서 작업자 노드의 구성 요소 - kublet 및 kube-proxy - 는 Kubernetes 제어 평면 구성 요소,  특히 kube-apiserver와 통신해야 합니다.  
 통신이 방해받지 않고 비공개로 유지되며 클러스터의 각 구성 요소가 신뢰할 수 있는 다른 구성 요소와 통신하고 있는지 확인하기 위해 노드에서 클라이언트 TLS 인증서를 사용하는 것이 좋습니다.
 
