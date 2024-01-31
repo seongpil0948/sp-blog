@@ -209,3 +209,67 @@ $ sudo groupdel testGroup
 done
 ```
 
+## 사용자 및 그룹 디스크 할당
+100테라바이트의 저장 공간을 갖춘 서버를 상상해 보세요. 그 정도면 충분합니다.   
+하지만 100명의 사용자가 이 서버를 공유한다면 어떨까요? 그리고 한 사용자가 80테라바이트의 데이터를 저장한다면 어떻게 될까요?   
+단 한 사람이 사용 가능한 리소스의 80%를 사용하기 때문에 이는 불공평합니다.  
+
+이 문제를 해결하기 위해 리눅스는 사용자와 그룹에 대한 디스크 할당(disk quotas)을 제공합니다.
+100명의 사용자에게 공평히 1테라바이트의 저장 공간을 할당하고 싶다면 어떻게 해야 할까요? Let's 기릿~!  
+
+## setup
+```bash
+$ sudo dnf install quota
+```
+So let's say we want quotas on the file system where backups are stored.
+백업이 저장되는 파일 시스템에 대한 할당량을 원한다고 가정해 보겠습니다.  
+storage 관련 궁금한 점이 있다면 [storage-management](/doc/linux/storage-management)를 참고하자
+```bash
+$ sudo vim /etc/fstab
+# User quota enables setting storage quotas for users, and group quota enables quotas for groups.
+/dev/vdb1 /mnt/backup xfs defaults,usrquota,grpquota 0 2
+
+$ sudo mount -o remount /mnt/backup
+or
+$ sudo systemctl reboot
+```
+이시점에서 각 유저와 그룹에 대한 xfs파일 시스템이 활성화된다.   
+시스템은 그룹의 각 사용자가 사용하는 공간의 양을 추적하고 우리가 설정한 제한을 적용합니다.   
+--- 
+`/dev/vdb2`와 같은 파티션에 위치한 파일 시스템에 할당량을 적용하려면 다음을 수행합니다.  
+```bash
+# $ sudo quotacheck --create-files --user --group --verbose /dev/vdb1
+$ sudo quotacheck --create-files --user --group --verbose /mnt/backup
+`--create-files` 옵션은 파일 시스템에 대한 할당량을 생성하는 데 사용됩니다.  
+`--user` 옵션은 사용자에 대한 할당량을 생성하는 데 사용됩니다.  
+`--group` 옵션은 그룹에 대한 할당량을 생성하는 데 사용됩니다.  
+`--verbose` 옵션은 명령이 실행되는 동안 자세한 정보를 표시하는 데 사용됩니다.  
+
+# $ sudo xfs_quota -x -c 'limit bsoft=1t bhard=1.1t abacus' /mnt/backup
+```
+파일 시스템에 할당량 그룹과 할당량 사용자라는 두 개의 파일이 생성됩니다.
+- /mnt/backup/aquota.user
+- /mnt/backup/aquota.group
+위 파일들은 사용자 및 그룹에 대한 할당량, 사용량 정보를 저장합니다.
+
+```bash
+# 활성화
+$ sudo quotaon -v /mnt/backup
+```
+그럼 이제 확인해보자
+
+```bash
+# $ sudo repquota /mnt/backup
+$ sudo mkdir /mnt/backup/sp
+$ sudo chown abacus:sp /mnt/backup/sp
+$ sudo chmod 700 /mnt/backup/sp
+$ fallocate -l 100M /mnt/backup/sp/100M-file
+$ sudo edquota --user sp
+Disk quotas for user sp (uid 1001):
+  Filesystem                   blocks       soft       hard     inodes     soft     hard
+  /dev/vdb1                    102400          0          0          0        0        0
+```
+- blocks: 사용자가 사용중인 수 있는 블록(보통 kb) 수입니다.
+- soft: 값이 0이면 이 사용자에게 제한이 적용되지 않음을 의미합니다.
+- hard: 사용자가 사용할 수 있는 최대 블록 수입니다.
+소프트 제한을 150MB로 설정하고 하드 제한을 200MB로 설정할 수 있습니다.

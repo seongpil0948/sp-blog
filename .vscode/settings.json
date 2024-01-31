@@ -1,12 +1,15 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "cSpell.words": [
+    "aquota",
     "Booleanish",
     "bootable",
     "Choi",
     "DNAT",
     "DNSKEY",
     "DNSSEC",
+    "edquota",
+    "fallocate",
     "gpasswd",
     "IMAPS",
     "Keycloak",

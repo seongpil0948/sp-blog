@@ -93,5 +93,68 @@ advertising: team-analytics@company.com
 반드시 `newaliases` 명령어를 통해 `Postfix`에 적용해야 합니다. 잊지마세요(찡긋).
 
 ## IMAP and IMAPS
+이메일은 보내는 것 만큼 받는 것도 중요합니다.  여러계정을 관리하고 싶다면 `IMAP`을 사용해야 합니다.  
+`IMAP`은 이메일을 서버에 저장하고 여러 기기에서 동기화 할 수 있습니다.
+하지만 `IMAP`은 보안이 취약합니다.  `IMAP`은 암호화되지 않은 텍스트로 이메일을 전송합니다.  
+`IMAPS`는 `IMAP`과 동일하지만 `IMAPS`는  `SSL/TLS` 프로토콜을 준수하여 통신합니다.
 
+`IMAP`과 `IMAPS`를 사용하려면 `Dovecot`을 설치해야 합니다.
+```bash
+$ sudo dnf install dovecot
+$ sudo systemctl start dovecot
+$ sudo systemctl enable dovecot
+```
+방화벽을 열어줍니다.
+```bash
+$ sudo firewall-cmd --add-service=imaps --runtime-to-permanent
+$ sudo firewall-cmd --reload
+```
+
+인터넷의 모든 클라이언트에 서비스를 제공할 준비가 된 IMAP 및 IMAP 서버를 설정하고 보호하는 것은 매우 중요합니다.
+```bash
+# 잠시 시간을 내어 코멘트를 읽어보세요 (찡긋).
+# 많은 설정과 문서 정보들을 확인할 수 있습니다.
+$ sudo vi /etc/dovecot/dovecot.conf
+
+# IMAP 서버를 활성화합니다.
+protocols = imap imaps
+# 전체 네트워크에서 접속을 허용합니다.
+listen = *, ::
+```
+우리는 `dovecot`에게 메일을 어디에서 검색해야 하는지, 어떻게 정리해야 하는지 알려줄 수 있습니다.   
+`/etc/dovecot/conf.d` 디렉토리는 인증, 로깅, 메일박스, 네트워크, SSL 등의 다양한 설정을 제공합니다.  
+예로 `10-ssl.conf`파일은 네트워크를 통해 주고받는 데이터를 암호화하는 방법을 구성할 수 있습니다.
+물론 다른 데몬 설정파일과 같이 숫자 순서대로 반영됩니다.  
+
+---
+지금까지 메일이 저장된 위치는 `/var/spool/mail/%u`이었습니다.  (%u는 사용자 이름을 의미합니다.)
+dovecot은 메일을 `/var/mail/%u`에 저장합니다. (symlink)  
+
+또한 메일을 `/home/%u/mail`에 저장하도록 지시할 수 있습니다.  
+`/etc/dovecot/conf.d/10-mail.conf` 파일을 수정합니다.
+```bash
+$ sudo vim /etc/dovecot/conf.d/10-mail.conf
+mail_location = mbox:~/mail:INBOX=/var/mail/%u
+```
+--- 
+`Dovecot`에는 전송 계층 보안 인증서인 `TLS`(transport layer security certificate.)가 필요합니다.   
+이는 여전히 TLS 대신 SSL 인증서라고 불리는데, secure socket layer는 TLS로 대체하기 전에 수년 동안 사용되었습니다. 
+
+`Dovecot`은 `Postfix`와 마찬가지로 `SSL/TLS` 인증서를 사용하여 통신합니다.  
+
+```bash
+TLS_DIR=/etc/pki/tls
+# 인증서 및 키를 생성합니다.
+$ sudo openssl req -newkey rsa:2048 -nodes -keyout $TLS_DIR/private/dovecot.pem -x509 -days 365 -out $TLS_DIR/certs/dovecot.pem
+
+$ sudo vim /etc/dovecot/conf.d/10-ssl.conf
+# >>> insert >>>
+# SSL/TLS 인증서를 사용하도록 설정합니다.
+ssl = yes
+ssl_cert = </etc/pki/tls/certs/dovecot.pem
+ssl_key = </etc/pki/tls/private/dovecot.pem
+# <<< insert <<<
+```
+댓당
+ 
 
