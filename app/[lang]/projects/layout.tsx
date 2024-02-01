@@ -1,7 +1,11 @@
 import { Metadata } from 'next'
 import { LANDING_PATH, siteConfig } from '@/config/site'
 import CommonNavbar from '@/app/_components/server-client/navbar'
-import { layout, main } from '@/app/_components/server-only/primitives'
+import {
+  docWrapper,
+  layout,
+  main,
+} from '@/app/_components/server-only/primitives'
 import { CmFooter } from '@/app/_components/server-only/footers'
 
 export const metadata: Metadata = {
@@ -34,9 +38,7 @@ export default function RootLayout({
           title: 'Projects',
         }}
       />
-      <main id="content-container" className={main()}>
-        {children}
-      </main>
+      <main className={docWrapper()}>{children}</main>
       <CmFooter />
     </div>
   )
