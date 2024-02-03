@@ -1,6 +1,21 @@
 # What is LVM?
 > Logical Volume을 효율적이고 유연하게 관리하기 위한 커널의 한 부분이자 프로그램
 > 기존방식이 파일시스템을 블록 장치에 직접 접근해서 읽고 쓰기를 했다면, LVM은 파일시스템이 LVM이 만든 가상의 블록 장치에 읽고 쓰기를 하게 됩니다.
+사용전 좋은 접근방식은 `man lvm`을 통해 어떤 명령어를 사용할 수 있는지 확인하는 것입니다.  
+또한 명령어들이 vg, pv같이 접두어를 가지기 때문에 용도에 맞게 자동완성을 활용해보세요
+```bash
+$ lv + <tab> <tab>
+lvchange     lvcreate     lvextend     lvmconfig    lvmdump      lvmsadc      lvreduce     lvrename     lvs          
+lvconvert    lvdisplay    lvm          lvmdiskscan  lvmpolld     lvmsar       lvremove     lvresize     lvscan    
+
+$ pv + <tab> <tab>
+pvchange  pvck      pvcreate  pvdisplay pvmove    pvremove  pvresize  pvs       pvscan    
+
+$ vg + <tab> <tab>
+vgcfgbackup    vgchange       vgconvert      vgdisplay      vgextend       vgimportclone  vgmknodes      vgremove       vgs            vgsplit        
+vgcfgrestore   vgck           vgcreate       vgexport       vgimport       vgmerge        vgreduce       vgrename       vgscan   
+```
+
 
 ## 파티션과의 차이점
 LVM (Logical Volume Manager)와 Partition은 리눅스에서 스토리지를 관리하는 두 가지 주요 방법입니다.
@@ -12,7 +27,160 @@ LVM (Logical Volume Manager)와 Partition은 리눅스에서 스토리지를 관
 
 이러한 차이점들 때문에, LVM은 대규모 서버 환경에서 스토리지를 관리하는 데 주로 사용되며, 파티션은 간단한 스토리지 요구 사항이 있는 경우에 주로 사용됩니다.
 
-ㅔㅛ
+
+
+## Install
+```bash
+sudo apt-get install lvm2
+sudo dnf install lvm2
+```
+
+### Physical Volume (PV)  
+물리적인 디스크나 파티션을 의미합니다.  즉, 블록 장치 전체 또는 그 블록 장치를 이루고 있는 파티션들을 LVM에서 사용할 수 있게 변환하는 것입니다. 
+예를 들어 `/dev/sda1`, `/dev/sda2` 등의 블록 스토리지를 LVM으로 쓰기위해 PV로 초기화하게 됩니다. PV는 일정한 크기의 PE(Physical Extent)들로 구성이 됩니다.
+
+```bash
+# what disk and partition are available
+$ sudo lvmdiskscan
+
+# create physical volume
+$ sudo pvcreate /dev/sdc /dev/sdd
+Physical volume "/dev/sdc" successfully created.
+Physical volume "/dev/sdd" successfully created.
+```
+`pvs` 명령어는 logical volume manager에 의해 사용중인 논리적 볼륨양을 나타냅니다
+우린 이제 LVM에서 사용할 수 있게 된 두개의 물리적 볼륨을 가지게 되었습니다.
+```bash
+$ sudo pvs
+  PV         VG Fmt  Attr PSize  PFree
+  /dev/sdc       lvm2 ---  1.00g 1.00g
+  /dev/sdd       lvm2 ---  1.00g 1.00g
+# display physical volume
+$ sudo pvdisplay
+  "/dev/sdc" is a new physical volume of "1.00 GiB"
+  --- NEW Physical volume ---
+  PV Name               /dev/sdc
+  VG Name
+  PV Size               1.00 GiB
+  Allocatable           NO
+  PE Size               4.00 MiB
+  Total PE              255
+  Free PE               255
+  Allocated PE          0
+  PV UUID               3Z
+# remove physical volume
+$ sudo pvremove /dev/sdc
+```
+
+
+### Physical Extent (PE)  
+물리적 볼륨을 논리적 볼륨으로 나누는 단위입니다. 즉, 블록 장치 전체 또는 그 블록 장치를 이루고 있는 파티션들을 LVM에서 사용할 수 있게 변환하는 것입니다.  
+예를 들어 `/dev/sda1`, `/dev/sda2` 등의 블록 스토리지를 LVM으로 쓰기위해 PV로 초기화하게 됩니다. PV는 일정한 크기의 PE(Physical Extent)들로 구성이 됩니다.
+
+---
+다음으로 이 `PV, PVE` 용량을 사용하는 방법을 알려주어야 합니다.
+
+### Volume Group (VG)  
+하나 이상의 물리적 볼륨을 그룹화한 것입니다 즉, PV들의 집합으로 LV를 할당할 수 있는 공간입니다.  
+즉, PV들로 초기화된 장치들은 VG로 통합되게 됩니다.  
+사용자는 VG안에서 원하는대로 공간을 쪼개서 LV로 만들 수 있습니다.
+
+```bash
+# create volume group
+$ sudo vgcreate my_volume /dev/sdc /dev/sdd
+Volume group "my_volume" successfully created
+```
+우린 VG를 가상 디스크로 생삭 할 수 있습니다. 또한 이는 여러 PV로 구성될 수 있지요  
+sdc, sdd 각각이 50GB 크기로 구성될 경우, `my_volume`은 100GB의 크기를 가지게 됩니다.
+이는 수동으로 디스크를 추가할때 서버를 재부팅 하지 않아도 된다 부터 여러 이점을 제공해줍니다.    
+만약 `my_volume`이 디스크가 부족한경우, 다른 디스크(50G)를 추가하고 `vgextend` 명령어로 추가할 수 있습니다.
+```bash
+$ sudo vgextend my_volume /dev/sde
+$ sudo vgs
+  VG         #PV #LV #SN Attr   VSize  VFree
+  my_volume   3   0   0 wz--n-  150.00g 50.00g
+
+# remove pv from vg
+$ sudo vgreduce my_volume /dev/sde
+$ sudo pvremove /dev/sde 
+```
+
+### Logical Volume (LV)  
+논리적인 볼륨을 의미합니다. 이는 논리적 볼륨 그룹에 속해 있습니다. 사용자가 최종적으로 다루게 되는 논리적인 스토리지입니다.   
+생성된 LV는 파일 시스템 및 애플리케이션(Database 등)으로 사용됩니다. 위에서도 언급했듯이, LV를 구성하는 LE들은 PV의 PE들과 맵핑하며 존재하게 됩니다.
+
+```bash
+# create logical volume from volume group as 50GB
+# $ sudo lvcreate -L 50G --name partition1 my_volume
+$ sudo lvcreate --size 50G --name partition1 my_volume
+
+$ sudo vgs  
+  VG         #PV #LV #SN Attr   VSize  VFree
+  my_volume   3   1   0 wz--n-  150.00g 100.00g
+
+# display logical volume
+$ sudo lvs
+  LV         VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  partition1 my_volume -wi-a-----  50.00g
+```
+- 50GB의 크기로 `partition1`이 생성되었습니다.
+- `my_volume`은 150GB의 크기를 가지고 있으며, 100GB의 공간이 남아있습니다.
+- `partition1`은 `my_volume`에 속해있으며, 50GB의 크기를 가지고 있습니다.
+
+```bash
+# create second logical volume from volume group as 30GB
+$ sudo lvcreate --size 30G --name partition2 my_volume
+$ sudo lvs
+  LV         VG        Attr       LSize   Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  partition1 my_volume -wi-a-----  50.00g
+  partition2 my_volume -wi-a-----  30.00g
+$ sudo vgs
+  VG         #PV #LV #SN Attr   VSize  VFree
+  my_volume   3   2   0 wz--n-  150.00g 70.00g
+
+# extend logical volume
+$ sudo lvextend -L +20G /dev/my_volume/partition2
+
+# remove logical volume
+$ sudo lvremove /dev/my_volume/partition1
+
+# resize logical volume as 100% free space
+# $ sudo lvresize -L 50G /dev/my_volume/partition2
+$ sudo lvresize -l +100%VG /dev/my_volume/partition2
+
+# display logical volume
+$ sudo lvdisplay
+ ```
+직관적이고 유연하게 스토리지를 관리할 수 있습니다.   
+
+위 정보로 xfs 파일시스템을 생성하고 마운트하면 됩니다.
+```bash
+# create xfs file system
+$ sudo mkfs.xfs /dev/my_volume/partition2
+
+# mount
+$ sudo mkdir /mnt/my_volume
+$ sudo mount /dev/my_volume/partition2 /mnt/my_volume
+```
+참고로, 파일 시스템을 생성한 후론 더 신중히 다루어야 합니다.  
+만약 resize를 하게 된다면 --resizefs 옵션을 사용해야 합니다. 그리고 커질수 있지만 작아질 수는 없습니다.  
+파일시스템의 제한사항을 확인하고, 파일시스템을 확장하기 전에 파일시스템을 확인해야 합니다.   
+```bash
+# resize file system
+$ sudo lvresize -l 3G /dev/my_volume/partition2
+```
+
+
+
+
+
+
+
+```bash
+### Logical Extent (LE)
+논리적인 볼륨을 구성하는 단위입니다. LE는 VG에 속해있으며, PE와 맵핑됩니다. 즉, LE는 PE의 논리적인 표현입니다.  
+LV를 구성하는 일정한 크기의 블록으로 기본크기는 PE와 마찬가지로 4MB입니다.VG1에서 사용자가 원하는 크기대로 분할해서 LV1과 LV2를 만들 수 있습니다.  
+꼭 VG의 모든 공간을 다 써야되는건 아닙니다. 각각의 LV들은 동일한 크기의 LE로 구성이되며 PE들과 1:1로 맵핑됩니다.
 
 
 ## Reference

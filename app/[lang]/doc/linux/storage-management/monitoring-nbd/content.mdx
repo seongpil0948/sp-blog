@@ -1,0 +1,223 @@
+# Network block device
+> network block device (NBD) is a [network protocol](https://en.wikipedia.org/wiki/Network_protocol) that can be used to forward a [block device](https://en.wikipedia.org/wiki/Device_node) (typically a hard disk or partition) from one machine to a second machine. As an example, a local machine can access a hard disk drive that is attached to another computer.
+> used to access remote storage device that does not physically reside in the local machine. 
+기술적으로 네트워크 블록 장치는 서버 부분, 클라이언트 부분, 이들 사이의 네트워크라는 세 가지 구성 요소로 구현됩니다. 
+파일 디바이스가 있는 클라이언트 시스템에서 파일에 접근할때(커널 드라이버가 장치를 제어합니다). 
+데이터가 물리적으로 상주하는 서버 시스템. 서버 시스템에서 클라이언트의 요청은 사용자 공간 프로그램에 의해 처리됩니다.
+
+---
+
+NBD는 클라이언트/서버 아키텍처에 따라 작동합니다.  
+서버를 사용하여 호스트에서 볼륨을 네트워크 블록 장치로 사용할 수 있게 만든 다음 클라이언트를 실행하여 다른 호스트에서 해당 볼륨에 연결합니다.   
+
+## ServerSide
+serverIP: `192.168.1.100`
+
+### Setup server
+```bash
+apt-get install nbd-server
+modprobe nbd
+```
+after installation you can begin to export a device or file now
+- modprobe: 모듈(리눅스 커널의 확장 프로그램)을 로드하거나 언로드하는 명령어입니다.
+
+
+### Export device
+Example: export ServerSide Disk Device like /dev/sda on port 9999
+```bash
+nbd-server 9999 /dev/sda
+```
+### Export img file
+Example: export ServceSide .img file like vmdisk.img on port 9998
+```bash
+nbd-server 9998 /path/to/vmdisk.img
+```
+img over NDB can be useful if you’re working with virtual disk images, for example.  
+
+## ClientSide
+clientIP: 192.168.1.200
+
+### Setup client
+
+On the client machine that we want to use to connect to the NBD export we just created,  
+we first need to install the NBD client package with:
+```bash
+apt-get install nbd-client
+modprobe nbd-client
+```
+### Mount
+map/mount remote NBD exported device as local device/dev/nbd0
+```bash
+nbd-client 192.168.1.100 9999 /dev/nbd0
+nbd-client 192.168.1.100 9998 /dev/nbd1
+```
+이제 클라이언트측의 로컬 디스크처럼 `/dev/nbd0`을 사용할 수 있습니다.
+클라이언트가 /dev/nbd0에서 사용하는 내보내기가 서버의 /dev/sda와 같은 장치에 매핑되는 한, 클라이언트는 서버의 /dev/sda를 사용하는 것과 같은 효과를 얻을 수 있습니다.
+
+
+# Monitoring storage
+우리는 서버의 CPU와 메모리에 제한이 있다는 것을 알고 있습니다.  
+또한 위 리소스들로 부터 프로세스가 사용할 수 있는 양을 제한할 수 있습니다.  
+그러나 저장소에 대해서는 어떨까요?  
+당연히 저장소 자체에도 제한이 있습니다.  
+저장장치의 크기와 저장할 수 있는 데이터의 양뿐만 아니라 읽기/쓰기 작업의 수에도 제한이 있습니다.  
+
+우리는 `top`, `htop` 등의 명령어를 사용하여 CPU와 메모리 사용량을 모니터링 할 수 있습니다.  
+그러나 우리는 저장소에 읽고, 쓰는 작업을 모니터링 하기 위해 `sysstat`이라는 상위 패키지를 사용할 수 있습니다.
+
+
+## setup 
+```bash
+$ sudo apt-get install sysstat
+$ sudo dnf install sysstat
+```
+
+- `iostat`(input output statistics)은 부팅 이후 저장장치의 사용량을 모니터링 할 수 있습니다.  
+  - 기기의 쓴 횟수를 확인할 수 있습니다. 
+  - 저장 장치에서 데이터를 몇 번이나 읽었는지 확인할 수 있습니다.
+- `pidstat`은 프로세스 별 I/O 사용량을 모니터링 할 수 있습니다.
+  - 각각의 프로세스가 저장 장치에 너무 자주 쓰거나 읽는 것은 병목현상(bottle neck)과 같은  문제를 일으킬 수 있습니다.
+따라서 우리는 이 두 가지 도구를 모두 활용하여 다양한 스토리지 문제를 적절하게 해결하고자 합니다. 
+
+```bash
+$ iostat -h
+Linux 5.4.0-167-generic (abacus103)     02/03/2024      _x86_64_        (2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+          20.3%    0.0%   16.9%    0.1%    0.0%   62.7%
+
+# `tps`(transfers per second): 시스템은 장치에 무언가를 읽거나 쓰라고 몇 번이나 지시했습니까?  
+# `kB_dscd`: 버퍼 캐시에 저장된 데이터를 버리는 횟수
+      tps    kB_read/s    kB_wrtn/s    kB_dscd/s    kB_read    kB_wrtn    kB_dscd Device
+    33.90         0.8k       181.5k        32.4k       4.3G     992.1G     177.1G dm-0
+     0.00         0.0k         0.0k         0.0k       2.6M       0.0k       0.0k loop0
+     0.00         0.0k         0.0k         0.0k       2.4M       0.0k       0.0k loop1
+     0.00         0.0k         0.0k         0.0k      24.5M       0.0k       0.0k loop2
+     0.00         0.0k         0.0k         0.0k      26.4M       0.0k       0.0k loop3
+     0.00         0.0k         0.0k         0.0k       7.0M       0.0k       0.0k loop4
+     0.00         0.0k         0.0k         0.0k     272.5k       0.0k       0.0k loop5
+     0.00         0.0k         0.0k         0.0k       1.4M       0.0k       0.0k loop6
+     0.00         0.0k         0.0k         0.0k      24.7M       0.0k       0.0k loop7
+     0.00         0.0k         0.0k         0.0k       1.5M       0.0k       0.0k loop8
+    28.80         0.8k       179.6k        34.5k       4.5G     981.9G     188.5G nvme0n1
+```
+위 계산은 `average usage / total uptime`을 나타냅니다.  
+부팅이후 통계를 나타내는 것은 자세한 디버깅에 어려움을 줄 수 있습니다.   
+예로 지난 한 시간 동안 저장 공간에 오류나 문제가 발생하여 시스템이 한 시간 동안 가동된 경우 2주 후에는 해당 시점의 평균이기 때문에 숫자에 실제로 반영된 내용이 표시되지 않을 수도 있습니다.    
+1. 3초간 서버를 실행시켰습니다
+2. 1초에 100KB 읽기 작업을 확인했습니다. (100kBps)
+3. 2초에 200KB 읽기 작업을 확인했습니다. (200kBps)
+4. 3초에 0KB 읽기 작업을 확인했습니다.   (0kBps)
+`iostat` 은 100 + 200 + 0 / 3 = 100KBps로 계산합니다.  
+그러니 `Kb_wrtn` 값을 서버가 실행된 시간으로 나누어서 계산하면 `kB_wrtn/s`가 될것이죠 
+하지만!, 이문제를 해결하기 위해 `iostat`을 실행할때 `iostat 10`을 사용하여 10초전데이터를 기준으로 계산하도록 할 수 있습니다.  ㅎㅎ
+---
+한가지 유용한 예제를 더 보겠습니다.  
+
+```bash
+# please delete me
+$ dd if=/dev/zero of=DELETEME bs=1 count=100000 oflag=dsync&
+[1] 2561012
+```
+- `dd` 명령어는 `DELETEME`라는 파일에 100000바이트를 쓰는 작업을 수행합니다.
+- `oflag=dsync`은 cache를 사용하지 않고 디스크에 바로 쓰라는 의미입니다.
+  -  데이터에 동기화된 I/O를 사용합니다. 출력 파일의 경우 쓰기마다 출력 데이터의 물리적 쓰기가 강제 실행됩니다.
+  -  원래 1블록 단위로 캐싱을 하지만 `dsync`를 사용하면 캐싱을 하지 않습니다.
+  -  자세한 내용은 메뉴얼(`man dd`)을 참고하세요.
+- `&`는 백그라운드에서 실행하라는 의미입니다.
+- bs=1: 1바이트씩 쓰라는 의미입니다.
+- `if=/dev/zero`는 0으로 채워진 파일을 계속하여 읽어오라는 의미입니다.
+  - /dev/zero is a special file in Unix-like operating systems that provides as many null characters (ASCII NUL, 0x00) as are read from it.[1] One of the typical uses is to provide a **character stream** for initializing data storage.
+  - `dd if=/dev/zero of=foobar count=1024 bs=1024`: Creating a 1 MiB file, called foobar, filled with null characters
+즉 1바이트씩 100000번 쓰라는 의미입니다. 
+
+```bash
+$ iostat -h 1
+Linux 5.4.0-167-generic (abacus103)     02/03/2024      _x86_64_        (2 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+          20.3%    0.0%   16.9%    0.1%    0.0%   62.7%
+
+      tps    kB_read/s    kB_wrtn/s    kB_dscd/s    kB_read    kB_wrtn    kB_dscd Device
+    33.96         0.8k       181.7k        32.4k       4.3G     993.6G     177.1G dm-0
+     0.00         0.0k         0.0k         0.0k       2.6M       0.0k       0.0k loop0
+     0.00         0.0k         0.0k         0.0k       2.4M       0.0k       0.0k loop1
+     0.00         0.0k         0.0k         0.0k      24.5M       0.0k       0.0k loop2
+     0.00         0.0k         0.0k         0.0k      26.4M       0.0k       0.0k loop3
+     0.00         0.0k         0.0k         0.0k       7.0M       0.0k       0.0k loop4
+     0.00         0.0k         0.0k         0.0k     272.5k       0.0k       0.0k loop5
+     0.00         0.0k         0.0k         0.0k       1.4M       0.0k       0.0k loop6
+     0.00         0.0k         0.0k         0.0k      24.7M       0.0k       0.0k loop7
+     0.00         0.0k         0.0k         0.0k       1.5M       0.0k       0.0k loop8
+    28.84         0.8k       179.8k        34.5k       4.5G     983.2G     188.5G nvme0n1
+```
+1초마다 갱신되는 유용한 정보를 확인할 수 있습니다.  
+하지만 어떤 프로세스가 얼마나 많은 I/O를 사용하는지 확인하려면 `pidstat`을 사용해야 합니다.  
+```bash
+$ pidstat
+Linux 5.4.0-167-generic (abacus103)     02/03/2024      _x86_64_        (2 CPU)
+
+09:58:34 AM   UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+09:58:34 AM     0         1    0.52    0.22    0.00    0.34    0.74     0  systemd
+09:58:34 AM     0         2    0.00    0.00    0.00    0.00    0.00     0  kthreadd
+09:58:34 AM     0    151121   12.01    7.87    0.00    0.00   19.88     1  kube-apiserver
+09:58:34 AM     0    151167    1.51    2.80    0.00    0.65    4.31     1  kube-controller
+09:58:34 AM     0    151206    3.14    3.99    0.00    0.00    7.14     1  etcd
+09:58:34 AM     0    151229    0.42    0.39    0.00    0.00    0.81     1  kube-scheduler
+09:58:34 AM     0    151362    3.59    2.49    0.00    0.00    6.08     0  kubelet
+09:58:34 AM     0    151444    0.02    0.01    0.00    0.00    0.03     0  containerd-shim
+09:58:34 AM     0    151509    0.02    0.02    0.00    0.01    0.03     0  kube-proxy
+09:58:34 AM     0    710887    0.00    0.00    0.00    0.01    0.01     0  livenessprobe
+09:58:34 AM     0    710929    0.00    0.00    0.00    0.00    0.00     0  csi-node-driver
+09:58:34 AM     0    711074    0.00    0.00    0.00    0.01    0.01     0  nfsplugin
+09:58:34 AM  1000    942599    0.00    0.00    0.00    0.00    0.00     0  kubectl
+```
+UID, PID, CPU 사용량, 메모리 사용량, I/O 사용량, 스레드, 프로세스 을 알수 있는데
+storage에 대한 정보를 얻기 위해서 `-d` 옵션을 사용한다.
+
+```bash
+$ pidstat -d
+Linux 5.4.0-167-generic (abacus103)     02/03/2024      _x86_64_        (2 CPU)
+
+10:03:19 AM   UID       PID   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command
+10:03:19 AM     0         1     -1.00     -1.00     -1.00     446  systemd
+10:03:19 AM  1000      1789      0.03      0.02      0.00       0  bash
+10:03:19 AM     0    104211     -1.00     -1.00     -1.00       1  dockerd
+10:03:19 AM     0    151167     -1.00     -1.00     -1.00       2  kube-controller
+10:03:19 AM     0    153444     -1.00     -1.00     -1.00    2793  svlogd
+10:03:19 AM     0   1535497     -1.00     -1.00     -1.00       6  speaker
+10:03:19 AM  1000   1762053      0.00      0.07      0.00       0  java
+10:03:19 AM  1000   1881608      0.00      0.05      0.00       0  containerd
+10:03:19 AM   999   2464424     -1.00     -1.00     -1.00       1  mysqld
+10:03:19 AM  1000   2530916      0.00      0.08      0.00       0  bash
+10:03:19 AM  1000   2568226      0.00      0.01      0.00      66  dd
+```
+
+마지막 row에 우리가 방금 실행한 `dd` 프로세스를 확인 할 수 있습니다!
+하지만 이또한 실시간 모니터링이 아닙니다. 1초별 갱신되는 정볼르 확인하기 위해 아래 명령어로 실행하겠습니다.
+  
+```bash
+$ pidstat -d 1
+```
+실시간으로 어떤 프로세스가 어떤 성능으로 storage를 사용하는지 확인 할 수 있습니다.
+흥미롭네요..  
+---
+
+그래서 이 두 가지 명령, 즉 Iostat와 PID stat는 우리에게 필요한 모든 정보를 가지고 있습니다.   
+iostat는 우리에게 높은 읽기 또는 쓰기를 볼 수 있는 특정한 저장 장치를 제공합니다. 이 경우에는 쓰기였고 PID stat은 우리에게 어떤 특정한 프로세스가 실제로 그것을 야기하고 있는지, 그리고 그 특정한 프로세스의 읽기 및 쓰기 속도가 무엇인지를 보여줍니다.  
+그리고 pidstat을 통해 우리는 어떤 프로세스가 어떤 저장 장치를 사용하고 있는지 확인 할 수 있습니다.  
+만약 프로세스의 더 자세한 정보가 필요하다면 `ps` 명령어를 사용하면 됩니다. ID를 가지고 있으니 문제없겠죠
+
+실 예로, MariaDB, MySQL과 같은 데이터베이스 관리 시스템과 같은 강력한 프로세스를 발견 할 수 있을겁니다.
+따라서MySQL이나 Mariadb가 이 목록에 표시되어 많은 읽기 및 쓰기를 유발하는 것을 확인한 경우,   
+데이터베이스 팀으로 이동하여 정확하게 무슨 일이 일어나고 있는지, 무엇이 이상하게 작동하는지 파악할 수 있습니다.
+
+
+
+
+
+
+
+## Reference
+* https://en.wikipedia.org/wiki/Network_block_device
+* https://medium.com/@aysadx/linux-nbd-introduction-to-linux-network-block-devices-143365f1901b
