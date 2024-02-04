@@ -24,8 +24,8 @@
     - [Usage](#usage)
 - [Practice](#practice)
     - [Let's export `/etc` directory using `NFS` for `127.0.0.1` IP address. Also, the `ro` option should be applied, making this share `read-only`. Clients will only be able to read, but not write to this network shared directory.](#lets-export-etc-directory-using-nfs-for-127001-ip-address-also-the-ro-option-should-be-applied-making-this-share-read-only-clients-will-only-be-able-to-read-but-not-write-to-this-network-shared-directory)
-    - [Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist, `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.](#tell-autofs-to-auto-mount-a-directory-called-shares-if-this-directory-does-not-exist-autofs-should-automatically-create-it-the-shares-directory-should-be-defined-in-a-file-called-etcautoshares)
-  - [또한 autofs는 /shares/mynetworkshare/에 네트워크 공유 127.0.0.1:/etc를 자동으로 마운트하고 /shares/mynetworkshare/ 디렉토리에 127.0.0.1:/etc의 내용을 표시해야 합니다.](#또한-autofs는-sharesmynetworkshare에-네트워크-공유-127001etc를-자동으로-마운트하고-sharesmynetworkshare-디렉토리에-127001etc의-내용을-표시해야-합니다)
+    - [what `autofs` 's configuration file name and location?](#what-autofs-s-configuration-file-name-and-location)
+    - [Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist](#tell-autofs-to-auto-mount-a-directory-called-shares-if-this-directory-does-not-exist)
 
 
 # NFS in K8s with Auto FS
@@ -497,12 +497,17 @@ $ echo '/etc 127.0.0.1(ro)' | sudo tee -a /etc/exports
 $ sudo systemctl reload nfs-server
  
 ```
+### what `autofs` 's configuration file name and location?
+- `/etc/auto.master` file first to tell autofs that we'll use a directory called /shares for auto-mounting.
+- Further create /etc/auto.shares file to add the required configuration.
 
-### Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist, `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.
 
-Further, autofs should automatically mount a network share 127.0.0.1:/etc in /shares/mynetworkshare/ and should show us the contents of 127.0.0.1:/etc in /shares/mynetworkshare/ directory.  
-또한 autofs는 /shares/mynetworkshare/에 네트워크 공유 127.0.0.1:/etc를 자동으로 마운트하고 /shares/mynetworkshare/ 디렉토리에 127.0.0.1:/etc의 내용을 표시해야 합니다.  
+### Tell `autofs` to auto-mount a directory called `/shares`. If this directory does not exist
 --- 
+ `autofs` should automatically create it. The `/shares` directory should be defined in a file called `/etc/auto.shares`.   
+ Further, autofs should automatically mount a network share 127.0.0.1:/etc in /shares/mynetworkshare/ and should show us the contents of 127.0.0.1:/etc in /shares/mynetworkshare/ directory.  
+또한 autofs는 /shares/mynetworkshare/에 네트워크 공유 127.0.0.1:/etc를 자동으로 마운트하고 /shares/mynetworkshare/ 디렉토리에 127.0.0.1:/etc의 내용을 표시해야 합니다.  
+
 Edit `/etc/auto.master` file first to tell autofs that we'll use a directory called /shares for auto-mounting. Further create /etc/auto.shares file to add the required configuration.  
 
 ```bash

@@ -1,0 +1,120 @@
+# Create and configure encrypted storage
+리눅스환경에서 디스크를 암호화하는 방법에 대해 알아보자.
+사실 직무 관계 없이 보안을 고려해야 할 사항들은 갑자기 나타난다.  
+안드로이드 App을 앱스토어에 등록하면 keystore를 비롯해 여러 key들을 관리해야하고  
+ssh key를 관리 한다던가 API key를 관리하다던가 대부분 로컬에 저장되어야 한다.  
+자. 우린 팀원들을 못믿는게 아니라 사고를 방지할 뿐이다.. ㅎㅎ 반드시 설명하자.  
+
+## 왜 디스크를 암호화 해야 하는가?  
+리눅스에는 RBAC(Role Based Access Control)이라는 사용자가 특정한 역할을 수행할 수 있도록 권한을 부여하는 기능이 있다.  
+그러면 접근 권한이 없는 사용자가 디스크에 접근할 수 없는 것 아닌가? 아니다.
+누가 몰래 디스크를 빼서 내 장비에 연결하면, 덤프뜨고 다시 연결해두면?  
+그냥 털리는 것이다. 하지만? 내용자체를 암호화하면 누가 빼가도 내용을 볼 수 없다.  
+
+## 어떻게 암호화 하는가?  
+리눅스에서는 여러가지 방법으로 디스크를 암호화 할 수 있다.
+* LUKS(Linux Unified Key Setup)
+* dm-crypt
+* eCryptfs
+* EncFS
+* ... 등등
+많지만 우선 `cryptsetup`을 사용해야한다.
+
+## cryptsetup
+`cryptsetup`은 리눅스 커널에 매핑된 블록 device 디스크를 암호화하기 위한 인터페이스를 제공하는 유틸리티이다.  
+```bash
+$ sudo cryptsetup --verify-passphrase open --type plain /dev/vde mysecuredisk
+```
+- `--verify-passphrase` : 암호를 두번 입력하게 한다.
+- `--type` : 암호화 타입을 지정한다.
+- `open` : 디스크를 열어준다.
+- `mysecuredisk` : 디스크 이름
+이제 매핑된 디스크를 사용하여 파일시스템을 생성하고 마운트하면 된다.
+```bash
+$ sudo mkfs.xfs /dev/mapper/mysecuredisk 
+$ sudo mount /dev/mapper/mysecuredisk /mnt/mysecuredisk
+```
+파일시스템은 마운트된 디스크에 읽기, 쓰기 작업을 할 때 동일한 signal을 보내지만, 내부적으로는 암호화 하여 쓰고, 해독하여 읽는다.  
+한마디로 fake 디스크를 만들어서 암호화된 디스크에 접근하는 것이다.  
+그럼 허점이 있다는 걸 알 수 있다.  마운트된 이상 정보는 평문이다.  
+반드시 아래 명령어로 닫아주자.  
+```bash
+$ sudo umount /mnt/mysecuredisk
+$ sudo cryptsetup close mysecuredisk
+```
+plain format 말고 다른 방식을 사용해보자.
+
+## Luks(Linux Unified Key Setup) Extension
+하드 디스크 암호화의 표준입니다. 파티션 헤더와 대량 데이터 형식을 표준화합니다.  
+LUKS는 효과적으로 취소할 수 있고 PBKDF2를 사용한 사전 공격으로부터 보호되는 여러 암호를 관리할 수 있습니다.
+
+```bash
+$ sudo cryptsetup luksFormat /dev/vde
+$ cryptsetup + <tap> <tap>
+benchmark          isLuks             luksDump           luksHeaderRestore  luksResume         open               status             
+close              luksAddKey         luksFormat         luksKillSlot       luksSuspend        repair             tcryptDump         
+erase              luksChangeKey      luksHeaderBackup   luksRemoveKey      luksUUID           resize 
+```
+for change password
+```bash
+$ sudo cryptsetup luksChangeKey /dev
+```
+use `cryptsetup luksDump /dev/vde` to check the status of the disk.
+```bash
+# a very small block of data to the storage device called a header, and by reading that header cryptsetup can automatically detect the encryption type.
+$ sudo cryptsetup open /dev/vde mysecuredisk
+
+$ sudo mkfs.xfs /dev/mapper/mysecuredisk
+$ sudo mount /dev/mapper/mysecuredisk /mnt/mysecuredisk
+$ sudo umount /mnt/mysecuredisk
+$ sudo cryptsetup close mysecuredisk
+```
+
+
+### Practice
+
+### `/dev/vde`를 암호화된 디스크로 설정합니다. 
+매핑된 장치는 `secretdisk`라고 해야 합니다. 일반 유형 암호화(LUKS 아님)를 사용하고 비밀번호는 `S3curepass`여야 합니다.
+and 
+XFS 파일 시스템을 만듭니다.
+```bash
+$ sudo cryptsetup --help
+cryptsetup 2.3.3
+Usage: cryptsetup [OPTION...] <action> <action-specific>
+
+$ sudo cryptsetup --verify-passphrase --type=plain open /dev/vde secretdisk
+Enter passphrase for /dev/vde: S3curepass
+
+# list of encrypted disk
+$ ls /dev/mapper/
+control  secretdisk
+# create file system
+$ sudo mkfs.xfs /dev/mapper/secretdisk
+```
+
+### secretdisk라는 암호화되지 않은 매핑된 장치를 닫습니다.  
+```bash
+$ sudo umount /mnt/secretdisk
+$ sudo cryptsetup close secretdisk
+```
+
+### Format the `/dev/vde` device to be used with `LUKS` encryption. Use `S3curepass` password.
+```bash
+$ man cryptsetup
+$ sudo cryptsetup luksFormat /dev/vde
+```
+### Now `/dev/vde` is formatted to be used with LUKS encryption. 
+Use `cryptsetup` to open `/dev/vde` with LUKS-type encryption (password is `S3curepass`).  
+`/dev/vde` should be mapped to an unencrypted device called secretdisk.
+
+```bash
+$ sudo cryptsetup open --type luks /dev/vde secretdisk
+```
+
+
+
+
+
+## Reference
+* https://en.wikipedia.org/wiki/Network_block_device
+* https://medium.com/@aysadx/linux-nbd-introduction-to-linux-network-block-devices-143365f1901b

@@ -60,7 +60,8 @@ journalctl -p 0 -fe
 #  emerg (0), alert (1), crit (2), err (3), warning (4), notice (5), info (6), debug (7).
 
 # 최근 3개월전 부터 어제까지의 로그를 michelle 메세지가 포함된 로그를 보여줘
-journalctl --since "3 months ago" --until "yesterday" -u ssh.service -f
+
+journalctl --since "3 months ago" --until "yesterday" -u ssh.service -f | grep michelle
 
 # 2번째 전의 부팅시 로그 정보를 보여줘
 journalctl -b -2 

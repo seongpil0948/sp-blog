@@ -1,3 +1,26 @@
+## Toc
+- [What is LVM?](#what-is-lvm)
+  - [파티션과의 차이점](#파티션과의-차이점)
+  - [Install](#install)
+    - [Physical Volume (PV)](#physical-volume-pv)
+    - [Physical Extent (PE)](#physical-extent-pe)
+    - [Volume Group (VG)](#volume-group-vg)
+    - [Logical Volume (LV)](#logical-volume-lv)
+    - [Logical Extent (LE)](#logical-extent-le)
+- [Practice](#practice)
+    - [Install lvm on this system.](#install-lvm-on-this-system)
+    - [Add these four disks as PVs (Physical Volumes) to LVM: `/dev/vdb`, `/dev/vdc`, `/dev/vdd` and `/dev/vde`.](#add-these-four-disks-as-pvs-physical-volumes-to-lvm-devvdb-devvdc-devvdd-and-devvde)
+    - [Remove the /dev/vde physical volume from LVM.](#remove-the-devvde-physical-volume-from-lvm)
+    - [Create a Volume Group (VG) named volume1. It should be created on these two Physical Volumes: /dev/vdb and /dev/vdc.](#create-a-volume-group-vg-named-volume1-it-should-be-created-on-these-two-physical-volumes-devvdb-and-devvdc)
+    - [Add /dev/vdd to this volume group so that we gain more usable storage space.](#add-devvdd-to-this-volume-group-so-that-we-gain-more-usable-storage-space)
+    - [Remove /dev/vdd from the volume group volume1.](#remove-devvdd-from-the-volume-group-volume1)
+    - [Create a Logical Volume (LV). It should have these properties:](#create-a-logical-volume-lv-it-should-have-these-properties)
+    - [Resize the Logical Volume called `smalldata` to `1 Gigabyte`. This logical volume resides on the volume group called `volume1`.](#resize-the-logical-volume-called-smalldata-to-1-gigabyte-this-logical-volume-resides-on-the-volume-group-called-volume1)
+    - [Create an `XFS` filesystem on the logical volume called smalldata.](#create-an-xfs-filesystem-on-the-logical-volume-called-smalldata)
+    - [Destroy/Remove the Logical Volume called `smalldata`.](#destroyremove-the-logical-volume-called-smalldata)
+  - [Reference](#reference)
+
+
 # What is LVM?
 > Logical Volume을 효율적이고 유연하게 관리하기 위한 커널의 한 부분이자 프로그램
 > 기존방식이 파일시스템을 블록 장치에 직접 접근해서 읽고 쓰기를 했다면, LVM은 파일시스템이 LVM이 만든 가상의 블록 장치에 읽고 쓰기를 하게 됩니다.
@@ -56,6 +79,7 @@ $ sudo pvs
   /dev/sdc       lvm2 ---  1.00g 1.00g
   /dev/sdd       lvm2 ---  1.00g 1.00g
 # display physical volume
+$ sudo pvscan
 $ sudo pvdisplay
   "/dev/sdc" is a new physical volume of "1.00 GiB"
   --- NEW Physical volume ---
@@ -99,6 +123,7 @@ $ sudo vgextend my_volume /dev/sde
 $ sudo vgs
   VG         #PV #LV #SN Attr   VSize  VFree
   my_volume   3   0   0 wz--n-  150.00g 50.00g
+$ sudo vgscan
 
 # remove pv from vg
 $ sudo vgreduce my_volume /dev/sde
@@ -149,6 +174,7 @@ $ sudo lvremove /dev/my_volume/partition1
 $ sudo lvresize -l +100%VG /dev/my_volume/partition2
 
 # display logical volume
+$ sudo lvscan
 $ sudo lvdisplay
  ```
 직관적이고 유연하게 스토리지를 관리할 수 있습니다.   
@@ -169,18 +195,119 @@ $ sudo mount /dev/my_volume/partition2 /mnt/my_volume
 # resize file system
 $ sudo lvresize -l 3G /dev/my_volume/partition2
 ```
-
-
-
-
-
-
-
-```bash
 ### Logical Extent (LE)
 논리적인 볼륨을 구성하는 단위입니다. LE는 VG에 속해있으며, PE와 맵핑됩니다. 즉, LE는 PE의 논리적인 표현입니다.  
 LV를 구성하는 일정한 크기의 블록으로 기본크기는 PE와 마찬가지로 4MB입니다.VG1에서 사용자가 원하는 크기대로 분할해서 LV1과 LV2를 만들 수 있습니다.  
 꼭 VG의 모든 공간을 다 써야되는건 아닙니다. 각각의 LV들은 동일한 크기의 LE로 구성이되며 PE들과 1:1로 맵핑됩니다.
+
+# Practice
+
+### Install lvm on this system.
+```bash
+# check os
+$ cat /etc/os-release
+# if ubuntu
+$ sudo apt-get install lvm2
+# if centos
+$ sudo dnf install lvm2
+```
+
+### Add these four disks as PVs (Physical Volumes) to LVM: `/dev/vdb`, `/dev/vdc`, `/dev/vdd` and `/dev/vde`.
+```bash
+# search command
+$ sudo pv
+pvchange   pvck       pvcreate   pvdisplay  pvmove     pvremove   pvresize   pvs        pvscan
+
+# search disk
+$ lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  11G  0 disk 
+└─vda1 253:1    0  10G  0 part /
+vdb    253:16   0   1G  0 disk 
+vdc    253:32   0   1G  0 disk 
+vdd    253:48   0   1G  0 disk 
+vde    253:64   0   1G  0 disk
+# create physical volume
+$ sudo pvcreate /dev/vdb /dev/vdc /dev/vdd /dev/vde
+$ sudo pvs
+  PV         VG Fmt  Attr PSize PFree
+  /dev/vdb      lvm2 ---  1.00g 1.00g
+  /dev/vdc      lvm2 ---  1.00g 1.00g
+  /dev/vdd      lvm2 ---  1.00g 1.00g
+  /dev/vde      lvm2 ---  1.00g 1.00g
+```
+
+### Remove the /dev/vde physical volume from LVM.
+```bash
+$ sudo pvremove /dev/vde
+  Labels on physical volume "/dev/vde" successfully wiped.
+```
+
+### Create a Volume Group (VG) named volume1. It should be created on these two Physical Volumes: /dev/vdb and /dev/vdc.  
+```bash
+$ vg + <tab> <tab>
+vgcfgbackup      vgconvert        vgextend         vgmerge          vgrename         
+vgcfgrestore     vgcreate         vgimport         vgmknodes        vgs              
+vgchange         vgdisplay        vgimportclone    vgreduce         vgscan           
+vgck             vgexport         vgimportdevices  vgremove         vgsplit 
+
+# create vg
+$ sudo vgcreate volume1 /dev/vdb /dev/vdc
+  Volume group "volume1" successfully created
+```
+### Add /dev/vdd to this volume group so that we gain more usable storage space.  
+```bash
+$ sudo vgs
+  VG      #PV #LV #SN Attr   VSize VFree
+  volume1   2   0   0 wz--n- 1.99g 1.99g
+# extends vg
+$ sudo vgextend volume1 /dev/vdd
+  Volume group "volume1" successfully extended
+
+$ sudo vgs
+  VG      #PV #LV #SN Attr   VSize  VFree 
+  volume1   3   0   0 wz--n- <2.99g <2.99g
+```
+
+### Remove /dev/vdd from the volume group volume1.
+```bash
+$ sudo vgreduce volume1 /dev/vdd
+  Removed "/dev/vdd" from volume group "volume1"
+```
+
+### Create a Logical Volume (LV). It should have these properties:
+
+1. The size of the LV should be 1.5 Gigabytes.
+2. Its name should be smalldata.
+3. The logical volume should be created on the volume group named volume1.
+```bash
+sudo lvcreate --size 1.5G --name smalldata volume1
+```
+
+### Resize the Logical Volume called `smalldata` to `1 Gigabyte`. This logical volume resides on the volume group called `volume1`.  
+```bash
+$ sudo lvresize -L 1G volume1/smalldata
+```
+
+### Create an `XFS` filesystem on the logical volume called smalldata.
+This logical volume exists on the volume group called `volume1`.
+```bash
+$ sudo mkfs.xfs /dev/volume1/smalldata
+```
+
+### Destroy/Remove the Logical Volume called `smalldata`.
+```bash
+# list of file system
+$ sudo lvscan
+  ACTIVE            '/dev/volume1/smalldata' [1.00 GiB] inherit
+# remove logical volume
+$ sudo lvremove /dev/volume1/smalldata
+```
+
+
+
+
+
 
 
 ## Reference
