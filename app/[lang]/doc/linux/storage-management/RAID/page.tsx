@@ -19,8 +19,9 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const dict = await getDictionary(lang)
   return {
-    title: 'monitoring storage device with nbd',
-    description: 'monitoring storage device with nbd',
+    title: 'RAID(Redundant Array of Independent Disks)',
+    description:
+      'configure RAID(Redundant Array of Independent Disks) in Linux',
   }
 }
 

@@ -7,20 +7,8 @@
 그렇다면 쿠버네티스는 어떻게 확장성을 고려하고 있을까? 알아보자.
 자세한 내용은 [extend k8s](https://kubernetes.io/ko/docs/concepts/extend-kubernetes)을 참고하자.  
 [extension point](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/#%EA%B7%B8%EB%A6%BC%EC%9D%98-%ED%95%B5%EC%8B%AC) 에 따르면
-`kubectl`, `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`, `kubelet`, `kube-proxy`, CNI 등 거의 모든 것이 확장 가능한 컴포넌트라고 한다.
+`kubectl`, `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`, `kubelet`, `kube-proxy`, CNI 등 거의 모든 것이 확장 가능한 컴포넌트라고 한다.  
 공부를 하며 느꼈지만 CRI, CNI, CSI 등 여러 인터페이스들에 따라 확장성에 대한 심도있는 discussion 들이 이루어지고 있고, 결과로서 엄청난 자유도를 가지고 있다.  
-
-## Custom Resource Definition, 
-쿠버네티스는 기본적으로 `Pod`, `Service`, `ReplicaSet` 등의 리소스를 제공한다.
-이러한 리소스들은 `kubectl` 을 통해  control(생성, 조회, 수정, 삭제..etc)할 수 있다.
-하지만, 사용자는 자신의 리소스를 정의하고 싶을 수 있다.  
-이때 사용하는 것이 `Custom Resource Definition` 이다.  
-
-## Operator
-우리는 종종 mysql, redis, argo, [keda](https://keda.sh/) 등의 오픈소스를 k8s 에서 사용한다.
-오픈소스 개발자들은 k8s 에서 더 쉽게 사용하기 위해 `container`를 제공할 뿐 아니라  `Custom Resource Definition` 을 정의하고, [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 를 제공한다.
-예로 mysql의 [operator manual](https://dev.mysql.com/doc/mysql-operator/en/) 페이지를 슬쩍 보고오자.
-숨이 막힌다.. 뭔데 그래서? -> `Custom Resource Definition` 을 통해 정의한 리소스들을 관리(control)하는 것이 [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 이다.  
 
 ### 사용 예시
 마치 CLI 를 이용해 k8s 를 제어하는 것처럼, 거의 뭐 k8s 매크로다. 
@@ -35,7 +23,182 @@ java를 사용하는거? 아니면 go 를 사용하는거? 아니면 python? 언
 당신은 자신만의 operator 를 만들 수 있다. 
 [writing-operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/#writing-operator)를 참고하자.  
 필자는 [k8s 오픈소스 프로젝트](https://github.com/kubernetes/kubernetes)의 주언어가 go 라는 것을 확인하고, [client-libraries](https://kubernetes.io/ko/docs/reference/using-api/client-libraries/) 의 [client-go](https://github.com/kubernetes/client-go/) 를 사용하기로 결정했다.  
-오픈소스 분석에 가장 쉽게 다가가는 길은 시작문서와 [example](https://github.com/kubernetes/client-go/tree/master/examples), [test](https://github.com/kubernetes/client-go/blob/master/testing/fake_test.go) 를 분석하는 것이다.  
+오픈소스 분석에 가장 쉽게 다가가는 길은 시작문서와 [example](https://github.com/kubernetes/client-go/tree/master/examples), [test](https://github.com/kubernetes/client-go/blob/master/testing/fake_test.go) 를 분석하는 것이다. 
+
+
+## Custom Resource Definition, 
+쿠버네티스는 기본적으로 `Pod`, `Service`, `ReplicaSet` 등의 리소스를 제공한다.
+이러한 리소스들은 `kubectl` 을 통해  control(생성, 조회, 수정, 삭제..etc)할 수 있다.
+하지만, 사용자는 자신의 리소스를 정의하고 싶을 수 있다.  
+이때 사용하는 것이 `Custom Resource Definition` 이다.  
+
+## Operator
+우리는 종종 mysql, redis, argo, [keda](https://keda.sh/) 등의 오픈소스를 k8s 에서 사용한다.
+오픈소스 개발자들은 k8s 에서 더 쉽게 사용하기 위해 `container`를 제공할 뿐 아니라  `Custom Resource Definition` 을 정의하고, [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 를 제공한다.
+예로 mysql의 [operator manual](https://dev.mysql.com/doc/mysql-operator/en/) 페이지를 슬쩍 보고오자.
+숨이 막힌다.. 뭔데 그래서? -> `Custom Resource Definition` 을 통해 정의한 리소스들을 관리(control)하는 것이 [Operator](https://kubernetes.io/ko/docs/concepts/extend-kubernetes/operator/) 이다.  
+
+## Custom Controller
+쿠버네티스는 `kube-controller-manager` 를 통해 `ReplicaSet`, `Deployment`, `StatefulSet` 등의 리소스를 관리한다.  
+약간 리소스 관리자 즉 brain 이라고 생각하면 된다.  
+우리가 만약 `Pod` 의 상태가 `Running` 이 아닌 경우, `kube-controller-manager` 가 `Pod` 의 상태를 `Running` 으로 변경해주는 것을 볼 수 있다.  
+custom resource 를 만들경우 그에 맞는 `kube-controller-manager` 와 같은 컨트롤러를 만들어야 하는 경우가 있다.  
+로직은 [github-controller](https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/deployment/deployment_controller_test.go)를 참고하자.  
+
+### Controller Flow
+controller 는  cluster 를 watch(subscribe for events) 하고, 리소스의 상태를 변경하는 것을 반복한다.
+> An event is the combination of an action (create, update, or delete) and a resource key (typically in the format of namespace/name).
+이벤트를 publish 하는 코드는 [this informer (GitHub)](https://github.com/trstringer/k8s-controller-core-resource/blob/master/main.go#L52-L59)를 살펴보자
+
+### Custom Resource
+테스트 전에 [custom controller](https://github.com/trstringer/k8s-controller-core-resource) 를 세팅해두는 것을 추천한다.
+6년전 코드이므로 최신버전에 맞게 수정해야한다.
+```bash
+go mod init example/k8s-controller-core-resource
+go mod tidy
+```
+
+`README.md` 에서 사용중인 `dlv`라는 go 디버깅 툴은 내가 사용중인 `vscode extension`에 포함되어있는것 같았다.  
+breakpoint 를 찍어보니 잘 동작하는것을 확인할 수 있었다.  
+
+---  
+Controller 로서 리소스를 다룰때 하나의 `data`로 취급할 수 있다.  
+우리는 informer, queue, controller 가 세팅된 후에 ,custom resource를 informer에 등록하고, queue에 넣어준다.  
+### Define Custom Resource
+먼저 리소스를 정의할 파일을 만들어보겠습니다.
+```bash
+VERSION="v1alpha1"
+RESOURCE_LO="myresource"
+$  mkdir -p "pkg/apis/$RESOURCE_LO/v1-alpha"
+$  touch "pkg/apis/$RESOURCE_LO/register.go"
+```
+먼저 다른 파일에서 사용할 수 있도록  `constant` 를 정의해준다.
+<CodeHeader text="pkg/apis/myresource/register.go" /> 
+
+```go
+package myresource
+
+const GroupName = "iabacus.co.kr"
+```
+로직을 작성하기전 타입, 인터페이스를 정의하며 계획하는 것은 좋은 습관입니다.
+뼈대 리소스를 먼저 정의해보겠습니다.
+`//` `+<tag_name>[=value].` 형태의 코멘트는 `code-generator` 에 의해 사용됩니다.
+- +genclient: 이 패키지에 대한 클라이언트 생성(아래 참조)
+- +genclient:noStatus: client 생성시 status 를 패키지에 저장하지 않습니다.
+- +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object: deepcopy-gen 을 사용하여 runtime Object에 deep copy를 생성합니다.(MyResource, MyResourceList)
+
+
+<CodeHeader text="pkg/apis/myresource/v1alpha1/types.go" /> 
+
+```go
+package v1alpha
+
+
+import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// +genclient
+// +genclient:noStatus
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// MyResource describes a MyResource resource
+type MyResource struct {
+	// TypeMeta is the metadata for the resource, like kind and apiversion
+	meta_v1.TypeMeta `json:",inline"`
+	// ObjectMeta contains the metadata for the particular object, including
+	// things like...
+	//  - name
+	//  - namespace
+	//  - self link
+	//  - labels
+	//  - ... etc ...
+	meta_v1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Spec is the custom resource spec
+	Spec MyResourceSpec `json:"spec"`
+}
+
+// MyResourceSpec is the spec for a MyResource resource
+type MyResourceSpec struct {
+	// Message and SomeValue are example custom spec fields
+	//
+	// this is where you would put your custom resource data
+	Message   string `json:"message"`
+	SomeValue *int32 `json:"someValue"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// MyResourceList is a list of MyResource resources
+type MyResourceList struct {
+	meta_v1.TypeMeta `json:",inline"`
+	meta_v1.ListMeta `json:"metadata"`
+
+	Items []MyResource `json:"items"`
+}
+```
+
+이제 doc 소스를 작성하겠습니다.  
+type.go와 마찬가지로 코드 생성기에 대한 몇 가지 주석 태그가 있습니다. 패키지에 대해 doc.go에 정의된 경우 이러한 설정은 전체 패키지에 적용됩니다. 여기서는 패키지의 모든 유형에 대해 deepcopy를 생성해야 한다고 설정했습니다(별도로 해제하지 않는 한). 그리고 +groupName 태그를 사용하여 API 그룹 이름이 무엇인지 생성기에 알려줍니다.
+<CodeHeader text="pkg/apis/myresource/v1alpha/doc.go" /> 
+
+```go
+// +k8s:deepcopy-gen=package
+// +groupName=trstringer.com
+
+package v1alpha
+```
+클라이언트에는 사용자 정의 유형을 위한 특정 API 노출 영역이 필요하며(particular API surface area for custom types),  
+패키지에는 AddToScheme 및 Resource가 포함되어야 합니다.  
+이러한 함수는 구성표에 유형 추가를 처리합니다. 패키지에서 이 기능에 대한 소스 파일을 생성합니다.
+
+<CodeHeader text="pkg/apis/myresource/v1alpha/register.go" /> 
+
+```go 
+package v1alpha
+
+import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"examples/custom-cotroller/pkg/apis/myresource"
+)
+
+// GroupVersion is the identifier for the API which includes
+// the name of the group and the version of the API
+var SchemeGroupVersion = schema.GroupVersion{
+	Group:   myresource.GroupName,
+	Version: "v1alpha",
+}
+
+// create a SchemeBuilder which uses functions to add types to
+// the scheme
+var AddToScheme = runtime.NewSchemeBuilder(addKnownTypes).AddToScheme
+
+func Resource(resource string) schema.GroupResource {
+	return SchemeGroupVersion.WithResource(resource).GroupResource()
+}
+
+// addKnownTypes adds our types to the API scheme by registering
+// MyResource and MyResourceList
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(
+		SchemeGroupVersion,
+		&MyResource{},
+		&MyResourceList{},
+	)
+
+	// register the type in the scheme
+	meta_v1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	return nil
+}
+```
+
+자 에러가 나고있죠?? code generator를 안돌려서 그래요~!  
+코드 생성기를 실행하기 위한 약간의 설정이 있습니다. 실행해야 하는 쉘 명령을 아래에 포함시켰습니다.  
+> It’s the k8s.io/code-generator package that contains the generate-groups.sh shell script which we will use to do all of the heavy lifting (this shell script directly invokes the client-gen, informer-gen, and lister-gen bins).
 
 
 
@@ -45,6 +208,8 @@ java를 사용하는거? 아니면 go 를 사용하는거? 아니면 python? 언
 
 
 
-####
+#### Reference
 - [k8s crd](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+- [extending-k8s-custom-controllers](https://trstringer.com/extending-k8s-custom-controllers/)
+- [code-generator](https://github.com/kubernetes/code-generator)
 
