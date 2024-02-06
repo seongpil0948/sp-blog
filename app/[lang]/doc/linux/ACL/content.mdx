@@ -1,0 +1,169 @@
+# What is ACL
+ACL은 Access Control List의 약자로, 파일이나 디렉토리에 대한 접근 권한을 설정하는 기능이다.  
+리눅스에서는 기본적으로 사용자, 그룹, 기타 사용자에 대한 접근 권한을 설정할 수 있지만, ACL을 사용하면 더 세밀한 접근 권한을 설정할 수 있다.  
+만약 소유자 뿐 아니라 `sp` 사용자에게 읽기 권한을 부여하고 싶다면? 이때 ACL을 사용하면 된다.   
+ACL은 파일 시스템에 따라 지원 여부가 다르다. 리눅스에서 `ext`, `xfs` 파일 시스템은 지원하니 안심하자.  
+
+## Access Check Algorithm
+> **ACL_MASK**: ACL_USER, ACL_GROUP_OBJ 또는 ACL_GROUP 유형의 항목에 의해 부여될 수 있는 최대 액세스 권한을 나타냅니다.
+> **한정자(qualifier)**: 는 태그 유형이 각각 ACL_USER 또는 ACL_GROUP인 항목에 대해 사용자 또는 그룹의 식별자를 나타냅니다.
+1. 액세스를 요청한 process 의 uid가 파일의 소유자 uid와 일치하는지 확인한다.
+   1. then: ACL_USER_OBJ 항목에 요청된 권한이 포함되어 있으며 액세스가 허용됩니다
+   2. else: 다음 단계로 이동
+2. 프로세스의 uid 가 ACL_USER 유형 항목의 한정자(qualifierof)와 일치하는 경우
+   1. then: 일치하는 ACL_USER 항목과 ACL_MASK 항목에 요청된 권한이 포함되어 있으면 액세스가 허용됩니다.
+   2. else: 다음 단계로 이동
+3. 프로세스의 유효(effective) 그룹 ID 또는 보조(supplementary) 그룹 ID 중 하나가 파일 그룹 또는 ACL_GROUP 유형 항목의 한정자와 비교.
+   1. then: ACL_MASK 항목과 일치하는 ACL_GROUP_OBJ 또는 ACL_GROUP 항목에 요청된 권한이 포함되어 있으면 액세스가 허용됩니다.
+   2. else: ACL_OTHER 항목에 요청된 권한이 포함되어 있으면 액세스가 허용됩니다.
+
+
+### Install
+`acl` 패키지를 설치하자.  
+```bash
+$ sudo dnf install acl
+$ sudo apt install acl
+```
+
+## Set ACL to file or directory
+`setfacl` 명령어를 사용하여 ACL을 설정할 수 있다.
+
+```bash
+$ setfacl [option] [user]:[permission] [file or directory]
+$ setfacl [option] [acl] [path]
+$ setfacl [-bkndRLPvh] [{-m|-x} acl_spec] [{-M|-X} acl_file] file ...
+$ setfacl --restore=file
+
+[option]
+-m : modify, 생성
+-x : acl 삭제
+-b : 초기값(모든권한 초기상태), 권한 및 mask 등 지정한 권한을 전부 제거
+-R : recursive, 디렉터리의 경우 하위 디렉터리와 파일까지 권한 변경
+-k : default 삭제
+...
+
+[acl]
+u=user, g=group, o=other, d=default
+u:<username>:r|w|x    사용자
+g:<groupname>:r|w|x   그룹
+o::r|w|x              Other
+d:u|g|o::r|w|x        default
+...
+
+ex)
+$ setfacl -m u:user:rw /root/file1
+$ setfacl -x u:user:rw /root/file1
+
+```
+
+
+사용자 `sp`에게 `/mnt/backup/sp` 디렉토리에 대한 읽기 권한을 부여하고 싶다면?  
+```bash
+$ sudo setfacl -m u:sp:r /mnt/backup/sp
+```
+다시 쓰기 권한을 부여하고 싶다면?  
+```bash
+$ sudo setfacl -m u:sp:rw /mnt/backup/sp
+```
+
+group `family` 에게 `/mnt/backup/sp` 디렉토리에 대한 읽기 권한을 부여하고 싶다면?  
+```bash
+$ sudo setfacl -m g:family:r /mnt/backup/sp
+```
+
+group `family` 에게 `/etc/hosts` 파일에 대한 쓰기 권한을 부여하고 싶다면?  
+```bash
+$ sudo setfacl -m g:family:w /etc/hosts
+```
+
+
+## Get ACL
+
+위 명령어들을 다루고나면 `ls` 명령어를 사용하여 ACL을 확인할 수 있다.  
+```bash
+$ ls -l /etc/hosts
+-rw-rw-r--+ 1 root root 0 Apr 19 23:44 /etc/hosts
+```
+`+` 기호가 보이는 것을 확인할 수 있다. 이것은 ACL이 설정되어 있다는 것을 의미한다.  
+ACL을 확인하려면 `getfacl` 명령어를 사용하자.
+
+> 각 파일에 대해 `getfacl`은 파일 이름, 소유자, 그룹 및 ACL(액세스 제어 목록)을 표시합니다. 디렉토리에 기본 ACL이 있는 경우 `getfacl`은 기본 ACL도 표시합니다. 디렉터리가 아닌 경우에는 기본 ACL을 가질 수 없습니다.  
+> ACL을 지원하지 않는 파일 시스템에서 `getfacl`을 사용하는 경우 `getfacl`은 기존 파일 모드 권한 비트로 정의된 액세스 권한을 표시합니다.
+
+```bash
+getfacl [option] [file or directory]
+[option]
+
+ex)
+$ getfacl /mnt/backup/sp
+$ getfacl /etc/hosts
+```
+### Options
+```
+-R : recursive, 디렉터리의 경우 하위 디렉터리와 파일까지 권한 확인
+-a, --access
+Display the file access control list.
+-d, --default
+Display the default access control list.
+-c, --omit-header
+Do not display the comment header (the first three lines of each file's output).
+-e, --all-effective
+Print all effective rights comments, even if identical to the rights defined by the ACL entry.
+-E, --no-effective
+Do not print effective rights comments.
+-s, --skip-base
+Skip files that only have the base ACL entries (owner, group, others).
+-R, --recursive
+List the ACLs of all files and directories recursively.
+-L, --logical
+Logical walk, follow symbolic links to directories. The default behavior is to follow symbolic link arguments, and skip symbolic links encountered in subdirectories. Only effective in combination with -R.
+-P, --physical
+Physical walk, do not follow symbolic links to directories. This also skips symbolic link arguments. Only effective in combination with -R.
+-t, --tabular
+Use an alternative tabular output format. The ACL and the default ACL are displayed side by side. Permissions that are ineffective due to the ACL mask entry are displayed capitalized. The entry tag names for the ACL_USER_OBJ and ACL_GROUP_OBJ entries are also displayed in capital letters, which helps in spotting those entries.
+-p, --absolute-names
+Do not strip leading slash characters ('/'). The default behavior is to strip leading slash characters.
+-n, --numeric
+List numeric user and group IDs
+-v, --version
+Print the version of getfacl and exit.
+-h, --help
+Print help explaining the command line options.
+```
+
+### Output format
+```
+ 1:  # file: somedir/
+ 2:  # owner: lisa
+ 3:  # group: staff
+ 4:  # flags: -s-
+ 5:  user::rwx
+ 6:  user:joe:rwx               #effective:r-x
+ 7:  group::rwx                 #effective:r-x
+ 8:  group:cool:r-x
+ 9:  mask::r-x
+10:  other::r-x
+11:  default:user::rwx
+12:  default:user:joe:rwx       #effective:r-x
+13:  default:group::r-x
+14:  default:mask::r-x
+15:  default:other::---
+```
+1. 파일 이름
+2. 소유자
+3. 그룹
+4. flags: setuid(들), setgid(들) 및 고정(t) 비트를 나타냅니다
+5, 7m 10: 파일 모드 권한 비트의 사용자, 그룹 및 기타 필드에 응답합니다. 이 세 가지를 기본 ACL 항목이라고 합니다.   
+6, 8행은 특정(named) 사용자 그룹 항목입니다. 9행은 유효 권한 마스크입니다. 이 항목은 모든 특정 그룹 및 사용자에게 부여된 유효 권한을 제한합니다.(그이상 권한을 줄 수 없음)  
+11행 이후는 기본 ACL 항목입니다. 이러한 항목은 디렉터리에 대한 기본 ACL을 나타냅니다.  
+
+
+
+
+## References
+- [acl](https://linux.die.net/man/5/acl)
+- [linux-acl-guide](https://www.bangseongbeom.com/linux-acl-guide.html)
+- 
+- [setfacl](https://linux.die.net/man/1/setfacl)
+- [getfacl](https://linux.die.net/man/1/getfacl)
+- https://blog.naver.com/polky0421/221440203034
