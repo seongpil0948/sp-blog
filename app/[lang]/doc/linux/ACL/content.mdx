@@ -57,13 +57,13 @@ $ setfacl -x u:user:rw /root/file1
 ```
 
 
-사용자 `sp`에게 `/mnt/backup/sp` 디렉토리에 대한 읽기 권한을 부여하고 싶다면?  
+사용자 `sp`에게 `/mnt/backup/sp` 디렉토리 하위 전체에대한 읽기 권한을 부여하고 싶다면?  
 ```bash
-$ sudo setfacl -m u:sp:r /mnt/backup/sp
+$ sudo setfacl --recursive -m u:sp:r /mnt/backup/sp
 ```
-다시 쓰기 권한을 부여하고 싶다면?  
+다시 디렉토리만 쓰기 권한을 부여하고 싶다면?  
 ```bash
-$ sudo setfacl -m u:sp:rw /mnt/backup/sp
+$ sudo setfacl --modify user:sp:rw /mnt/backup/sp
 ```
 
 group `family` 에게 `/mnt/backup/sp` 디렉토리에 대한 읽기 권한을 부여하고 싶다면?  
@@ -73,7 +73,12 @@ $ sudo setfacl -m g:family:r /mnt/backup/sp
 
 group `family` 에게 `/etc/hosts` 파일에 대한 쓰기 권한을 부여하고 싶다면?  
 ```bash
-$ sudo setfacl -m g:family:w /etc/hosts
+$ sudo setfacl -m group:family:w /etc/hosts
+```
+
+user `sp`의 권한을 삭제하고 싶다면?  
+```bash
+sudo setfacl --remove u:sp /mnt/backup/sp
 ```
 
 
@@ -156,6 +161,68 @@ Print help explaining the command line options.
 5, 7m 10: 파일 모드 권한 비트의 사용자, 그룹 및 기타 필드에 응답합니다. 이 세 가지를 기본 ACL 항목이라고 합니다.   
 6, 8행은 특정(named) 사용자 그룹 항목입니다. 9행은 유효 권한 마스크입니다. 이 항목은 모든 특정 그룹 및 사용자에게 부여된 유효 권한을 제한합니다.(그이상 권한을 줄 수 없음)  
 11행 이후는 기본 ACL 항목입니다. 이러한 항목은 디렉터리에 대한 기본 ACL을 나타냅니다.  
+
+## chattr
+> change file attributes on a Linux file system
+
+### 사용법
+```bash
+chattr [ -RVf ] [ -v version ]  [ [+-]mode ] files...
+
+[-RVf]
+-R
+   Recursively change attributes of directories and their contents.
+-V
+   Be verbose with chattr's output and print the program version.
+-f (오류 메세지 미표시)
+   Suppress most error messages.
+-v version
+   Set the file's version/generation number.
+```
+**[mode]**
+- a: append only, 파일 내용을 추가만 가능하게 제한
+  - redirect operator `>` 불가, `>>` 가능
+  - delete, rename, truncate 불가
+- c: compressed, 파일을 압축하여 저장
+  - `xfs` 파일시스템 지원, 그외 `ext` 파일시스템은 지원하지 않음
+- d: no dump, 백업에서 제외
+  - not candidate for backup when the dump(8) program is run.
+- i: immutable, 파일을 수정, 삭제, 이름 변경 불가
+- j: journaling, 파일을 저널링하여 저장
+- s: secure deletion, 파일을 삭제할 때 덮어쓰기를 하지 않고 삭제
+- S: synchronous updates, 파일을 동기적으로 업데이트
+- T: top of directory hierarchy, 디렉토리의 최상위에 위치
+
+## Examples 
+
+### append only
+```bash
+FILE=abc.txt
+$ echo 'abc' > $FILE
+$ chattr +a $FILE
+$ echo 'def' > $FILE
+bash: abc.txt: Operation not permitted
+$ echo 'def' >> $FILE
+$ cat $FILE
+abc
+def
+```
+
+### list of attributes
+```bash
+FILE=abc.txt
+$ lsattr $FILE
+
+```
+
+### remove attribute
+```bash
+FILE=abc.txt
+$ chattr -a $FILE
+$ lsattr $FILE
+$ echo 'abc' > $FILE
+$ cat $FILE
+```
 
 
 

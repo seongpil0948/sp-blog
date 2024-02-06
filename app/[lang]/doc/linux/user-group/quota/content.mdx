@@ -1,0 +1,98 @@
+# What is Quota
+리눅스에서는 사용자 또는 그룹에 대한 inode(파일 개수), block(파일 크기)에 대한 제한을 설정할 수 있습니다.
+팀내의 누군가 80%의 리소스를 사용하고 있다면, 이는 불공평합니다.   
+만약 100명의 팀원에게 공평히 1테라바이트의 저장 공간을 할당하고 싶다면 어떻게 해야 할까요?    
+quota는 사용자 또는 그룹이 사용할 수 있는 디스크 공간을 관리하는 기능입니다.  
+
+## Terminology
+
+### quotacheck
+는 각 파일 시스템과 현재 디스크 사용량 테이블을 작성하고,  
+파일 시스템의 디스크 할당량 파일에 기록된 테이블과 비교합니다.  
+만약 불일치가 발견되면, 파일 시스템의 디스크 할당량 파일을 업데이트합니다.  
+
+### quotaon, quotaoff 
+
+### fallocate
+신속히 테스트용 파일을 생성 할 수 있습니다.
+특정 디스크의 사용량을 증가시키기 위해 사용할 수 있습니다.
+수동으로 하려면 정확한 크기를맞추기 어렵습니다.  
+
+
+```bash
+# 10byte 파일 생성
+$ fallocate -l 10 /tmp/testfile
+# 500메가 파일 생성
+$ fallocate -l 500M /tmp/testfile
+# 1기가 파일 생성
+$ fallocate -l 1G /tmp/testfile
+
+```
+### edquota(edit user quotas)
+개요
+edquota 명령은 사용자 또는 그룹의 할당량을 편집하는 데 사용됩니다.
+```
+edquota [ -p protoname ] [ -u | -g ] [ -rm ] [ -F format-name ] [ -f filesystem ] username...
+edquota [ -u | -g ] [ -F format-name ] [ -f filesystem ] -t
+edquota [ -u | -g ] [ -F format-name ] [ -f filesystem ] -T username | groupname...
+```
+**Example**
+```bash
+# 유저 `sp`의 할당량을 편집하겠습니다.
+$ sudo edquota -u sp --filesystem /dev/sda1 
+# 그룹 'FTP'의 할당량을 편집하겠습니다.
+$ sudo edquota -g FTP --filesystem /dev/sda1 
+```
+전체 사용자의 할당량을 편집하려면, -u 옵션을 생략합니다.
+
+
+## setup
+설치 및 설정은 다음과 같습니다.
+
+### Install
+```bash
+$ sudo dnf install quota
+$ sudo apt install quota
+```
+먼저 사용할 저장 기기에 quota를 설정해야 합니다.  
+`/etc/fstab` 파일을 열어서 `usrquota` 또는 `grpquota` 옵션을 추가합니다.  
+```bash
+$ sudo vi /etc/fstab
+
+# mount option에 usrquota(유저 할당량 제한), grpquota(그룹 할당량 제한) 추가
+/dev/sda1 /home xfs defaults,usrquota,grpquota 0 0
+
+# apply changes
+$ sudo systemctl reboot
+# or
+$ sudo mount -o remount /home
+```
+
+다음은 디스크 사용량 테이블을 먼저 확인하겠습니다.
+```bash
+$ sudo quotacheck --create-files --user --group --verbose /dev/sda1
+```
+실행시 파일 시스템에 할당량 그룹과 할당량 사용자라는 두 개(`aquota.group`, `aquota.user` )의 테이블 파일이 생성됩니다.  
+
+이제 제한을 설정해보겠습니다. on/off 명령어를 사용하여 설정을 적용합니다.  
+```bash
+$ sudo quotaon /home
+```
+
+모든 유저의 사용량을 5GB로 제한하겠습니다.  
+```bash
+$ sudo edquota -f /dev/sda1
+```
+`edquota` 명령어를 실행하면, 사용자별로 설정할 수 있는 옵션들이 나타납니다.  
+
+
+
+
+
+
+
+## Reference
+- [[CentOS] 유저 별 용량 / 파일 개수 제한](https://blog.naver.com/ncloud24/221825908147)
+- [quota](https://linux.die.net/man/1/quota)
+- [quotacheck](https://linux.die.net/man/8/quotacheck)
+- [quotaon](https://linux.die.net/man/8/quotaon)
