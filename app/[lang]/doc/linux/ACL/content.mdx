@@ -225,6 +225,44 @@ $ cat $FILE
 ```
 
 
+# Practice
+
+
+### In your home directory you will find a file named `specialfile`. Add an ACL permission to this file so that the user called john can read and write to it.
+```bash
+[bob@centos-host ~]$ sudo setfacl -m u:john:rw specialfile
+[bob@centos-host ~]$ sudo getfacl specialfile
+# file: specialfile
+# owner: bob
+# group: bob
+user::rw-
+user:john:rw-
+group::r--
+mask::rw-
+other::r--
+```
+
+### To the file called specialfile add an ACL permission for the group called mail. The mail group should get permissions to read and execute this file.
+```bash
+[bob@centos-host ~]$ sudo setfacl -m g:mail:r-x specialfile
+[bob@centos-host ~]$ sudo getfacl specialfile
+# file: specialfile
+# owner: bob
+# group: bob
+user::rw-
+group::r--
+group:mail:r-x
+mask::r-x
+other::r--
+```
+
+### Remove the file called specialfile from your home directory. You will notice that not even sudo rm can remove this file. That's because the file is currently immutable. Remove the immutable flag from it and then delete the file.
+```bash
+[bob@centos-host ~]$ sudo chattr -i specialfile 
+[bob@centos-host ~]$ rm specialfile
+```
+
+
 
 
 ## References

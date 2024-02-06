@@ -88,6 +88,34 @@ RAID 레벨(0~6)은 데이터를 관리하는 방식을 의미한다.  ( `RAID1`
    4. 레벨 1과 레벨 0을 결합하여 적은양의 증분효과를 얻지만 안정성을 높일 수 있습니다.
 위처럼 각 레벨의 특성을 고려하여 설계하여 사용해야한다.
 
+## mdadm
+mdadm(manage Multiple Devices devices aka Linux Software RAID)는 리눅스에서 소프트웨어 레벨에서 RAID를 관리하는데 사용되는 도구이다.  
+
+```bash
+mdadm [mode] <raiddevice> [options] <component-devices>
+```
+###  Modes
+- --create: 새로운 RAID array를 생성합니다.
+- --assemble: 이전에 생성된 RAID array를 재조립합니다.
+- --build: RAID array를 생성하지 않고, 디스크를 검사합니다.
+- --grow: RAID array의 크기를 변경합니다.
+- --manage: RAID array의 관리를 합니다.
+- --monitor: RAID array의 모니터링을 합니다.
+- --misc: 기타 명령어를 실행합니다.
+- --incremental: RAID array의 증분을 실행합니다.
+
+### Options
+- --level: RAID 레벨을 설정합니다.
+- --raid-devices: RAID array에 사용할 디스크의 개수를 설정합니다.
+- --spare-devices: RAID array에 사용할 스페어 디스크의 개수를 설정합니다.
+- --bitmap: RAID array에 사용할 비트맵을 설정합니다.
+- --name: RAID array의 이름을 설정합니다.
+- --homehost: RAID array의 호스트 이름을 설정합니다.
+- --uuid: RAID array의 UUID를 설정합니다.
+
+
+
+
 Let's jump to the commands
 ---
 만약 이전시에 LVM을 사용했다면 /dev/vdc, /dev/vdd, /dev/vde 디스크를 release 해주자.  
@@ -144,6 +172,40 @@ md0 : active raid1 vde[2] vdd[1] vdc[0]
       1047552 blocks super 1.2 [3/2] [UU_]
       bitmap: 1/1 pages [4KB], 65536KB chunk
 ```
+
+
+# Practice
+
+### Create a level 1 RAID array, at /dev/md0, with two devices: /dev/vdc and /dev/vdd.
+
+```bash
+$ sudo mdadm --create --level=1 /dev/md0  --raid-devices=2 /dev/vdc /dev/vdd
+mdadm: Note: this array has metadata at the start and
+    may not be suitable as a boot device.  If you plan to
+    store '/boot' on this device please ensure that
+    your boot-loader understands md/v1.x metadata, or use
+    --metadata=0.90
+Continue creating array? yes              
+mdadm: Defaulting to version 1.2 metadata
+mdadm: array /dev/md0 started.
+
+$ cat /proc/mdstat 
+Personalities : [raid1] 
+md0 : active raid1 vdd[1] vdc[0]
+      1046528 blocks super 1.2 [2/2] [UU]
+```
+
+### Add another device, /dev/vde, to the previously created array, /dev/md0.
+   
+```bash
+$ sudo mdadm --manage /dev/md0 --add /dev/vde 
+mdadm: added /dev/vde
+```
+
+
+
+
+
 
 
 

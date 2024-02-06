@@ -11,6 +11,10 @@ quota는 사용자 또는 그룹이 사용할 수 있는 디스크 공간을 관
 파일 시스템의 디스크 할당량 파일에 기록된 테이블과 비교합니다.  
 만약 불일치가 발견되면, 파일 시스템의 디스크 할당량 파일을 업데이트합니다.  
 
+### setquota
+
+setquota(set disk quotas) is a command line quota editor.
+
 ### quotaon, quotaoff 
 
 ### fallocate
@@ -84,6 +88,48 @@ $ sudo quotaon /home
 $ sudo edquota -f /dev/sda1
 ```
 `edquota` 명령어를 실행하면, 사용자별로 설정할 수 있는 옵션들이 나타납니다.  
+
+
+# Practice
+
+### Edit disk quotas for the user called john. Set a soft limit of 100 megabytes and hard limit of 500 megabytes on /mnt partition.
+
+```bash
+$ sudo setquota -u john 100 500 0 0 /mnt
+```
+or
+```bash
+$ sudo edquota -u john --filesystem=/mnt
+```
+아래와 같이 뜬다.
+```
+Disk quotas for user john (uid 1003):
+  Filesystem                   blocks       soft       hard     inodes     soft     hard
+  /dev/vdb1                         0          0          0          0        0        **0**
+```
+100M, 500M 을 입력하고 저장하면 다음과 같이 변한다.
+```
+Disk quotas for user john (uid 1003):
+  Filesystem                   blocks       soft       hard     inodes     soft     hard
+  /dev/vdb1                         0     102400     512000          0        0        0
+```
+아직 반영이 안되었다..
+```bash
+$ sudo quota --user john
+Disk quotas for user john (uid 1003): no limited resources used
+```
+
+> 사실 이단계에서 된것이었다.. 영어를 잘 해석해보자 ㅋㅋ..
+
+
+다시 마운트하자
+```bash
+$ sudo mount -o remount  /mnt
+```
+Another way to edit the disk quota is to use the xfs_quota command:
+```bash
+sudo xfs_quota -x -c 'limit bsoft=100m bhard=500m john' /mnt/
+```
 
 
 
