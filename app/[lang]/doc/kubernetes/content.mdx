@@ -1,7 +1,7 @@
 # What is Kubernetes?
 > 'k8s' 또는 'kube'라고도 하는 Kubernetes는 컨테이너화된 애플리케이션의 배포, 관리 및 확장을 예약하고 자동화하기 위한 컨테이너 오케스트레이션 플랫폼입니다.  
 > Kubernetes는 컨테이너화된 애플리케이션을 클러스터로 그룹화하고, 클러스터의 리소스를 동적으로 관리하며, 클러스터의 상태를 지속적으로 모니터링합니다.  
-> Kubernetes는 컨테이너화된 애플리케이션을 배포하고 확장하는 데 필요한 모든 기능을 제공합니다.
+> Kubernetes는 컨테이너화된 애플리케이션을 배포하고 확장하는 데 필요한 모든 기능을 제공합니다.  
 > Google의 엔지니어들이 처음 개발했습니다. Google 내부에서 사용되는 컨테이너 오케스트레이션 플랫폼인 Borg를 기반으로 개발되었습니다.  
 
 처음 진입한 방대한 생태계에 머리가 지끈거리고, 눈꺼풀이 무거워지는게 느껴진다 하지만
@@ -14,7 +14,8 @@
 여러분이라면, 2백만개의 컨테이너를 어떻게 관리할 것인가? 라는 질문에 대한 답을 생각해보자.    
 그리고 구글의 답은 Kubernetes이다.    
 
-Kubernetes는 그리스어로 조타수,조종사를 의미하는데, `헤이 ixi로 라벨링 된 컨테이너들을 19시에 정지하고 08시에 다시 배포해줘` 라고 명령하면 마치 내가 한 척의 배의 조타수가 되어 수천,수만개의 컨테이너를 관리하는 것처럼 느껴진다.  
+Kubernetes는 그리스어로 조타수,조종사를 의미하는데, `헤이 ixi로 라벨링 된 컨테이너들을 19시에 정지하고 08시에 다시 배포해줘` 라고 명령하면,   
+마치 내가 한 척의 배의 조타수가 되어 수천,수만개의 컨테이너를 관리하는 것처럼 느껴진다.  
 
 ## Terms
 용어에 친숙해지기 위해 우리는 몇가지 용어를 알아야 한다.
@@ -22,16 +23,21 @@ Kubernetes는 그리스어로 조타수,조종사를 의미하는데, `헤이 ix
 - 컨테이너화된 애플리케이션을 실행하는 것을 의미한다.
 - Pod, Deployment, StatefulSet, DaemonSet, Job, CronJob 등 앱을 실행하는 리소스를 의미한다.
 ### Pod
+> 자식같은 놈들이다. 작은놈이 하고 싶은대로 다한다.
 Kubernetes에서 생성하고 관리할 수 있는 배포 가능한 가장 작은 컴퓨팅 단위입니다.  
 하나 이상의 컨테이너를 포함하며, 컨테이너가 동일한 호스트에서 실행되어야 하는 경우에는 동일한 Pod에 배치됩니다.  
 네트워크와 스토리지를 공유하며, Pod의 모든 컨테이너는 동일한 IP 주소와 포트 공간을 공유합니다.
 
 ### Cluster
+> 가부장사회의 아버지와 같다. 명령만 겁나게 한다. 어따 배치해라 언제해라 어디로가라..
 노드의 집합을 의미한다. 
 클러스터에는 마스터 노드와 워커 노드가 있다. 
 
 
 ### Node
+> 어머니와 같은 존재다. 아버지의 명령을 받아 파드자식 놈들 직접 실행되는 공간이다. 에러나면 고치고 그냥 뒷바라지를 다한다.  
+> 비싸다. 가상머신으로 거의 대부분의 비용이 발생한다. 역시 육아는 비싸다.  
+
 클러스터의 일부로서, 컨테이너화된 애플리케이션을 실행하는 머신이다.
 온프레미스에서 노드는 물리적 또는 가상 머신이 될 수 있으며, 클라우드에서는 인스턴스가 될 수 있다.
 AWS, GCP, Azure 등의 클라우드 플랫폼에서는 노드를 VM이라고 부르기도 한다.  
@@ -51,15 +57,44 @@ michelle    Ready      <none>          56d   v1.28.2 -> 워커노드
 하지만 k8s는 다르다. 그저 Local PC에 설치한다면 삭제하기도 어렵고, 무엇보다도 k8s는 분산시스템이다.  
 다수의 VM 세팅과 네트워크 설정은 우리의 시작을 방해할 것이다.  
 설치를 권유하진 않지만, 원한다면 [minikube](https://minikube.sigs.k8s.io/docs/start/), virtual machine(OS자체를 삭제하기 용이하면 좋다.) 환경의 [kubeadm](https://kubernetes.io/ko/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) 등을 사용하여 설치하기 바란다.  
-우린 온프레미스 환경,  클라우드 플랫폼에서 제공하는 EKS, GKE, AKS  어떠한  k8s 환경인지 고려하여
-세팅해
-### 시작하기
+우린 온프레미스 환경,  클라우드 플랫폼에서 제공하는 EKS, GKE, AKS  어떠한  k8s 환경인지 고려하여 잘 기획하는 것이 핵심.
+
+## 시작하기
+노드 목록을 확인한다.
 ```bash
-$ kubectl get nodes
-
+$ kubectl get nodes -o wide
+NAME        STATUS   ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
+abacus102   Ready    <none>          63d   v1.28.2   192.168.0.102   <none>        Ubuntu 20.04.6 LTS   5.4.0-167-generic    containerd://1.6.25
+abacus103   Ready    control-plane   65d   v1.28.4   192.168.0.103   <none>        Ubuntu 20.04.6 LTS   5.4.0-167-generic    containerd://1.6.26
+michelle    Ready    <none>          62d   v1.28.2   192.168.0.101   <none>        Ubuntu 18.04 LTS     4.15.0-213-generic   containerd://1.7.11
 ```
+6개의 노드가 있다.   
 
+### Pod 생성하기
+파드를 생성하기전 어떤 곳에 생성할지, 어떤 이미지를 사용할지, 어떤 포트를 사용할지 등을 정해야 한다.  
+먼저 관리가 용이한 네임스페이스를 생성한다.
+```bash
+$ kubectl create namespace temp
+namespace/temp created
+```
+이후 파드를 생성하면 된다.
+```bash
+$ kubectl run nginx --image=nginx --namespace=temp
+pod/nginx created
+```
+생성된 파드를 확인한다.
+```bash
+$ kubectl get pods -n temp
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          3m
+```
+파드가 생성되었다.  
 
+파드를 삭제 할 수 도 있지만, 네임스페이스를 삭제하면 파드도 같이 삭제된다.
+```bash
+$ kubectl delete namespace temp
+namespace "temp" deleted
+```
 
 
 ### Reference
