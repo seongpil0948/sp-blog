@@ -1,0 +1,418 @@
+
+# KVM
+Kernel-based Virtual Machine (KVM)은 리눅스 커널에서 하드웨어 가상화를 지원하는 모듈이다. KVM은 QEMU를 이용하여 가상화를 수행한다. QEMU는 CPU 에뮬레이션을 지원하는 가상화 소프트웨어이다. KVM은 QEMU를 이용하여 가상화를 수행하며, KVM 모듈을 이용하여 CPU 가상화를 수행한다.  
+
+## Setup
+사용될 패키지를 설치한다.
+```bash
+# in centos
+$ sudo dnf install qemu-kvm libvirt
+# $ sudo systemctl start libvirtd
+# $ sudo systemctl enable libvirtd
+```
+
+관리할 가상 머신을 명세하는 XML 파일을 생성한다.
+```bash
+$ vi testmachine.xml
+```
+```xml
+<!-- domain basically refer to a vm -->
+<domain type="qemu">
+  <name>TestMachine</name>
+  <!-- <memory unit="KiB">1048576</memory> -->
+  <!-- 1GB -->
+  <memory unit="GiB">1</memory>
+  <vcpu placement="static">2</vcpu>
+  <os>
+    <!--  This element describes the type of the VM. The arch attribute specifies the architecture of the VM's CPU,  -->
+    <!-- 하드웨어 가상 머신을 의미합니다. -->
+    <type arch="x86_64" machine="pc-i440fx-2.12">hvm</type>
+    <!-- VM will try to boot from the hard drive first. -->
+    <boot dev="hd"/>
+  </os>
+  <!-- <devices>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2"/>
+      <source file="/var/lib/libvirt/images/testmachine.qcow2"/>
+      <target dev="vda" bus="virtio"/>
+    </disk>
+    <interface type="network">
+      <source network="default"/>
+    </interface>
+  </devices> -->
+<domain>
+```
+
+이제 가상 머신을 생성한다.  
+> `virsh`은 가상화 관리를 위한 명령어를 제공하는 프로그램으로 `libvirt` 패키지에 포함되어 있다.  
+```bash
+$ sudo virsh define testmachine.xml
+#  off
+$ sudo virsh define --disable TestMachine
+# get info
+$ sudo virsh dominfo TestMachine
+Id:             -
+Name:           TestMachine
+UUID:           01e3...
+OS Type:        hvm
+State:          shut off
+CPU(s):         1
+Max memory:     1048576 KiB
+Used memory:    1048576 KiB
+Persistent:     yes
+Autostart:      disable
+Managed save:   no
+Security model: selinux
+Security DOI:   0
+```
+2CPU로 변경한다.
+```bash
+$ virsh help setvcpus
+Name
+  setvcpus - Change the number of virtual CPUs
+$ sudo virsh setvcpus TestMachine 2
+# error: invalid argurments 에러가 발생max allowable vcpus for the  persistent domain is 1
+#  set maximum vcpus not assigned real cpu
+$ sudo virsh setvcpus TestMachine 2 --config --maximum
+# 여기서 --config 는 maximum을 자동으로 적용하도록 설정한다.
+$ sudo virsh setvcpus TestMachine 2 --config 
+
+# set maximum memory
+$ sudo virsh setmaxmem TestMachine 2G --config
+```
+
+가상 머신을 시작한다.
+```bash
+# not active yet
+$ sudo virsh list --all
+Id  Name          State
+---------------------------
+1   TestMachine   shut off
+
+$ sudo virsh start TestMachine
+$ sudo virsh list
+Id  Name          State
+---------------------------
+1   TestMachine   running
+```
+서버가 리부팅을 하면 가상 머신이 자동으로 시작되도록 설정한다.
+```bash
+$ sudo virsh autostart TestMachine
+```
+
+
+리부팅등 종료 명령어를 VM에 전달한다.
+```bash
+# (graceful)
+$ sudo virsh reboot TestMachine
+Domain TestMachine is being rebooted
+
+# shutdown (graceful)
+$ sudo virsh shutdown TestMachine
+Domain TestMachine is being shutdown
+
+# force shutdown (unplugging power cord in other words not graceful shutdown)
+$ sudo virsh reset TestMachine
+Domain TestMachine is being reset
+
+# hard power off, not graceful
+$ sudo virsh destroy TestMachine
+Domain TestMachine destroyed
+```
+위 명령어는 `virsh list --all` 을 통해 shutdown 상태를 확인 할 수 있다.  
+완전히 종료된 가상 머신을 삭제한다.
+```bash
+$ sudo virsh undefine TestMachine
+```
+
+
+해당 명령은 우리가 정의한 가상 컴퓨터만 삭제하지만 저장된 데이터는 삭제하지 않습니다.(연결된 가상 디스크가 있는 경우).  
+이번에는 모든 것을 제거하고 전체 머신 데이터를 완전히 폐기한다고 가정해 보겠습니다. 
+```bash
+$ sudo virsh help undefine
+```
+```bash
+$ sudo virsh undefine TestMachine --remove-all-storage  
+```
+
+---
+우린 지금까지 KVM을 이용하여 가상 머신을 생성하고 관리하는 최소한의 방법을 알아보았다.  
+좀더 흥미롭고 실무적인 내용을 알아보자.  
+
+## virt-manager
+`virt-manager`는 GUI를 이용하여 가상 머신을 관리(`libvirt`)할 수 있는 프로그램이다.  
+주로 KVM VM을 대상으로 하지만 Xen 및 LXC(Linux 컨테이너)도 관리합니다.
+
+### About virt-manager’s supporting tools
+- `virt-install` is a command line tool which provides an easy way to provision operating systems into virtual machines.
+- `virt-viewer` is a lightweight UI interface for interacting with the graphical display of virtualized guest OS. It can display VNC or SPICE, and uses libvirt to lookup the graphical connection details.
+- `virt-clone` is a command line tool for cloning existing inactive guests. It copies the disk images, and defines a config with new name, UUID and MAC address pointing to the copied disks.
+- `virt-xml` is a command line tool for easily editing libvirt domain XML using virt-install’s command line options.
+- `virt-bootstrap` is a command line tool providing an easy way to setup the root file system for libvirt-based containers.
+
+### setup
+```bash
+# install
+$ sudo apt install virt-manager
+# download ubuntu img
+$ wget https://cloud-images.ubuntu.com/minimal/releases/jammy/release/ubuntu-22.04-minimal-cloudimg-amd64.img
+
+# print img info
+$ qemu-img info ubuntu-22.04-minimal-cloudimg-amd64.img
+image: ubuntu-22.04-minimal-cloudimg-amd64.img
+file format: qcow2
+virtual size: 2.0 GiB (2147483648 bytes)
+disk size: 1.1 GiB
+cluster_size: 65536
+...
+```
+추가 소프트웨어 설치와 용도에 따라 더 큰 사이즈(10G)로 Virtual disk을 생성한다.
+```bash
+$ qemu-img resize ubuntu-22.04-minimal-cloudimg-amd64.img 10G
+```
+
+```bash
+$ ls /var/lib/libvirt/
+images  storage  ...
+# copy img to libvirt
+$ sudo cp ubuntu-22.04-minimal-cloudimg-amd64.img /var/lib/libvirt/images/
+```
+자 이제 맨땅에 헤딩 해보자
+```bash
+$ virt-install
+```
+뭘 추가해라 어떻게 확인해라 다 알려준다. 친절.  
+os 선택(필수), 메모리, cpu, 디스크, 네트워크, 그래픽, 부팅 순서, 추가 옵션 등을 설정할 수 있다.  
+
+```bash
+$ virt-install --osinfo list
+windows11
+windows10
+windows8
+...
+ubuntu22.04
+ubuntu20.04
+suse15.3
+...
+```
+음 이런게 있구나 하고 `man virt-install` 의 EXAMPLES에서 복붙해서 사용하자.  
+가 아니라 우리는 사전 OS 이미지를 다운로드 받았으니 `--import` 옵션을 사용하자.  
+```bash
+$ virt-install --help
+```
+---
+```bash
+$ sudo virt-install \
+--name ubuntu1 \
+--graphics none \
+--memory 1024 \
+--vcpus 1 \
+--osinfo ubuntu22.04 \
+--import \
+--disk /var/lib/libvirt/images/ubuntu-22.04-minimal-cloudimg-amd64.img
+```
+- `--name` : 가상 머신 이름
+- `--graphics` : 그래픽 디스플레이 설정, none으로 설정하면 그래픽 디스플레이를 사용하지 않는다.
+- `--memory` : 메모리 크기
+- `--vcpus` : virtual CPU 코어 수
+- `--osinfo` : OS 정보, os-variant와 equivalent한 값이다.
+- `--import` : os 이미지를 import한다. (설치과정을 거치지 않는다)
+- '--disk' : 디스크 이미지 경로
+명령어를 실행하면 가상 머신이 생성되고 실행된 VM console로 접속된다.  
+> "openBSD 보안 쉘이 시작되지 못했습니다."  SSH 서버에서 로그인 세부 정보를 제공하지 않았기 때문에 실패하는 것은 정상입니다.
+
+```bash
+Ubuntu 22.04 LTS ubuntu1 ttyS0
+ubuntu1 login:
+```
+계정 정보를 모르니 아무것도 입력할 필요없다. 
+가상 머신의 console을 종료(escape)하려면 `Ctrl + ]`를 입력한다.(명령어 실행시 stdout으로 출력된 로그 상단에서도 확인 가능)    
+
+먼저 가상 머신 목록을 확인하자.
+```bash
+$ sudo virsh list --all
+ Id   Name    State
+--------------------
+  1    ubuntu1 running
+```
+기억들 하지? `virsh [shutdown | destroy | undefine]`  사용 가능.  
+삭제하자.
+```bash
+$ sudo virsh shutdown ubuntu1
+$ sudo virsh undefine ubuntu1
+```
+---
+다운 받은 이미지를 되돌아보자 `ubuntu-22.04-minimal-cloudimg-amd64.img`, 즉 클라우드 용으로 만들어진 이미지이다.  
+즉 셋업에 필요한 자동화된 스크립트가 존재한다는 뜻이다.
+
+아까 스크립트에 두개의 옵션만 추가하면 된다.
+```bash
+$ sudo virt-install \
+--name ubuntu2 \
+--graphics none \
+--memory 1024 \
+--vcpus 1 \
+--osinfo ubuntu22.04 \
+--import \
+--disk /var/lib/libvirt/images/ubuntu-22.04-minimal-cloudimg-amd64.img \
+--cloud-init \
+--root-password-generate=on
+```
+> `--root-password-generate=on` : 루트 비밀번호를 생성한다.
+10초간 보여지고 사라진다. 복사할 준비가 되어있어야 한다.
+
+```
+Starting install...
+Password for first root login is: s7d6asd6as7d
+```
+이제 로그인을 할수있고 OpenBSD 에러도 없다.  접속해보자.  
+디스크 용량을 확인해보자
+```bash
+$ sudo df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root      9.8G  1.1G  8.2G  12%   /
+```
+할당한 10G의 용량이 확인된다.
+인터넷은 연결된걸까?
+```bash
+$ sudo apt update
+```
+잘될 것이다.  
+---
+우린 언제든 다시. 접속 할 수 있다.  
+```bash
+$ sudo virsh console ubuntu2
+```
+
+마무리하며 Ubuntu 30.04 LTS 가 어제 나왔다고 칩시다.  
+`virt-install` 은 저놈의 타입을 모릅니다. 그렇다고 안되나?  
+설치 옵션중 `--os-info=detect`를 사용할 수 있다고 하지만 테스트하지 않았고 그렇게 사용할 마음도 없다 일단은.  
+
+
+
+## Practice
+
+### What does this command do?
+```bash
+virsh destroy TestMachine
+```
+It forces a power off for the virtual machine called TestMachine
+
+### Edit the mariadb-server.cnf config file to enable the remote access to your MariaDB server.
+
+```bash
+# pipe to exclude include docker
+sudo find / -name "*my*" | grep -v docker
+$ systemctl status mariadb
+Unit mariadb.service could not be found.
+```
+없네..? 깔아야해? ㅋㅋㅋ
+```bash
+$ sudo dnf update
+$ sudo dnf install mariadb-server
+$ ls /etc/ | grep my
+my.cnf
+my.cnf.d
+
+$ sudo vi mariadb-server.cnf
+[[insert]]
+$ sudo systemctl start mariadb
+$ sudo systemctl enable mariadb
+```
+
+### change the password for the MariaDB root user to `Secu43@123`
+```bash
+$ sudo mysql + <tab> + <tab>
+mysql                       mysql_fix_extensions
+mysqlaccess                 mysqlhotcopy
+mysqladmin                  mysqlimport
+mysqlbinlog                 mysql_install_db
+mysqlcheck                  mysql_plugin
+mysql_convert_table_format  mysql_secure_installation
+mysqld_multi                mysql_setpermission
+mysqld_safe                 mysqlshow
+mysqld_safe_helper          mysqlslap
+mysqldump                   mysql_tzinfo_to_sql
+mysqldumpslow               mysql_upgrade
+mysql_find_rows             mysql_waitpid
+$ sudo mysql_secure_installation
+Enter current password for root (enter for none): just enter
+Set root password? [Y/n] Y
+New password: Secu43@123
+```
+테스트!
+```bash
+$ mysql -u root -p 
+Enter password: Secu43@123
+```
+성고옹.
+
+### Change the MariaDB server port to 3308
+```bash
+# check before port is 3306
+$ ss -lnt
+State  Recv-Q Send-Q Local Address:Port  Peer Address:Port Process 
+LISTEN 0      80           0.0.0.0:3306       0.0.0.0:*  
+
+
+$ sudo vi mariadb-server.cnf
+[[insert]]
+[mysqld]
+pid-file=/run/mariadb/mariadb.pid
+port=3308
+$ sudo systemctl restart mariadb
+```
+
+### We have a configuration file /opt/testmachine2.xml on this system.
+```bash
+$ sudo virsh create /opt/testmachine2.xml 
+Domain VM2 created from /opt/testmachine2.xml
+
+[bob@centos-host ~]$ sudo virsh list
+ Id   Name   State
+----------------------
+ 1    VM2    running
+```
+### we want VM2 virtual machine to start up automatically at boot.
+```bash
+$ sudo virsh autostart VM2
+```
+### Change the memory size for `VM2`, set its value to `80M`
+현재 상태..
+```bash
+$ sudo virsh dominfo VM2
+Id:             1
+Name:           VM2
+UUID:           766552f3-753d-40bc-9361-3aa0082ab9cc
+OS Type:        hvm
+State:          running
+CPU(s):         1
+CPU time:       1.4s
+Max memory:     128000 KiB
+Used memory:    128000 KiB
+Persistent:     no
+Autostart:      disable
+Managed save:   no
+Security model: selinux
+Security DOI:   0
+Security label: system_u:system_r:svirt_tcg_t:s0:c247,c612 (permissive)
+$ sudo virsh -h | grep mem
+    memtune                        Get or set memory parameters
+    setmaxmem                      change maximum memory limit
+    setmem                         change memory allocation
+```
+찾았다 요놈
+```bash
+$ sudo virsh setmaxmem VM2 80M --config
+$ sudo virsh setmem VM2 80M --config
+error: Requested operation is not valid: cannot resize the maximum memory on an active domain
+sudo virsh shutdown VM2
+sudo virsh start VM2 80M
+```
+
+
+
+
+## References
+- [네이버클라우드-기술-경험-가상화-개념-이해하기-1-qemu-vs-kvm](https://medium.com/naver-cloud-platform/%EB%84%A4%EC%9D%B4%EB%B2%84%ED%81%B4%EB%9D%BC%EC%9A%B0%EB%93%9C-%EA%B8%B0%EC%88%A0-%EA%B2%BD%ED%97%98-%EA%B0%80%EC%83%81%ED%99%94-%EA%B0%9C%EB%85%90-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0-1-qemu-vs-kvm-962113641799)
+- [man](https://linux.die.net/man/1/qemu-kvm)
