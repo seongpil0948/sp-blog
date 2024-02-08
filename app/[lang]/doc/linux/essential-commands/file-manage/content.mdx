@@ -1,0 +1,85 @@
+# File permission
+리눅스는 모든 것을 파일로 간주합니다. 디렉토리, 파일, 소켓, 프로세스, 사용자, 그룹 등 모든 것은 파일로 표현됩니다.   
+파일에는 권한이 있습니다. 이 권한은 파일을 읽고 쓰고 실행할 수 있는지 여부를 결정합니다. 파일 권한은 소유자, 그룹, 기타 사용자에 대해 설정됩니다.  
+
+## File type
+리눅스 파일은 크게 7가지 타입으로 나뉩니다.
+- `-` : Regular file
+- `d` : Directory
+- `l` : Symbolic link
+- `c` : Character device file
+- `b` : Block device file
+- `p` : Named pipe
+- `s` : Socket
+
+## Permission
+파일 권한은 소유자, 그룹, 기타 사용자에 대해 설정됩니다.
+- `r` : 읽기 권한(4) = 100
+- `w` : 쓰기 권한(2) = 010
+- `x` : 실행 권한(1) = 001 
+권한은 십진수, 8진수(2^3, 2^2, 2^1) = 111, 문자로 표현될 수 있습니다.  
+
+### Sticky bit
+디렉토리에 sticky bit가 설정되어 있으면, 사용자는 자신이 소유한 파일만 삭제할 수 있습니다.  
+`/tmp` 디렉토리에 sticky bit가 설정되어 있습니다.  
+```bash
+$ ls -ld /tmp
+drwxrwxrwt 15 root root 4096  4월 19 23:44 /tmp
+```
+
+
+# Search file
+우리는 파일 시스템에게 inode를 사용하여 파일을 찾도록 요청합니다.
+
+## find
+`find` 명령어는 파일 시스템에서 파일을 찾는데 사용됩니다.
+```bash
+$ find [path] [option] [expression]
+```
+- `[path]` : 파일을 찾을 디렉토리
+- `[option]` : 옵션
+- `[expression]` : 찾을 파일의 표현식
+
+### Option
+- `-mmin` : 파일이 마지막으로 수정된 시간으로 파일을 찾습니다.
+- `-mtime` : 파일이 마지막으로 수정된 날짜로 파일을 찾습니다.
+- `-amin` : 파일이 마지막으로 접근된 시간으로 파일을 찾습니다.
+- `-atime` : 파일이 마지막으로 접근된 날짜로 파일을 찾습니다.
+- `-cmin` : 파일의 상태가 마지막으로 변경된 시간으로 파일을 찾습니다.
+- `-ctime` : 파일의 상태가 마지막으로 변경된 날짜로 파일을 찾습니다.
+
+# Practice
+
+### What command would find files and directories modified in the last 5 minutes in /dev directory?  
+```bash
+$ find /dev -mmin -5
+```
+
+### What command removes the write permission for the group from a file?
+```bash
+$ chmod g-w file
+```
+
+###  Find files/directories under `/var/log/` directory that the group can write to, but `others` cannot `read or write` to it.   
+Save the list of the files/directories (with complete parent path) in /home/bob/data.txt file.  
+
+To make this easier to understand, the logic of the command can be broken down like this:  
+-> Permissions for the group have to be at least w. If there's also an extra r or x in there, it will still match.  
+-> Permissions for others have not to be r or w. That means, if any of these two permissions, r or w match for others, the result has to be excluded.
+
+```bash
+# except can read and write to others
+# include can write to group
+# -iname : ignore case sensitive
+$ sudo find /var/log -perm /g=w ! -perm /o=rw > /home/bob/data.txt
+```
+
+### Find our secret file under `/home/bob`. You can either look for a file that is exactly `213 kilobytes` or a file that has permission `402` in octal.
+secret file must include '/.' in the file path.  
+```bash
+
+$ find /home/bob -size 213k -o -perm 402 > /home/bob/secfile.txt
+
+```
+
+

@@ -15,6 +15,7 @@
     "fallocate",
     "gpasswd",
     "IMAPS",
+    "iname",
     "iostat",
     "Keycloak",
     "Luks",
