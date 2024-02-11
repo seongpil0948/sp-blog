@@ -1,0 +1,234 @@
+# Compression, Decompression
+리눅스에서 파일을 압축하고 해제하는 방법에 대해 알아보겠습니다.
+
+## Error redirect
+리눅스에서 명령어를 실행할 때, 에러메시지를 파일로 저장하고 싶을 때가 있습니다.  
+- `1>` or `>` 를 사용하면 표준 출력을 파일로 저장할 수 있습니다.  
+- `2>` 를 사용하면 표준 에러를 파일로 저장할 수 있습니다.  
+- `2>&1` 를 사용하면 표준 출력과 표준 에러를 동시에 파일로 저장할 수 있습니다.
+  - 2의 출력을 1의 주소로 보내라는 의미입니다.
+### Execute `/home/bob/script.sh` script and save all normal output (except `errors/warnings`) in `/home/bob/output_stdout.txt` file. 
+```bash
+$ /home/bob/script.sh > /home/bob/output_stdout.txt
+```
+
+### 이번엔 error, warning , normal output을 모두 `/home/bob/output.txt` 파일로 저장하고 싶다면?
+```bash
+# 표준 출력을 /home/bob/output.txt 파일로 저장합니다. 
+# 이후 표준 에러를 표준 출력으로 보냅니다.
+$ /home/bob/script.sh > /home/bob/output.txt 2>&1
+```
+
+### 에러만 저장하고 싶다면?
+```bash
+$ /home/bob/script.sh 2> /home/bob/output_errors.txt
+```
+
+## tar
+`tar` is a command-line utility that is used to create and manipulate archive files in Linux. It is a short form of "Tape Archive".  
+`tar`은 리눅스에서 아카이브 파일을 생성하고 조작하는 데 사용되는 명령 줄 유틸리티로 "Tape Archive"의 약자입니다.   
+> It is used to store and extract files from a tape or disk archive. 
+> It is a very useful tool for archiving multiple files together into a single file. 
+> It is also used to compress and decompress files.
+
+### GNU-style usage
+```
+tar {--catenate|--concatenate} [OPTIONS] --file ARCHIVE ARCHIVE...
+tar --create [--file ARCHIVE] [OPTIONS] [FILE...]
+tar {--diff|--compare} [--file ARCHIVE] [OPTIONS] [FILE...]
+tar --delete [--file ARCHIVE] [OPTIONS] [MEMBER...]
+tar --append [--file ARCHIVE] [OPTIONS] [FILE...]
+tar --list [--file ARCHIVE] [OPTIONS] [MEMBER...]
+tar --test-label [--file ARCHIVE] [OPTIONS] [LABEL...]
+tar --update [--file ARCHIVE] [OPTIONS] [FILE...]
+tar {--extract|--get} [--file ARCHIVE] [OPTIONS] [MEMBER...]
+```
+- --concatenate: -A
+- --create: -c
+- --compare: -d
+- --delete: -D
+- --append: -r
+- --list: -t
+- --test-label: -l
+- --update: -u
+- --extract: -x
+- --verbose: -v
+
+### Operation mode
+- `--diff` : Find differences between archive and file system
+  - `$ tar --diff --file=archive.tar file1 file2 file3`
+- `--test-label` : Test the archive volume label and exit
+  - `$ tar --test-label --file=archive.tar "Volume 1"`
+- `--update` : Only append(not replace) files newer than copy in archive
+  - `$ tar --update --file=archive.tar file1 file2 file3`
+### --list
+List the contents of an archive file.
+```sh
+$ tar --list --file=archive.tar
+$ tar -tf archive.tar
+$ tar tf archive.tar
+file1
+file2
+file3
+```
+
+### --create
+Create a new archive file.
+```sh
+$ tar --create --file=archive.tar file1 file2 file3
+$ tar -cf archive.tar file1 file2 file3
+```
+
+### --append
+Append files to the end of an archive file.
+```sh
+$ tar --append --file=archive.tar file4 file5
+$ tar -rf archive.tar file4 file5
+```
+
+### --extract
+> Extract files from an archive file.  
+만약 `tar --list --file=archive.tar` 명령어 즉, `archive.tar` 에 포함된 파일 목록이 
+```
+Pictures/
+Pictures/family_dog.jpg
+```
+라고 가정하겠습니다.
+```sh
+$ tar --extract --file=archive.tar
+$ tar -xf archive.tar
+```
+위 명령어를 실행하면 현재 경로 기준으로 아래 파일들이 생성됩니다.
+
+```
+/home/user/Pictures/
+/home/user/Pictures/family_dog.jpg
+```
+특정 경로 기준으로 파일을 추출하고 싶다면 `-C` 옵션을 사용합니다.
+```sh
+$ tar --extract --file=archive.tar --directory /home/user
+$ tar -xf archive.tar -C /home/user
+```
+> 만약 permission 까지 원본과 동일하게 유지하고 싶다면 `--preserve-permissions` 옵션을 사용합니다.
+```sh
+$ tar --extract --file=archive.tar --preserve-permissions
+```
+---
+리눅스에서 compression utilities는 세가지 종류(format)가 있습니다.  
+`[format]`: [tar option]과 예제들로 알아보겠습니다.
+- `gzip` :  `-z`, `--gzip`
+  - `$ tar -czf archive.tar.gz file1 file2 file3`
+  - `$ gzip file1 -> file1.gz`
+- `bzip2` : `-j`, `--bzip2`
+  - `$ tar -cjf archive.tar.bz2 file1 file2 file3`
+  - `$ bzip2 file1 -> file1.bz2`
+- `xz` : `-J`, `--xz`
+  - `$ tar -cJf archive.tar.xz file1 file2 file3`
+  - `$ xz file1 -> file1.xz`
+
+각 파일을 해제하고 싶다면 `c` -> `x` 로 변경하면 됩니다.  
+확장자에 따라 자동으로 압축 할 수 있는 옵션도 있습니다.
+```bash
+$ tar --create  --auto-compress --file archive.tar.xz  file1 file2 file3
+```
+> 해제시는 압축된 파일 포맷에 따라 자동으로 추출됩니다.
+
+#TODO: 예제 추가
+## Backup to remote server (Directory )
+원격서버에서 소프트웨어를 설치하거나 설정을 변경하면서 혹은 DB를 백업을 하고 싶을 때가 있습니다.   
+리눅스 백업 관련 툴인 rsync(remote synchronization)는 원격서버와 로컬서버간에 파일을 동기화(using ssh)하는데 사용되는 도구입니다.
+```sh
+$ rsync -a /Pictures/ xxxx@xxxxxx:/backup/Pictures/
+```
+위 명령어는 `/Pictures/` 디렉토리를 원격서버의 `/backup/Pictures/` 디렉토리로 동기화합니다.  
+`-a`=`--archive` 옵션은 아래 옵션들을 포함합니다.
+- `-r` : recursive
+- `-l` : copy symlinks as symlinks
+- `-p` : preserve permissions
+- `-t` : preserve modification times
+- `-g` : preserve group
+- `-o` : preserve owner
+- `-D` : same as `--devices --specials`
+만약 명령어를 두번째 실행하면 변경된 파일만(skip old data) 동기화합니다.   
+반대로, 원격서버의 파일을 로컬로 동기화하고 싶다면 아래와 같이 명령어를 실행합니다.
+```sh
+$ rsync -a xxxx@xxxxxx:/backup/Pictures/ /Pictures/
+```
+## Backup to remote server (disk image) 
+때로 우리는 특정 파티션, 디스크를 백업하고 싶을 때가 있습니다.  
+`dd` 명령어는 디스크 이미지를 생성하거나 복사하는데 사용됩니다.  
+```sh
+$ sudo dd if=/dev/vda of=disk-image.raw bs=1M status=progress
+```
+이는 해당 디스크/파티션에 있는 모든 데이터를 이미지 비트 단위로 정확한 복사본을 만듭니다.
+> Before saving a disk or partition image, you should unmute that disk or partition to make sure no data is being changed while you back it up.
+- if : input file = disk or partition
+- of : output file = disk image file = backup file
+- bs : block size = 속도를 높이기 위해 사용됩니다.
+- progress : 진행상황을 보여줍니다.
+
+### Restore from disk image
+if, of 옵션을 바꿔서 복구할 수 있습니다.
+```sh
+$ sudo dd if=disk-image.raw of=/dev/vda bs=1M status=progress
+```
+> virtual machine의 경우, 해당 디스크/파티션을 언마운트 하고, 해당 VM을 종료해야합니다.
+> 그렇지 않을 경우 overwrite가 발생할 수 있습니다.
+
+
+
+
+# Practice
+> tar: Removing leading '/' from member names는 tar 명령어를 실행할 때 종종 나타나는 메시지입니다. 이 메시지는 tar가 절대 경로를 상대 경로로 변환하고 있음을 알려줍니다.
+
+
+### Create a tar archive `logs.tar` (under bob's home) of `/var/log/` directory.  
+```bash
+$ sudo tar -cvf /home/bob/logs.tar /var/log/
+```
+
+### Create a compressed tar archive `logs.tar.gz` (under bob's home) of `/var/log/` directory.
+```bash
+$ sudo tar -czvf /home/bob/logs.tar.gz /var/log/
+or
+$ sudo tar --auto-compress --verbose --create --file /home/bob/logs.tar.gz /var/log/
+```
+
+### List the content of `/home/bob/logs.tar` archive and save the output in `/home/bob/tar_data.txt` file.
+```bash
+$ sudo tar --list --file /home/bob/logs.tar > /home/bob/tar_data.txt
+```
+
+### Extract the contents of `/home/bob/archive.tar.gz` to the `/tmp` directory.
+```bash
+$ sudo tar -xvf /home/bob/archive.tar.gz -C /tmp
+or 
+$ sudo tar --extract --file /home/bob/archive.tar.gz --directory /tmp
+```
+
+### Create a `bzip` archive under bob's home named `file.txt.bz2` out of `/home/bob/file.txt`, but preserve the original file. At the end of the exercise you should have both
+> `home/bob/file.txt` 로부터 `home/bob/file.txt.bz2` 파일을 생성하되 원본 파일은 유지합니다.
+```bash
+$ sudo tar --create --bzip2 --file /home/bob/file.txt.bz2 /home/bob/file.txt
+```
+### Create a `file.tar` archive of `/home/bob/file` directory under `/home/bob` location.
+```bash
+cd  /home/bob
+tar --create --file file.tar  file
+```
+
+### Sort the contents of `/home/bob/values.conf` file and save the sorted output in `/home/bob/values.sort ` file.
+- eliminate any common values
+- sort the values in dictionary order
+- alphabetically
+- ignore case
+```bash
+$ sort -i /home/bob/values.conf | uniq > /home/bob/values.sort
+or
+$ sort --unique --dictionary-order --ignore-case /home/bob/values.conf > /home/bob/values.sort
+
+```
+
+# Reference
+- [https://www.gnu.org/software/tar/manual/tar.html](https://www.gnu.org/software/tar/manual/tar.html)
+- [https://man7.org/linux/man-pages/man1/tar.1.html](https://man7.org/linux/man-pages/man1/tar.1.html)
