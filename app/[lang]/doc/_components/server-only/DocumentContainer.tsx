@@ -6,5 +6,5 @@ interface DocumentContainerProps {
 }
 
 export default function DocumentContainer(props: DocumentContainerProps) {
-  return <section className="document-container">{props.children}</section>
+  return <section>{props.children}</section>
 }

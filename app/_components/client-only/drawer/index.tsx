@@ -37,6 +37,7 @@ export default function CommonDrawer(props: CommonDrawerProps) {
       <Sheet
         classNames={{
           body: 'overflow-auto',
+          wrapper: 'h-full rounded-l-none rounded-r-xl shadow-xl',
         }}
         isOpen={isOpen}
         defaultOpen={sheetProps?.defaultOpen ?? true}

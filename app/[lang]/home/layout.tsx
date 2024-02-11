@@ -34,9 +34,9 @@ export default function RootLayout({
   return (
     <div className={layout()}>
       <CommonNavbar
-        prefix={<div></div>}
+        // prefix={<div></div>}
         leftTreeOptions={{
-          dir: 'app/[lang]/',
+          dir: 'app/[lang]',
         }}
       ></CommonNavbar>
       <main id="content-container" className={main()}>

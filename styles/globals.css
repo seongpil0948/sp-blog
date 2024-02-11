@@ -17,3 +17,7 @@ li > ul {
 li > p { 
   display: contents;
 }
+
+.document-container {
+  width: 100%;
+}

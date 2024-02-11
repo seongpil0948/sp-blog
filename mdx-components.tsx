@@ -19,7 +19,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     code: (props) => (
       <code
-        className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent px-0 py-0 font-mono text-small font-normal text-sky-400"
+        className="inline-block h-fit rounded-small  bg-transparent px-0 py-0 font-mono text-xs font-normal text-sky-400 md:text-small"
         // className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent px-0 py-0 font-mono text-small font-normal text-sky-400 before:content-['`'] after:content-['`']"
         // className="inline-block h-fit whitespace-nowrap rounded-small bg-transparent "
         {...props}
@@ -30,7 +30,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         <HeaderWithLink
           props={props}
           level={1}
-          className="mb-5 text-5xl font-bold leading-tight text-slate-900 dark:text-slate-200"
+          className="mb-5 text-3xl font-bold leading-tight text-slate-900 dark:text-slate-200 md:text-5xl"
         />
       )
     },
@@ -39,7 +39,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         <HeaderWithLink
           props={props}
           level={2}
-          className="my-10 text-3xl font-bold text-slate-900 dark:text-slate-200"
+          className="my-10 text-xl  font-bold text-slate-900 dark:text-slate-200 md:text-3xl"
         />
       )
     },
@@ -48,13 +48,13 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         <HeaderWithLink
           props={props}
           level={3}
-          className="mb-8 mt-10 text-2xl font-semibold text-slate-900 dark:text-slate-200"
+          className="mb-8 mt-10 text-lg font-semibold text-slate-900 dark:text-slate-200 md:text-2xl"
         />
       )
     },
     h4: (props) => (
       <h4
-        className="mb-2 text-sm font-semibold leading-6 text-slate-900 dark:text-slate-200"
+        className="text-md mb-2 font-semibold leading-6 text-slate-900 underline decoration-indigo-500 dark:text-slate-200"
         {...props}
       />
     ),
@@ -76,7 +76,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     li: (props) => (
       <li
-        className="text-md mb-2 leading-6 [&:before]:mr-6 [&:before]:content-['-']"
+        className="md:text-md mb-2 text-sm leading-6 [&::marker]:font-semibold [&:before]:mr-6 [&:before]:content-['-']"
         {...props}
       />
     ),
@@ -87,7 +87,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       />
     ),
     p: (props) => (
-      <p className="text-md my-5 font-normal leading-7" {...props} />
+      <p className="md:text-md my-5 text-sm font-normal leading-7" {...props} />
     ),
     pre: (props) => {
       return (
@@ -139,6 +139,7 @@ const Link = ({
       // isExternal={!href?.startsWith('/') && !href?.includes(APP_DOMAIN)}
       isExternal={false}
       showAnchorIcon
+      className="text-xs text-sky-500 underline hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-100 md:text-sm"
     >
       {children}
     </NextLink>

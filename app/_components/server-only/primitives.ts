@@ -16,7 +16,8 @@ export const main = tv({
 })
 
 export const docWrapper = tv({
-  base: 'docWrapper w-4xl mx-auto py-20',
+  base: 'docWrapper px-4 pt-15 mx-auto py-4 w-full sm:px-0  xl:w-4xl xl:py-20',
+
 })
 
 export const box = tv({

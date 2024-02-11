@@ -25,7 +25,7 @@ import { useRouter } from 'next/navigation'
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
   return (
-    <NextUINavbar classNames={classes} maxWidth="xl" position="sticky">
+    <NextUINavbar classNames={classes} maxWidth="full" position="sticky">
       <NavbarContent>
         <PrefixComp {...props} />
         <NavbarBrand as="li">
