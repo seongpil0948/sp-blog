@@ -33,7 +33,13 @@ export default function RootLayout({
         name="naver-site-verification"
         content="a1cd903032b0efba5543fddeb9533e90d0812859"
       />
-      <head />
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7483273776022909"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body
         className={clsx(
           'min-h-screen bg-background font-sans antialiased',
