@@ -1,6 +1,7 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "cSpell.words": [
+    "Anacron",
     "aquota",
     "Booleanish",
     "bootable",
@@ -20,6 +21,7 @@
     "IMAPS",
     "iname",
     "iostat",
+    "journalctl",
     "Keycloak",
     "Luks",
     "messageformat",
