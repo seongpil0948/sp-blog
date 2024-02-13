@@ -144,10 +144,6 @@ sudo apt-mark hold kubelet kubeadm kubectl
 sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
 sudo sudo mv /etc/containerd/config.toml /etc/containerd/config.bak.toml 
 sudo systemctl restart containerd
-
-
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/tigera-operator.yaml
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/custom-resources.yaml
 ```
 
 ## Create Cluster
@@ -174,34 +170,190 @@ default via 192.168.0.1 dev enp2s0f0 proto dhcp src 192.168.0.103 metric 100
    -  패킷은 192.168.0.1 게이트웨이로 전달됩니다.
 
 ## kubeadm init
+### hostname 설정
+```bash
+hostnamectl set-hostname 192.168.0.103
+```
+### disable swap
+```bash
+sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+```
+### disable firewall
+```bash
+sudo systemctl disable firewalld
+sudo systemctl stop firewalld
+```
+### Set SELinux to permissive mode:
+```bash
+# Set SELinux in permissive mode (effectively disabling it)
+sudo setenforce 0
+sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+```
+### sysctl 구성 및 커널 모드 활성화
+```bash
+sudo modprobe overlay
+sudo modprobe br_netfilter
+sudo tee /etc/sysctl.d/k8s.conf<<EOF
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF
+sudo sysctl --system
+```
+
+### add k8s repository
+```bash
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+EOF
+```
+###  Install kubelet, kubeadm and kubectl (and enable epel-release)
+```bash
+sudo dnf -y install kubelet kubeadm kubectl --disableexcludes=kubernetes epel-release
+kubectl version --client 
+```
+
+### install control-plane node
+make sure the br_netfilter module is loaded
+```bash
+lsmod | grep br_netfilter
+br_netfilter           36864  0
+bridge                409600  1 br_netfilter
+```
+Enable kubelet service
+```bash
+sudo systemctl enable kubelet
+```
+
+
 만약 aws, gcp, azure와 같은 클라우드 환경이라면 파드에 배정할 수 있는 IP가 한정됩니다.
 잘 확인하고 할당하시기 바랍니다.
 ```bash
-$ sudo kubeadm init --pod-network-cidr=192.168.0.0/16
-[WARNING Firewalld]: firewalld is active, please ensure ports [6443 10250] are open or your cluster may not function correctly
-[WARNING Swap]: swap is enabled; production deployments should disable swap unless testing the NodeSwap feature gate of the kubelet
-[WARNING Hostname]: hostname "103" could not be reached
-[WARNING Hostname]: hostname "103": lookup 103: no such host
+$ sudo kubeadm init \
+  --pod-network-cidr=192.168.0.0/16 \
+  --cri-socket=unix:///var/run/crio/crio.sock
 ```
-에러가 발생했군요!  
-방화벽 설정을 해주고, swap을 비활성화 해주고, 호스트네임을 설정해주어야 합니다.
+음 이미지를 pull 하는 과정에서 에러가 발생했다.
+```
+PullImage from image service failed" err="rpc error: code = Unknown desc = invalid policy in \"/etc/containers/policy.json\": Unknown key \"keyPaths\"" image="registry.k8s.io/kube-apiserver:v1.28.6"
+time="2024-02-14T00:23:47+09:00" level=fatal msg="pulling image: invalid policy in \"/etc/containers/policy.json\": Unknown key \"keyPaths\""
+, error: exit status 1
+To see the stack trace of this error execute with --v=5 or higher
+```
+
+keyPaths 키를 인식하지 못한다는 에러가 발생했다.  
+이는 crio의 버전이 낮아서 발생하는 문제로 보인다. 
 ```bash
-# firewall
-sudo firewall-cmd --permanent --add-port=6443/tcp
-sudo firewall-cmd --permanent --add-port=10250/tcp
-sudo firewall-cmd --reload
-
-# swap off
-sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+$ cat /etc/containers/policy.json
+{
+    "default": [
+        {
+            "type": "insecureAcceptAnything"
+        }
+    ],
+    "transports": {
+        "docker": {
+            "registry.access.redhat.com": [
+                {
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"]
+                }
+            ],
+            "registry.redhat.io": [
+                {
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"]
+                }
+            ]
+        },
+        "docker-daemon": {
+            "": [
+                {
+                    "type": "insecureAcceptAnything"
+                }
+            ]
+        }
+    }
+}
 ```
-
-
-
-설치후 표줄출력으로 나오는 join command 를 복사해두자.
+`/etc/containers` 디렉토리는 crio의 설정파일이다.
+`/etc/containers/policy.json` : 이미지를 pull할 때, 어떤 이미지를 pull할 수 있는지에 대한 정책을 설정하는 파일이다.
+파일을 확인해보니, keyPaths 키가 존재한다.  
+이상하다.. 검색을 해봐도 뭔가 꼬인것 같다 그래서 혹시몰라서..
 ```bash
-kubeadm join 192.168.0.103:6443 --token 852t7w.rb41pzw3wlge3ezs \
-        --discovery-token-ca-cert-hash sha256:8e05e2646f3a6aaf4878742c2250b8714c04183b4b9ba9ded92033ed1e609dcf 
+]$ sudo dnf upgrade
+Last metadata expiration check: 0:33:02 ago on Wed 14 Feb 2024 12:08:05 AM KST.
+Dependencies resolved.
+================================================================================================================================================================
+ Package                              Architecture              Version                               Repository                                           Size
+================================================================================================================================================================
+Upgrading:
+ containers-common                    noarch                    4:1-19.el9.28.25                      devel_kubic_libcontainers_stable                     61 k
+
+Transaction Summary
 ```
+뭔데 ㅋㅋㅋㅋ
+다시 실행하니 성공했다.  
+이제 클러스터 및 controlplane이 생성되었고, 워커 노드를 추가할 수 있는 join 명령어를 생성 가능하다.
+```bash
+$ sudo kubeadm token create --print-join-command
+kubeadm join 192.168.0.103:6443 --token ivqkx9.kv9pre3dljgn093w \
+        --discovery-token-ca-cert-hash sha256:fc67589410c4dd97c879879046fbfad8b9d0980967d2355edb20077e5a9926ae 
+```
+
+
+```bash
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+```
+위 출력에 따라 계속 진행해보자 
+### Set up local kubeconfig
+default로 설정된 kubeconfig 파일을 사용하려면, 아래 명령어를 실행합니다.  
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+#TODO
+### Set up pod network
+가장 골칫거리가 될 CNI 즉 pod network를 설정해야합니다.
+많이 사용되는 소프트웨어는 calico입니다.  
+calico는 kubernetes 클러스터의 네트워크 정책을 관리하는 오픈소스 솔루션입니다.
+클러스터의 CNI를 책임질 친구입니다. 
+```bash
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/tigera-operator.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/custom-resources.yaml
+```
+### Check the status of the control-plane node
+```bash
+$ sudo kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
+NAME        STATUS     ROLES                  AGE   VERSION
+abacus103   NotReady   control-plane,master   11m   v1.28.2
+```
+
+
+
 1. 각 노드 서버에 접속하여 [공식문서 - install kubeadm](https://kubernetes.io/ko/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) 를 설치하고
 join 커맨드를 적용합니다.
 성공적으로 세팅했다면 아래 명령어처럼 노드 목록이 나와야합니다.
@@ -211,3 +363,8 @@ NAME        STATUS     ROLES           AGE     VERSION
 abacus100   Ready      <none>          5m53s   v1.28.2
 abacus103   NotReady   control-plane   11m     v1.28.2
 ```
+
+# Reference
+- [Kubernetes](https://kubernetes.io/)
+- [https://tayeh.me/posts/install-kubernetes-cluster-on-centos-8-with-kubeadm-crio/](https://tayeh.me/posts/install-kubernetes-cluster-on-centos-8-with-kubeadm-crio/)
+- [https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node)

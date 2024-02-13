@@ -1,0 +1,277 @@
+# Kernel Runtime Parameters 
+런타임 매개변수는 Linux 커널 로드 될 때 수행하는 방식에 대한 기본 설정을 나타내는 멋진 용어일 뿐입니다.   
+커널은  row level에서 동작하며, 설정에 따라 메모리 할당, 프로세스 관리, 파일 시스템 관리 등을 수행합니다.  
+
+
+커널런타임에 사용될 모든 파라미터를 확인하려면, 아래 명령어를 입력합니다.  
+```bash
+$ sudo sysctl -a
+fs.pipe-user-pages-soft = 12344
+fs.pipe-user-pages-hard = 0
+net.ipv6.conf.default.disable_ipv6 = 0
+...
+```
+위 설정에서 ipv6가 활성화되어 있는 것을 확인할 수 있습니다.  
+>   `sysctl` is used to modify kernel parameters at runtime.  The
+>   parameters available are those listed under `/proc/sys/`.  Procfs
+>   is required for sysctl support in Linux.  You can use sysctl to
+>   both read and write sysctl data.
+>  이러한 설정들은 `/etc/sysctl.conf` 파일에 저장되어 있습니다.
+
+이와같이 네트워크 부터 파일시스템, 메모리 관리, vm 등 커널이 수행하는 모든 작업에 대한 설정을 확인할 수 있습니다.   
+ipv6를 비활성화하고 싶다면, 아래 명령어를 입력합니다.  
+```bash
+# change not permanently
+$ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+# check
+$ sudo sysctl -a | grep ipv6
+or
+$ sudo sysctl net.ipv6.conf.default.disable_ipv6
+```
+변경된 값이 영구적으로 적용되게 하려면, 설정 파일을 수정해야 합니다.  
+```bash
+$ man sysctl.d
+SYNOPSIS
+       /etc/sysctl.d/*.conf
+       /run/sysctl.d/*.conf
+       /usr/lib/sysctl.d/*.conf
+$ vi /etc/sysctl.d/99-sysctl.conf 
+[input]
+net.ipv6.conf.default.disable_ipv6 = 1
+```
+
+### 시나리오
+만약 vm의 메모리를 설정하고 싶습니다.
+
+```bash
+$ sysctl -a | grep vm
+vm.panic_on_oom = 0
+vm.swappiness = 30
+```
+위 설정에서 `vm.swappiness`는 30으로 설정되어 있습니다.
+> swappiness는 커널이 메모리를 어떻게 사용할지에 대한 정책입니다.
+> 0이면, 메모리를 적게 사용하고, 100이면 스왑을 최대한 사용합니다.
+
+만약 이 값을 10으로 변경하고 싶다면, 아래 명령어를 입력합니다.
+```bash
+sudo vim /etc/sysctl.d/99-sysctl.conf
+[append]
+vm.swappiness=10
+```
+이제 next boot시에 변경된 값이 적용됩니다.   
+만약 즉시 적용하고 싶다면, 아래 명령어를 입력합니다.
+```bash
+-p : permanent file
+$ sudo sysctl -p /etc/sysctl.d/99-sysctl.conf
+```
+
+
+
+
+
+
+# SELinux/AppArmor
+우리는 리눅스에는  파일과 디렉터리에 대한 제어 즉 콘텐츠를 읽고, 쓰고, 실행할 수 있는 사용자를 결정할 수 있는 권한이 있습니다.  
+또한 일반 사용자는 루트 사용자가 할 수 있는 특정 작업을 수행할 수 없습니다. 그러나 이러한 형태의 보안은 오늘날의 정교한 사이버 공격에는 충분하지 않습니다.  
+
+예를 들어, 사용자는 웹 서버와 같은 프로그램을 실행하는 특정 디렉터리에 대한 권한을 가지고 있습니다.  
+해커가 서버를 통해 폴더로 이동한다고 가정해 보겠습니다. 그녀는 이제 해당 폴더에 대해 프로세스가 가졌던 것과 동일한 권한을 가지며, 우리는 이 취약성을 이용하여 시스템에 대한 공격을 수행할 수 있습니다.
+
+다행히도 리눅스 커널은 소위 모듈로 쉽게 확장할 수 있고, 접근을 제한하는 매우 고급 기능을 추가한 `SELinux`라는 보안 모듈이 있습니다. 또한 `SELinux`는 CentOS Stream에서 기본적으로 활성화되어 있습니다.   
+`SELinux`는 허용 또는 거부해야 하는 작업에 대한 세분화 된 제어를 할 수 있습니다.   
+하지만 어떻게 이러한 결정을 내릴 수 있을까요? 
+`ls -l` 와 같은 출력은 문자열을 통해 이 파일에 대한 권한이 어떻게 설정되어 있는지 알 수 있습니다.  
+
+`SELinux`에서도 위와 같은 기능을 `ls -Z` 명령어로 확인할 수 있습니다.   
+그리고 문자열을 `SELinux` 컨텍스트 레이블이라고 합니다.   
+```bash
+$ ls -Z /var/www/html
+#                           user role type level
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 html
+drwxr-xr-x. root root unconfined_u:object_r:default_t:s0  html2
+drwxr-xr-x. root root unconfined_u:object_r:user_home:s0  html3
+
+```
+이러한 컨텍스트는 파일 및 디렉터리 사용 권한과 비슷하지만 훨씬 더 복잡합니다.
+- user
+  - system_u: SELinux 사용자
+  - unconfined_u: 제한되지 않은 사용자
+- role
+  - object_r: 파일에 대한 역할
+  - unconfined_r: 제한되지 않은 역할
+- type
+  - httpd_sys_content_t: 웹 서버가 읽고 실행할 수 있는 파일
+  - default_t: 기본 파일
+  - user_home: 사용자 홈 디렉터리
+- level
+  - s0: 기본 레벨
+
+account(사용자, process)가 생성되면  `SELinux`는 account에 대한 사전 정의된 role 목록을 준비합니다.
+그리고 매번 account가 실행될 때마다 `SELinux`는 account의 role에 대한 정책을 검사합니다.  
+이러한 정책은 컨텍스트 레이블에 저장되어 있습니다.
+### 절차
+1. 유저가 특정 role, type에 대한 리소스에 접근 가능한지 확인.
+2. 해당 job에 대한 권한을 부여받았는지 확인
+3. 혹은 특정 action에 대한 권한을 부여받았는지 확인
+4. 아닐 경우 접근을 거부합니다.  
+
+### 시나리오1
+`developer user` 는 도커와 nginx를 실행할 수 있어야 하지만, 시스템 설정을 변경할 수는 없습니다.  
+`guest user` 는 시스템 설정을 변경할 수 도, 도커와 nginx프로세스를 제어할 수 없어야 합니다.  
+### 시나리오2
+예를 들면 제인은 고위 군 장교이고 높은 레벨을 가질 것이고 레벨 4는 극비 파일로 레벨 0에서 레벨 4까지 분류된 문서를 읽을 수 있을 것입니다. 반면에 레벨 1 접근 권한을 가진 사용자는 레벨 1과 레벨 0에서만 접근할 수 있습니다.  
+---
+즉 해커가 웹 사이트 방문자에게 리소스를 제공하는 아파치 프로그램을 제어한다고 상상해 보세요.  
+그들은 여전히 SELinux 도메인에 제한되어 있으므로 이러한 경계에서 벗어날 수 없습니다.  
+그들은 사실상 가상 감옥에 있으며, 따라서 그들이 할 수 있는 피해는 크게 줄어듭니다.
+
+## 실무
+현재 프로세스에 대한 `SELinux` 컨텍스트 레이블을 확인하려면, 아래 명령어를 입력합니다.
+```bash
+# Z: 컨텍스트 레이블을 확인
+$ ps -auxZ
+```
+그리고 자신의 컨텍스트 레이블을 확인하려면, 아래 명령어를 입력합니다.
+```bash
+$ id -Z
+```
+`semanage - SELinux Policy Management tool`은 `SELinux` 정책을 관리하는데 사용됩니다.  
+
+```bash
+# login Manage login mappings between linux users and SELinux confined users
+$ sudo semanage login -l
+
+# user Manage SELinux confined users (Roles and levels for an SELinux user)
+$ sudo semanage user -l
+```
+
+제한을 하기전에 몇가지 용어를 알아야 합니다.
+- `Permissive`
+  - means it's allowing everything and just locking actions that should have been restricted
+  - 기본이 허용이며 제한적으로 거부합니다.
+- `Enforcing`
+  - means it's allowing only what's been explicitly allowed and denying everything else
+  - 기본이 제한(거부)이며 제한적으로 허용합니다.
+- `Disabled`
+  - means it's not doing anything at all
+  - 아무것도 하지 않습니다.
+
+
+# Practice
+### `SELinux`를 `Permissive`로 변경하고, `Enforcing`으로 변경합니다.
+search
+```bash
+$ apropos SELinux | grep set
+pam_selinux (8)      - PAM module to set the default security context
+setenforce (8)       - modify the mode SELinux is running in
+setfiles (8)         - set SELinux file security contexts.
+setsebool (8)        - set SELinux boolean value
+```
+영구적 저장은 뭘까 찾아보니 `SELINUXTYPE`이라는 환경변수를 설정하면 된다고 합니다.
+```bash
+man -i selinux
+[search `mode`]
+The /etc/selinux/config configuration file also controls
+You can define which policy you will run by setting  the  `SELINUXTYPE`
+       environment variable within /etc/selinux/config.  You must reboot and
+       possibly relabel if you change the policy type to have it take effect
+       on  the system.  
+FILES
+       /etc/selinux/config
+```
+가 보인다
+```bash
+# Temporarily
+$ sudo setenforce 0
+$ sudo setenforce 1
+# Permanently
+$ sudo vi /etc/selinux/config
+[append]
+SELINUX=permissive
+or
+SELINUX=enforcing
+
+
+```
+
+### Find the SELinux labels of `sshd` process running on this system, save its value in` /home/bob/sshd` file.
+```bash
+$ ps auxZ | grep sshd
+$ echo 'system_u:system_r:initrc_t:s0' > /home/bob/sshd
+```
+
+### Turn on `kernel.modules_disabled` kernel runtime parameter, so that loading new kernel modules will be disabled.
+```bash
+$ apropos kernel | grep parameter
+bootparam (7)        - introduction to boot time parameters of the Linux ke...
+kernel-command-line (7) - Kernel command line parameters
+sysctl (8)           - configure kernel parameters at runtime
+sysctl.d (5)         - Configure kernel parameters at boot
+systemd-sysctl (8)   - Configure kernel parameters at boot
+systemd-sysctl.service (8) - Configure kernel parameters at boot
+
+$ sudo vi /etc/sysctl.d/99-sysctl.conf
+[append]
+kernel.modules_disabled=1
+# -p: persistent
+$ sudo sysctl -p /etc/sysctl.d/99-sysctl.conf
+or 
+$ sudo sysctl --system
+```
+
+### Check out the `SELinux label` for the file stored at `/bin/sudo`. Ignore the `SELinux user and role` here.
+What is the SELinux type used on this file? Save its value in /home/bob/selabel file.
+```bash
+$ ls -Z /bin/sudo
+system_u:object_r:sudo_exec_t:s0 /bin/sudo
+```
+- `:`를 기준 seperate
+  -  1번째 값이 `SELinux user`입니다.
+  -  2번째 값이 `SELinux role`입니다.
+  -  3번째 값이 `SELinux type`입니다.
+
+```bash
+$ echo 'sudo_exec_t' > /home/bob/selabel
+```
+
+### Use the sysctl command to make sure this kernel runtime parameter is actively enabling its settings:
+`net.ipv6.conf.lo.seg6_enabled`
+check
+```bash
+$ sudo sysctl -a | grep net.ipv6.conf.lo.seg6_enabled
+or
+$ sudo sysctl net.ipv6.conf.lo.seg6_enabled
+net.ipv6.conf.lo.seg6_enabled = 0
+
+$ sudo sysctl -w net.ipv6.conf.lo.seg6_enabled=1
+```
+
+### Change the `SELinux context` of `/var/index.html` file to` httpd_sys_content_t`
+t로 끝나는 말은 `type`을 의미합니다.
+search
+```bash
+$ apropos SELinux | grep change
+chcat (8)            - change file SELinux security category
+chcon (1)            - change file SELinux security context
+```
+
+- `chcon`:  change file SELinux security context
+  - `-h`: if a symbolic link is specified, change the security context of the link's target
+  - `-t`: set the SELinux type
+  - `-u`: set the SELinux user
+  - `-r`: set the SELinux role
+  - `-l`: set range `RANGE`
+```bash
+$ ls -Z /var/index.html
+-rw-r--r--. root root unconfined_u:object_r:default_t:s0 /var/index.html
+$ sudo chcon -t httpd_sys_content_t /var/index.html 
+$ ls -Z /var/index.html
+-rw-r--r--. root root unconfined_u:object_r:httpd_sys_content_t:s0 /var/index.html
+```
+
+### Identify the SELinux `Roles `for `xguest_u` SELinux `user` 
+xguest_u SELinux 사용자에 대한 SELinux 역할을 식별
+`semanage` (8)         - SELinux Policy Management tool
+```bash
+$ sudo semanage user -l | grep xguest_u
+```
