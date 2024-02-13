@@ -1,0 +1,213 @@
+# 개요 
+요새 많은 회사들이 k8s 도입하며 서비스를 관리하고 있다.   
+이번에 팀용 사내서버를 새로 구축하게 되면서, 우리도 k8s를 도입하고자 한다.  
+* Ubuntu 20.04 LTS를 사용할 것이며, 모든 서버에 Docker를 설치할 것이다. 
+* 사용할 서버는 4대이며, 각 서버는 16GB의 메모리와 500GB의 디스크를 가지고 있다.  
+* 서버는 1대의 마스터노드와 3대의 워커노드로 구성할 것이다.
+
+각 사용할 오픈소스들에 대해 알아보고, 설치 및 설정을 진행해보자.
+
+## List of Open source
+- [Kubernetes](https://kubernetes.io/)
+- [Docker](https://www.docker.com/)
+- [Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+- [Calico](https://www.projectcalico.org/)
+- [MetalLB](https://metallb.universe.tf/)
+- [Helms](https://helm.sh/)
+- [Keycloak](https://www.keycloak.org/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
+  
+
+### What is Kubeadm?
+kubeadm은 Kubernetes 클러스터를 빠르고 쉽게 구축할 수 있도록 도와주는 공식 유틸입니다.
+
+### What is Calico?
+Calico는 Kubernetes 클러스터의 네트워크 정책을 관리하는 오픈소스 솔루션입니다.
+클러스터의 CNI를 책임질 친구입니다. 
+
+  
+### What is MetalLB?
+MetalLB는 Kubernetes 클러스터에 로드밸런서 서비스를 제공하는 컨트롤러입니다.
+ExternalIPs, LoadBalancer 서비스 유형을 사용하여 서비스를 외부로 노출할 수 있습니다.
+보통 토이프로젝트는 NodePort를 사용하여 서비스를 외부로 노출합니다.
+실무에서 사용하는 방식은 아니기 때문에 이번에는 MetalLB를 사용하여 서비스를 외부로 노출할 것입니다.
+
+### What is Helms?
+Helm은 Kubernetes의 패키지 관리자입니다.
+기존 Node.js 의 npm, Python의 pip, Java의 maven과 같은 역할을 합니다.
+서버에 한번 설치된 어플리케이션을 업데이트하거나 삭제할 때, 매번 명령어를 입력하는 것은 번거롭습니다.
+Helm은 이러한 문제를 해결하기 위해 어플리케이션을 chart라는 단위로 관리합니다.
+chart를 사용하여 Kubernetes 애플리케이션을 설치, 업그레이드, 삭제할 수 있습니다.
+
+### What is Keycloak?
+Keycloak은 Red Hat에서 만든 오픈소스 싱글 사인온(SSO) 솔루션입니다.
+인증 및 권한 부여를 위한 기능을 제공하며, OAuth 2.0, OpenID Connect, SAML 2.0을 지원합니다.
+Keycloak은 다양한 클라이언트 언어를 지원하며, 다양한 클라이언트 언어를 지원합니다.
+우리는 다양한 어플리케이션의 로그인을 통합하기 위해 Keycloak을 사용할 것입니다.
+
+예로 우리팀은 사내 프레임워크, 스텝업 서비스, 팀별 서비스 등 다양한 서비스를 운영 하고있습니다.
+이러한 서비스들은 각각의 로그인 서비스를 가지고 있습니다.
+한 유저가 여러 서비스를 사용할 때, 각 서비스마다 계정을 생성하고,
+로그인을 해야하는 번거로움이 있습니다.
+이러한 문제를 해결하기 위해 Keycloak을 사용하여 로그인을 통합할 것입니다.
+
+### What is Prometheus?
+* 오픈소스 모니터링 솔루션입니다.
+* 다양한 서버, 서비스, 어플리케이션의 상태를 모니터링 할 수 있습니다.
+* 다양한 클라이언트 라이브러리를 제공하며, 다양한 언어로 작성된 어플리케이션을 모니터링 할 수 있습니다.
+* 다양한 Exporter를 제공하며, 다양한 서버, 서비스, 어플리케이션을 모니터링 할 수 있습니다.
+  
+
+### What is Grafana?
+* 오픈소스 대시보드 솔루션입니다.
+* 다양한 데이터 소스를 지원하며, 다양한 데이터 소스를 대시보드로 시각화 할 수 있습니다. 
+
+
+# Setup
+## 기존 클러스터 제거
+```bash
+$ sudo kubeadm reset
+$ sudo apt-get purge kubeadm kubectl kubelet kubernetes-cni kube*
+$ sudo apt-get autoremove
+$ sudo rm -rf ~/.kube
+$ sudo rm -rf /etc/kubernetes
+$ sudo rm -rf /var/lib/etcd
+```
+*kub* 가 들어간 파일이나 디렉토리를 확인
+```bash
+sudo find / -name "*kub*"
+```
+
+
+## 클러스터 설치
+아래 문서에 따라 설치합니다.
+1. [공식문서 - install kubeadm](https://kubernetes.io/ko/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+2. [공식문서 - create cluster](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
+
+
+## 서버 네트워크 구성
+Kubernetes는 클러스터의 노드 간에 통신하기 위해 네트워크를 사용합니다. 따라서, 서버의 네트워크 설정을 구성해야 합니다.
+가용 IP 주소 범위는 192.168.0.100 ~ 103 입니다.
+
+마스터 노드로 사용할 100번 서버의 ifconfig 결과를 살펴보면 여럿 네트워크 인터페이스를 가지고 있습니다.
+
+*  br-* : 브릿지 인터페이스이며 다른 인터페이스 간의 트래픽 전송을 지원합니다.
+*  cali* : Calico 네트워크 인터페이스
+   *  calico 네트워크 fabric의 일부이며 서버 간의 통신을 위해 사용됩니다.
+*  docker*: Docker 컨테이너의 네트워킹을 관리하는 가상 인터페이스입니다.
+*  enp2s0f0 : 서버의 물리적인 네트워크 인터페이스입니다.
+*  lo : 로컬 루프백 인터페이스이며 서버 내부 통신에 사용됩니다.
+*  veth* : 인터페이스는 가상 이더넷 인터페이스이며 서버 내부 통신에 사용됩니다.
+*  
+## kubelet kubeadm kubectl 세팅에 사용된 스크립트(CentOS 9)
+작성 기준 CRI-O의 Centos 9버전이 지원되지 않아서, CentOS 8버전을 사용하였습니다.
+### Install CRI
+```bash
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+# install cri-o using dnf
+$ sudo dnf config-manager --set-enabled crb
+$ sudo dnf install epel-release
+$ sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_9_Stream/devel:kubic:libcontainers:stable.repo
+  
+$ sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.24.0.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.24:/1.24.0/CentOS_8_Stream/devel:kubic:libcontainers:stable:cri-o:1.24:1.24.0.repo
+
+$ sudo yum install cri-o
+```
+
+
+## kubelet kubeadm kubectl 세팅에 사용된 스크립트(Ubuntu 20.04)
+CRI는 [container d](https://github.com/containerd/containerd/blob/main/docs/getting-started.md)를 미리 설치해사용했습니다.
+```bash
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+# apt 패키지 색인을 업데이트하고, 쿠버네티스 apt 리포지터리를 사용하는 데 필요한 패키지를 설치한다.
+sudo apt-get update
+# apt-transport-https may be a dummy package; if so, you can skip that package
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+
+# 구글 클라우드의 공개 사이닝 키를 다운로드 한다.
+# Download the public signing key for the Kubernetes package repositories. The same signing key is used for all repositories so you can disregard the version in the URL:
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+# 쿠버네티스 apt 리포지터리를 추가한다.
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+# https://velog.io/@dldbwls492/unable-to-locate-package-kubeadm-kubelet-kubectl-kubernetes-cni-error
+# echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list  
+echo 'deb http://apt.kubernetes.io/ kubernetes-xenial main' | sudo tee /etc/apt/sources.list.d/kubernetes.list  
+sudo apt-get update
+
+# apt 패키지 색인을 업데이트하고, kubelet, kubeadm, kubectl을 설치하고 해당 버전을 고정한다.
+sudo apt-get install -y kubelet kubeadm kubectl
+# 보류 상태로 설정된 패키지는 자동 업데이트되지 않습니다.
+sudo apt-mark hold kubelet kubeadm kubectl
+
+sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+sudo sudo mv /etc/containerd/config.toml /etc/containerd/config.bak.toml 
+sudo systemctl restart containerd
+
+
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/tigera-operator.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/custom-resources.yaml
+```
+
+## Create Cluster
+현재 서버의 routing 정보를 확인합니다.
+```bash
+$ ip route show
+default via 192.168.0.1 dev enp2s0f0 proto dhcp src 192.168.0.103 metric 100 
+192.168.0.0/24 dev enp2s0f0 proto kernel scope link src 192.168.0.103 metric 100 
+```
+- 패킷의 목적지 IP 주소가 192.168.0.0/24 서브넷에 속하는 경우:
+  - 192.168.0.0/24 라우팅 정보를 사용하여 패킷을 처리합니다.
+  - 이 경우 패킷은 enp2s0f0 인터페이스를 통해 192.168.0.103 컴퓨터로 전달됩니다.
+- 패킷의 목적지 IP 주소가 192.168.0.0/24 서브넷에 속하지 않는 경우:
+  - default 라우팅 정보를 사용하여 패킷을 처리합니다.
+  - 이 경우 패킷은 192.168.0.1 게이트웨이로 전달됩니다.
+### 예시:
+ -  192.168.0.100 컴퓨터에서 192.168.0.103 컴퓨터로 패킷을 전송하는 경우:
+   -  패킷의 목적지 IP 주소는 192.168.0.0/24 서브넷에 속합니다.
+   -  따라서 192.168.0.0/24 라우팅 정보가 사용됩니다.
+   -  패킷은 enp2s0f0 인터페이스를 통해 192.168.0.103 컴퓨터로 전달됩니다.
+-  192.168.1.100 컴퓨터에서 192.168.0.103 컴퓨터로 패킷을 전송하는 경우:
+   -  패킷의 목적지 IP 주소는 192.168.0.0/24 서브넷에 속하지 않습니다.
+   -  따라서 default 라우팅 정보가 사용됩니다.
+   -  패킷은 192.168.0.1 게이트웨이로 전달됩니다.
+
+## kubeadm init
+만약 aws, gcp, azure와 같은 클라우드 환경이라면 파드에 배정할 수 있는 IP가 한정됩니다.
+잘 확인하고 할당하시기 바랍니다.
+```bash
+$ sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+[WARNING Firewalld]: firewalld is active, please ensure ports [6443 10250] are open or your cluster may not function correctly
+[WARNING Swap]: swap is enabled; production deployments should disable swap unless testing the NodeSwap feature gate of the kubelet
+[WARNING Hostname]: hostname "103" could not be reached
+[WARNING Hostname]: hostname "103": lookup 103: no such host
+```
+에러가 발생했군요!  
+방화벽 설정을 해주고, swap을 비활성화 해주고, 호스트네임을 설정해주어야 합니다.
+```bash
+# firewall
+sudo firewall-cmd --permanent --add-port=6443/tcp
+sudo firewall-cmd --permanent --add-port=10250/tcp
+sudo firewall-cmd --reload
+
+# swap off
+sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+```
+
+
+
+설치후 표줄출력으로 나오는 join command 를 복사해두자.
+```bash
+kubeadm join 192.168.0.103:6443 --token 852t7w.rb41pzw3wlge3ezs \
+        --discovery-token-ca-cert-hash sha256:8e05e2646f3a6aaf4878742c2250b8714c04183b4b9ba9ded92033ed1e609dcf 
+```
+1. 각 노드 서버에 접속하여 [공식문서 - install kubeadm](https://kubernetes.io/ko/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) 를 설치하고
+join 커맨드를 적용합니다.
+성공적으로 세팅했다면 아래 명령어처럼 노드 목록이 나와야합니다.
+```bash
+$ sudo kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
+NAME        STATUS     ROLES           AGE     VERSION
+abacus100   Ready      <none>          5m53s   v1.28.2
+abacus103   NotReady   control-plane   11m     v1.28.2
+```

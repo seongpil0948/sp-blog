@@ -1,16 +1,36 @@
-## Toc
-- [Toc](#toc)
+# Getting Started with Linux Essential Commands
+리눅스를 처음 접하는 사람들을 위한 리눅스 명령어에 대한 기본적인 내용을 다룹니다.  
+
+- [Getting Started with Linux Essential Commands](#getting-started-with-linux-essential-commands)
   - [Read \& use system documentation](#read--use-system-documentation)
     - [섹션 별 의미](#섹션-별-의미)
-- [Manage Hard \& Soft Links](#manage-hard--soft-links)
-  - [Hard Link](#hard-link)
-    - [Limitation](#limitation)
-  - [Soft Link](#soft-link)
-  - [bash: ldd로 의존성 탐색](#bash-ldd로-의존성-탐색)
+  - [Package Manager](#package-manager)
+    - [Repository update \& upgrade](#repository-update--upgrade)
+    - [install](#install)
+    - [bash: ldd로 의존성 탐색](#bash-ldd로-의존성-탐색)
+  - [Package repository](#package-repository)
+    - [Docker 설치 시나리오](#docker-설치-시나리오)
+  - [RHEL](#rhel)
+  - [dnf's config-manager](#dnfs-config-manager)
+  - [EPEL (Extra Packages for Enterprise Linux)](#epel-extra-packages-for-enterprise-linux)
+    - [Enable](#enable)
+  - [PowerTools](#powertools)
+    - [Enable](#enable-1)
+  - [Manage Hard \& Soft Links](#manage-hard--soft-links)
+    - [Hard Link](#hard-link)
+      - [Limitation](#limitation)
+    - [Soft Link](#soft-link)
+- [Practice](#practice)
+    - [How do we get a list of all CentOS repositories that are `enabled` or `disabled`?](#how-do-we-get-a-list-of-all-centos-repositories-that-are-enabled-or-disabled)
+    - [install the group that brings in software related to `Container Management`.](#install-the-group-that-brings-in-software-related-to-container-management)
+    - [Identify which software package provides the program at `/bin/top`](#identify-which-software-package-provides-the-program-at-bintop)
+    - [List what old packages can be upgraded and store the list in `/home/bob/upgrade.txt` file.](#list-what-old-packages-can-be-upgraded-and-store-the-list-in-homebobupgradetxt-file)
+    - [Search the package related to `Apache HTTP Server`](#search-the-package-related-to-apache-http-server)
 
 
-### Read & use system documentation
-먼저 명령어의 메뉴얼을 어떻게 사용할지 메뉴얼을 보면 좋다.
+## Read & use system documentation 
+리눅스 명령어를 사용하는데 있어서 가장 중요한 것은 시스템의 메뉴얼을 읽고 사용하는 것입니다.  
+목적에 따라 어떤 명령어를 어떻게 사용할지 인지하는 것은 중잔기 따지지 않고 좋습니다.
 ```sh
 man man
 
@@ -22,7 +42,7 @@ man 3 printf
 man 8 clear
 ```
 참고로 인자중 숫자는 섹션을 의미한다.
-#### 섹션 별 의미
+### 섹션 별 의미
 1. general commands
 2. system calls
 3. library functions
@@ -42,6 +62,218 @@ apropos -s 1,8 director
 ```sh
 sudo mandb
 ``` 
+man 과 더불어 `info` 또한 비슷한 문법으로 더 많은 기능을 제공하니, 참고하시면 좋을 것 같습니다.  
+
+## Package Manager
+여느 소프트웨어가 그러하듯 리눅스 또한 OS별 패키지 매니저가 존재합니다.
+- Ubuntu의 apt(Advanced Package Tool)
+- Centos의 dnf 가 있다
+> dnf 는 Dandified YUM의 약자로 기존 Red Hat 계열의 패키지 관리자인 yum의 단점인 "느린 속도", "과다한 메모리 사용", "의존성 결정이 느림" 과 같은 단점을 개선한 새로운 패키지 관리자입니다.
+
+### Repository update & upgrade
+`apt update` 명령어는 시스템의 패키지 목록을 최신 상태로 업데이트합니다. 이 명령어를 실행하면, 시스템은 설정된 소프트웨어 리포지토리에서 사용 가능한 패키지와 그 버전 정보를 가져와 로컬 패키지 데이터베이스를 업데이트합니다.
+
+이렇게 하면, `apt upgrade`나 `apt install` 명령어를 사용할 때 최신 패키지를 설치하거나 기존 패키지를 최신 버전으로 업그레이드할 수 있습니다.
+```sh
+sudo apt update && sudo apt upgrade
+```
+### install
+nginx 패키지를 설치해보겠습니다.
+```sh
+sudo apt update
+sudo apt install nginx
+```
+우린 최신버전의 nginx 패키지(archive) 와 의존성들을 설치했습니다.  
+패키지는 프로그램과 더불어 document(man, info..., share, example) 등을 담고있습니다.  
+어떤 파일들로 구성되었는지 알아볼까요?  
+```sh
+$ dpkg --listfiles nginx
+/.
+/usr
+/usr/share
+/usr/share/doc
+/usr/share/doc/nginx
+/usr/share/doc/nginx/copyright
+/usr/share/doc/nginx/changelog.Debian.gz
+# in centos dnf
+$ dnf repoquery --list nginx 
+
+```
+dependency 인 nginx-core도 확인해보겠습니다.
+```sh
+$ dpkg --listfiles nginx-core
+/.
+/usr
+/usr/sbin
+/usr/sbin/nginx
+/usr/share
+/usr/share/doc
+/usr/share/doc/nginx-core
+/usr/share/doc/nginx-core/copyright
+/usr/share/man
+/usr/share/man/man8
+/usr/share/man/man8/nginx.8.gz
+/usr/share/doc/nginx-core/changelog.Debian.gz
+```
+자주 사용되는 `usr/sbin/nginx` 는 nginx-core에 포함되어 있습니다.
+`nginx-core` 가 있는지 알기 쉽지않습니다.  
+bin 파일로부터 어떤 패키지에 속해있는지 알아보는 방법이 있을까요?  
+```sh
+$ dpkg -S /usr/sbin/nginx
+$ dpkg --search /usr/sbin/nginx
+nginx-core: /usr/sbin/nginx
+```
+하나씩 알아보는건 성미에 맞지않습니다.
+패키지 자체에 대한 정보를 확인할 수 있는 명령어가 있을까요?  
+```sh
+$ apt show -a nginx
+Package: nginx
+Version: 1.18.0-0ubuntu1.4
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian Nginx Maintainers <pkg-nginx-maintainers@lists.alioth.debian.org>
+Bugs: https://bugs.launchpad.net/ubuntu/+filebug
+Installed-Size: 46.1 kB
+Depends: nginx-core (<< 1.18.0-0ubuntu1.4.1~) | nginx-full (<< 1.18.0-0ubuntu1.4.1~) | nginx-light (<< 1.18.0-0ubuntu1.4.1~) | nginx-extras (<< 1.18.0-0ubuntu1.4.1~), nginx-core (>= 1.18.0-0ubuntu1.4) | nginx-full (>= 1.18.0-0ubuntu1.4) | nginx-light (>= 1.18.0-0ubuntu1.4) | nginx-extras (>= 1.18.0-0ubuntu1.4)
+Homepage: http://nginx.net
+Download-Size: 3620 B
+APT-Manual-Installed: yes
+APT-Sources: http://kr.archive.ubuntu.com/ubuntu focal-updates/main amd64 Packages
+Description: small, powerful, scalable web/proxy server
+ Nginx ("engine X") is a high-performance web and reverse proxy server
+ created by Igor Sysoev. It can be used both as a standalone web server
+ and as a proxy to reduce the load on back-end HTTP or mail servers.
+ .
+ This is a dependency package to install either nginx-full (by default),
+ nginx-light or nginx-extras.
+```
+상당히 만족스럽습니다.   
+패키지를 apt uninstall로 삭제하면 의존성이 있는 다른 패키지들도 같이 삭제됩니다.  
+이러한 의존성을 확인하고 싶다면 `apt-cache` 명령어를 사용하면 됩니다.
+```sh
+apt-cache depends bash
+```
+이 명령어는 bash가 의존하고 있는 패키지들을 보여줍니다.
+또한 orphan dependencies를 자동으로 삭제하려면
+```sh
+sudo apt autoremove
+```
+를 사용하면 됩니다.
+
+### bash: ldd로 의존성 탐색
+어떤 프로그램은 프로그램 파일만으로 실행이 되기도 하지만, 많은 프로그램들은 시스템 상에 다른 파일에 의존하고 있습니다. 이를 동적 라이브러리라고 합니다. bash 또한 이러한 파일들에 대한 의존성을 가지고 있고, 파일 시스템 아래에 이 파일들이 존재하지 않으면 실행이 되지 않습니다. 어떤 프로그램이 의존하고 있는 라이브러리 파일을 추적할 수 있는 프로그램이 바로 ldd입니다. ldd는 다음과 같이 사용합니다.
+```bash
+$ ldd /bin/bash
+        linux-vdso.so.1 (0x00007ffe988fb000)
+        libtinfo.so.5 => /lib/x86_64-linux-gnu/libtinfo.so.5 (0x00007f1a60cd2000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f1a60ace000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1a606dd000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f1a61216000)
+```
+
+## Package repository
+리눅스 패키지 매니저는 패키지를 설치할 때 패키지 저장소에서 패키지를 다운로드합니다.
+동료가 만든 리눅스 패키지를 설치하고 싶다면 어떻게 해야할까요?  
+패키지 저장소를 추가하면 됩니다.  
+```sh
+sudo add-apt-repository ppa:nginx/stable
+```
+
+설명전 패키지 저장소 목록을 확인해보겠습니다.
+패키지 관리자는 `/etc/apt/sources.list`, `/etc/apt/sources.list.d` 디렉토리에 저장소 정보를 가지고 있습니다.
+```sh
+$ cat /etc/apt/sources.list
+# types  uri  code-name(release name) ...components 
+deb http://us.archive.ubuntu.com/ubuntu focal main restricted
+```
+> List of configured APT data sources
+- main: The core software for the distribution.
+- restricted: Proprietary software that is legally restricted.
+  - 법적으로 제한된 독점 소프트웨어입니다.
+- universe: Community maintained software, i.e. not officially supported software.
+  - 커뮤니티에서 유지보수하는 소프트웨어, 즉 공식적으로 지원되지 않는 소프트웨어입니다.
+- multiverse: Software that is not free.
+  - 무료가 아닌 소프트웨어입니다.
+restricted, universe, multiverse는 main과 다르게 공식적으로 지원되지 않는 소프트웨어들입니다.
+이는 Ubuntu가 아닌 다른 팀이나 회사에서 관리하는 소프트웨어 저장소를 의미합니다.
+최신버전의 패키지를 업데이트한다면 예기치 못한 패키지가 설치 될 수 있습니다.  
+### Docker 설치 시나리오
+Docker의 최신 안정 버전을 설치한다고 가정해 보겠습니다.   
+가장 먼저 해야 할 일은 공개 키를 다운로드하는 것입니다.   
+Docker 팀은 새 패키지를 업로드할 때 개인 키와 공개 키를 사용하여 서명합니다.   
+이는 악의적인 사용자가 패키지를 변조하지 못하도록 하는 보안 조치입니다.   
+어떤 키로 서명되었는지 확인 할 수 있습니다.
+```sh
+# $ apt-key list
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o docker.key
+```
+이제 패키지 관리자가 이해 할 수 있도록 `gpg` 형식으로 변경합니다.
+```sh
+$ gpg --dearmor -o docker.key.gpg docker.key
+```
+이제 이 키를 저장소에 추가합니다.
+```sh
+$ sudo mv docker.key.gpg /etc/apt/keyrings/
+```
+이제 앱 저장소를 시스템에 추가하면 됩니다.
+```sh
+$ echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.key.gpg] https://download.docker.com/linux/ubuntu focal stable" | sudo tee /etc/apt/sources.list.d/docker.list
+```
+이제 패키지 목록을 업데이트하고 Docker를 설치할 수 있습니다.
+```sh
+$ sudo apt update
+...
+Get:6 https://download.docker.com/linux/ubuntu focal/stable amd64 Packages [22.4 kB]
+```
+---
+이제 우분투에서 추가할 수 있는 또 다른 유형의 저장소를 개인 패키지 아카이브(PPA Personal Package Archive)라고 합니다.   
+이는 타사 저장소를 추가하는 전체 프로세스를 단순화합니다.  
+```sh
+$ sudo add-apt-repository ppa:nginx/stable
+```
+- `add-apt-repository` 명령어는 저장소를 추가하는 데 사용됩니다.
+- `ppa:nginx/stable`는 저장소의 이름입니다. 이것은 `nginx/stable`이라는 이름의 저장소를 추가하라는 것입니다.
+위 명령어는 위에서 진행한 키 다운로드 ~ 저장소 추가까지의 과정을 한번에 수행합니다.  
+
+이제 목록확인과 삭제를 해보겠습니다.
+```sh
+$ sudo add-apt-repository --list
+$ sudo add-apt-repository --remove ppa:nginx/stable
+```
+## RHEL
+RHEL은 Red Hat Enterprise Linux의 약자로 레드햇에서 개발한 리눅스 배포판입니다.
+
+## dnf's config-manager
+`dnf` 패키지 매니저는 `config-manager` 를 통해 저장소를 관리합니다.
+
+## EPEL (Extra Packages for Enterprise Linux)
+EPEL은 기본 RHEL이나 CentOS등에서 제공되지 않는 패키지를 설치하기 위한 추가 패키지 저장소.
+### Enable
+```sh
+$ sudo dnf config-manager --set-enabled epel
+or 
+$ sudo dnf install epel-release
+```
+만약 사용하지 않을경우
+```sh
+$ sudo dnf config-manager --set-disabled epel
+or
+$ sudo vi /etc/yum.repos.d/epel.repo
+[update]
+enabled=0
+```
+
+## PowerTools
+PowerTools는 RHEL 8에서 사용할 수 있는 추가 패키지 저장소입니다.
+### Enable
+```sh
+$ sudo dnf config-manager --set-enabled powertools
+
+# in latest centos
+$ sudo dnf config-manager --set-enabled crb
+```
+
+
+
 
 ## Manage Hard & Soft Links
 `stat` 명령어를 사용하면 파일의 정보를 확인할 수 있다.
@@ -75,7 +307,7 @@ ZFS, x-t4 등과 같은 파일 시스템은 AI 노드의 도움으로 데이터�
 이전 출력에서 나타난 `Links: 1` 은 파일에 대한 하드 링크의 수를 나타냅니다.
 ln 명령어를 사용하여 하드 링크를 만들 수 있고 링크들이 생성된 만큼 Links 의 수가 증가합니다.
 하드링크의 수가 0이되면 파일이 삭제됩니다.
-```
+```bash
 echo "initialized $PWD" > a.yaml
 
 ln a.yaml b.yaml
@@ -127,7 +359,7 @@ ls -l
 ```
 l자로 시작하는 부분은 symbolic link 를 의미합니다.
 마지막 컬럼은 어떤 파일을 가리키는지도 나타냅니다.
-```
+```bash
 total 4
 -rw-rw-r-- 1 abacus abacus 30 Jan 14 15:20 a.yaml
 lrwxrwxrwx 1 abacus abacus  6 Jan 14 15:20 b.yaml -> a.yaml
@@ -139,15 +371,70 @@ ls -l | grep "^l"
 readlink c.yaml
 ```
 
+# Practice
 
+### How do we get a list of all CentOS repositories that are `enabled` or `disabled`?  
+```sh
+$ sudo dnf repolist --all
+```
 
-### bash: ldd로 의존성 탐색
-어떤 프로그램은 프로그램 파일만으로 실행이 되기도 하지만, 많은 프로그램들은 시스템 상에 다른 파일에 의존하고 있습니다. 이를 동적 라이브러리라고 합니다. bash 또한 이러한 파일들에 대한 의존성을 가지고 있고, 파일 시스템 아래에 이 파일들이 존재하지 않으면 실행이 되지 않습니다. 어떤 프로그램이 의존하고 있는 라이브러리 파일을 추적할 수 있는 프로그램이 바로 ldd입니다. ldd는 다음과 같이 사용합니다.
-```bash
-$ ldd /bin/bash
-        linux-vdso.so.1 (0x00007ffe988fb000)
-        libtinfo.so.5 => /lib/x86_64-linux-gnu/libtinfo.so.5 (0x00007f1a60cd2000)
-        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f1a60ace000)
-        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1a606dd000)
-        /lib64/ld-linux-x86-64.so.2 (0x00007f1a61216000)
+### install the group that brings in software related to `Container Management`.
+```sh
+$ sudo dnf group list
+Available Environment Groups:
+   Server with GUI
+   Server
+   Minimal Install
+   Workstation
+   KDE Plasma Workspaces
+   Virtualization Host
+   Custom Operating System
+Installed Groups:
+   Development Tools
+Available Groups:
+   Container Management
+   .NET Core Development
+   RPM Development Tools
+   Graphical Administration Tools
+   Headless Management
+   Legacy UNIX Compatibility
+   Network Servers
+   Scientific Support
+   Security Tools
+   Smart Card Support
+   System Tools
+   Fedora Packager
+   Xfce
+```
+그룹목록 발견! 일단 install 해봄 ㅋㅋ
+```sh
+$ sudo dnf group install "Container Management"
+```
+
+### Identify which software package provides the program at `/bin/top`
+without the version and architecture information.
+
+```sh
+$ dnf --help | grep provide
+provides                  find what package provides the given value
+```
+
+패키지 명을 추출해보자
+```sh
+$ dnf provides /bin/top
+procps-ng-3.3.15-8.el8.x86_64 : System and process monitoring utilities
+Repo        : baseos
+Matched from:
+Filename    : /usr/bin/top
+echo 'procps-ng' > /home/bob/software
+```
+### List what old packages can be upgraded and store the list in `/home/bob/upgrade.txt` file.
+```sh
+$ sudo dnf check-upgrade > upgrade.txt
+```
+
+### Search the package related to `Apache HTTP Server` 
+store the output in /home/bob/webservers.txt file.
+```sh
+$ dnf search Apache HTTP Server > /home/bob/webservers.txt
 ```
