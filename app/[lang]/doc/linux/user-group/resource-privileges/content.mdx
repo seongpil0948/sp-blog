@@ -1,0 +1,230 @@
+# What is Limit
+팀내의 누군가 80%의 리소스를 사용하고 있다면, 이는 불공평합니다.   
+메뉴얼을 살피어 리소스를 제한하는 방법을 찾아봅시다.
+
+```bash
+$ man limits.conf
+
+NAME
+       limits.conf - configuration file for the pam_limits module
+
+DESCRIPTION
+       The pam_limits.so module applies ulimit limits, nice priority and number of simultaneous login
+       sessions limit to user login sessions. This description of the configuration file syntax applies to
+       the /etc/security/limits.conf file and *.conf files in the /etc/security/limits.d directory.
+
+       The syntax of the lines is as follows:
+
+       <domain> <type> <item> <value>
+
+       The fields listed above should be filled as follows:
+
+```
+
+```bash
+$ sudo vi /etc/security/limits.conf
+# /etc/security/limits.conf
+#
+#This file sets the resource limits for the users logged in via PAM.
+#It does not affect resource limits of the system services.
+#
+#Also note that configuration files in /etc/security/limits.d directory,
+#which are read in alphabetical order, override the settings in this
+#file in case the domain is the same or more specific.
+#That means, for example, that setting a limit for wildcard domain here
+#can be overridden with a wildcard setting in a config file in the
+#subdirectory, but a user specific setting here can be overridden only
+#with a user specific setting in the subdirectory.
+#
+#Each line describes a limit for a user in the form:
+#
+#<domain>        <type>  <item>  <value>
+#
+#Where:
+#<domain> can be:
+#        - a user name
+#        - a group name, with @group syntax
+#        - the wildcard *, for default entry
+#        - the wildcard %, can be also used with %group syntax, for maxlogin limit
+#           - ex. %users soft nproc 20
+#        - NOTE: group and wildcard limits are not applied to root.
+#
+#<type> can have the two values:
+#        - "soft" for enforcing the soft limits
+#        - "hard" for enforcing hard limits
+#        - "-" for unlimiting
+#
+#<item> can be one of the following:
+#        - core - limits the core file size (KB)
+#        - data - max data size (KB)
+#        - fsize - maximum filesize (KB)
+#        - memlock - max locked-in-memory address space (KB)
+#        - nofile - max number of open file descriptors
+#        - rss - max resident set size (KB)
+#        - stack - max stack size (KB)
+#        - cpu - max CPU time (MIN)
+#        - nproc - max number of processes
+#        - as - address space limit (KB)
+#        - maxlogins - max number of logins for this user
+#        - maxsyslogins - max number of logins on the system
+#        - priority - the priority to run user process with
+#        - locks - max number of file locks the user can hold
+#        - sigpending - max number of pending signals
+#        - msgqueue - max memory used by POSIX message queues (bytes)
+#        - nice - max nice priority allowed to raise to values: [-20, 19]
+#        - rtprio - max realtime priority
+#
+#<domain>      <type>  <item>         <value>
+#
+
+#*               soft    core            0
+#*               hard    rss             10000
+#@student        hard    nproc           20
+#@faculty        soft    nproc           20
+#@faculty        hard    nproc           50
+#ftp             hard    nproc           0
+#@student        -       maxlogins       4
+```
+뭐든 좋습니다. 만들었다면 테스트를 해봅시다.
+
+### Test
+사실 `sudo`의 뜻은 `super user do`가 아닙니다 ㅎㅎㅎ
+> execute a command as another user 
+그렇습니다 `sudo`는 다른 사용자로 명령을 실행하는 것입니다.
+유저의 nproc을 3으로 제한해주세요 아래의 명령은 실패해야합니다. 
+```bash
+USER=trinity
+# Run the shell specified by the target user
+# This means that login-specific resource files such as .profile, .bash_profile
+# 1 회성 프로세스용 로그인 쉘을 실행합니다.
+$ sudo su -iu $USER
+# background process
+$ sleep 100 &
+$ ps | grep sleep
+$ ls -a | grep bash | less
+# check the process
+$ ps -u $USER
+
+# from back to front
+$ fg
+$ logout
+```
+
+## Check my limit
+
+### ulimit
+```bash
+$ ulimit --help
+ulimit: ulimit [-SHabcdefiklmnpqrstuvxPT] [limit]
+    Modify shell resource limits.
+    
+    Provides control over the resources available to the shell and processes
+    it creates, on systems that allow such control.
+    
+    Options:
+      -S        use the `soft' resource limit
+      -H        use the `hard' resource limit
+      -a        all current limits are reported
+      -b        the socket buffer size
+      -c        the maximum size of core files created
+      -d        the maximum size of a process's data segment
+      -e        the maximum scheduling priority (`nice')
+      -f        the maximum size of files written by the shell and its children
+      -i        the maximum number of pending signals
+      -k        the maximum number of kqueues allocated for this process
+      -l        the maximum size a process may lock into memory
+      -m        the maximum resident set size
+      -n        the maximum number of open file descriptors
+      -p        the pipe buffer size
+      -q        the maximum number of bytes in POSIX message queues
+      -r        the maximum real-time scheduling priority
+      -s        the maximum stack size
+      -t        the maximum amount of cpu time in seconds
+      -u        the maximum number of user processes
+      -v        the size of virtual memory
+      -x        the maximum number of file locks
+      -P        the maximum number of pseudoterminals
+      -R        the maximum time a real-time process can run before blocking
+      -T        the maximum number of threads
+```
+- `ulimit`에 의해 설정된 값은 임시적입니다.
+- 자신의 한도를 낮출수만 있습니다. 높일 수는 없습니다. 
+- Hard limit 에 도달할 경우 한 번만 거부되고 다시 허가됩니다.
+```bash
+$ ulimit -a
+$ ulimit -u 2
+
+```
+
+
+
+
+# What is Privileges
+- 리눅스에서는 사용자와 그룹에 대한 권한을 설정할 수 있습니다.
+- 사용자와 그룹에 대한 권한을 설정하면, 사용자와 그룹이 파일이나 디렉토리에 대한 접근 권한을 설정할 수 있습니다.
+하지만 `sudo` 매직 커맨드.. 아주 간편하고 강력한 권한을 가지고 있습니다.  
+누가 사용가능할까요?  
+`/etc/sudoers` 파일을 확인하면 몇 가지 설명이 있습니다.(man sudoers)
+- This file must be edited with the 'visudo' command.
+- Sudoers allows particular users to run various commands as `root`
+- `visudo` 명령어를 사용하면 `/etc/sudoers` 파일을 열 수 있습니다. (자세한 내용은 `man visudo` 확인)
+파일에 따르면, 일시적이더라도  유저에 직접 권한부여가 아닌 그룹에 포함시키는 것을 추천하고 있습니다.
+```
+<group> <host> = (runas) <commands>
+admin ALL=(ALL) ALL
+```  
+어떤 유저가 어떤 호스트에서 어떤 명령을 실행할 수 있는지 설정할 수 있습니다.
+> aron as admin can run commands command on in host.
+
+### Example
+```bash
+$ sudo visudo
+# /etc/sudoers
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+triinity ALL=(ALL:ALL) ALL
+%admin  ALL=(ALL:ALL) /bin/ls
+```
+이러면 `admin` 그룹에 포함된 사용자는 `sudo ls` 명령어를 사용할 수 있습니다.
+```bash
+# but available any command as trinity
+$ sudo -u trinity firwall-cmd --permanent --add-port=80/tcp
+```
+만약 arronm, john 에 대한 비밀번호없이, sudo -u 로 제한하고 싶다면 아래와 같이 설정할 수 있습니다.
+```bash
+
+%admin  ALL=(arronm, john) NOPASSWD: /bin/ls
+```
+
+
+
+
+`gpasswd` 명령어를 사용하여 admin 그룹에 사용자를 추가할 수 있습니다.  
+
+### gpasswd
+gpasswd 명령은 /etc/group 및 /etc/gshadow를 관리하는 데 사용됩니다. 모든 그룹에는 관리자, 구성원 및 비밀번호가 있을 수 있습니다.   
+시스템 관리자는 `-A` 옵션을 사용하여 그룹 관리자를 정의하고 `-M` 옵션을 사용하여 구성원을 정의할 수 있습니다. 그들은 그룹 관리자 및 구성원의 모든 권한을 갖습니다.  
+
+그룹 이름을 가진 그룹 관리자가 호출한 gpasswd는 그룹의 새 비밀번호를 묻는 메시지만 표시합니다. 
+비밀번호가 설정된 경우 구성원은 비밀번호 없이 newgrp(1)을 사용할 수 있으며 비구성원은 비밀번호를 제공해야 합니다.
+
+```bash
+## add user to group
+$ sudo gpasswd -a trinity admin
+## remove user from group
+$ sudo gpasswd -d trinity admin
+```
+
+
+
+
+
+# Practice
+
+
+
+# Reference
+- [[CentOS] 유저 별 용량 / 파일 개수 제한](https://blog.naver.com/ncloud24/221825908147)
+- [quota](https://linux.die.net/man/1/quota)
+- [quotacheck](https://linux.die.net/man/8/quotacheck)
+- [quotaon](https://linux.die.net/man/8/quotaon)
