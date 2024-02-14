@@ -181,6 +181,7 @@ admin ALL=(ALL) ALL
 $ sudo visudo
 # /etc/sudoers
 # User privilege specification
+#<%group | user> <host> = (runas) <commands>
 root    ALL=(ALL:ALL) ALL
 triinity ALL=(ALL:ALL) ALL
 %admin  ALL=(ALL:ALL) /bin/ls
@@ -215,12 +216,75 @@ $ sudo gpasswd -a trinity admin
 $ sudo gpasswd -d trinity admin
 ```
 
-
-
-
-
 # Practice
+### How do we allow the user called `trinity` to execute any sudo command?
+cat sudo group
+```bash
+$ sudo cat /etc/sudoers | grep %
+## (ie, from files, LDAP, NIS, etc) in this file - just use %groupname 
+# %:group are resolved via the group plugin by default.
+# %sys ALL = NETWORKING, SOFTWARE, SERVICES, STORAGE, DELEGATING, PROCESSES, LOCATE, DRIVERS
+%wheel  ALL=(ALL)       ALL
+# %wheel        ALL=(ALL)       NOPASSWD: ALL
+# %users  ALL=/sbin/mount /mnt/cdrom, /sbi
+```
+wheel 그룹 이 정답
+```bash
+$ sudo usermod -aG wheel trinity
+or
+$ sudo gpasswd -a trinity wheel
+```
 
+### Modify the security limits file 
+- make sure that the user called `trinity` can run no more than `30 processes` in her session.
+- user `stephen` so that he can create `maximum filesize` upto `4 MiB`. This should be a `hard` limit.
+- Set a `soft` limit of `20 processes` for everyone in the `salesteam` group.
+open limit.conf
+```bash
+$ sudo vi /etc/security/limits.conf
+```
+insert the following line
+```bash
+#<domain>      <type>  <item>         <value>
+trinity          -       nproc           30
+stephen          hard    fsize           4096
+@salesteam        soft    nproc          20
+```
+### Identify all the `security limits` currently applied in our `user's session` and save the same in `/home/bob/limits` file.
+```bash
+$ ulimit -a > /home/bob/limits
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 837932
+max locked memory       (kbytes, -l) 65536
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 1024
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) unlimited
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+```
+
+### Modify the `sudoers` file in such a way to allow
+- the user called `trinity` to run any sudo command **without** needing to provide her `password`.
+and only run the `/usr/bin/mount`
+- all the users in the `salesteam group` to run any `sudo` command.
+- user `abc` be able to run `sudo` commands `as` the user `sam`.
+```bash
+$ sudo visudo
+```
+insert the following line
+```bash
+trinity    ALL=(ALL)   NOPASSWD:/usr/bin/mount
+%salesteam    ALL=(ALL)   ALL
+abc    ALL=(sam)   ALL
+```
 
 
 # Reference

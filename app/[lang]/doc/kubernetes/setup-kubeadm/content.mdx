@@ -106,13 +106,17 @@ Kubernetes는 클러스터의 노드 간에 통신하기 위해 네트워크를 
 ```bash
 # https://kubernetes.io/docs/setup/production-environment/container-runtimes/
 # install cri-o using dnf
+sudo dnf update -y && sudo dnf upgrade -y
 $ sudo dnf config-manager --set-enabled crb
-$ sudo dnf install epel-release
+$ sudo dnf install epel-release -y
 $ sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/CentOS_9_Stream/devel:kubic:libcontainers:stable.repo
   
 $ sudo curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:1.24.0.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.24:/1.24.0/CentOS_8_Stream/devel:kubic:libcontainers:stable:cri-o:1.24:1.24.0.repo
 
-$ sudo yum install cri-o
+$ sudo dnf install cri-o -y
+$ sudo systemctl start crio
+$ sudo systemctl enable crio
+$ sudo systemctl status crio
 ```
 
 
@@ -217,6 +221,8 @@ EOF
 ```bash
 sudo dnf -y install kubelet kubeadm kubectl --disableexcludes=kubernetes epel-release
 kubectl version --client 
+sudo systemctl enable kubelet
+sudo systemctl start kubelet
 ```
 
 ### install control-plane node
@@ -230,6 +236,17 @@ Enable kubelet service
 ```bash
 sudo systemctl enable kubelet
 ```
+
+### Join the control-plane node
+```bash
+[example]
+sudo kubeadm join 192.168.0.103:6443 \
+--token 74l5ij.t9k6whcpxus8ckup \
+--discovery-token-ca-cert-hash sha256:fc67589410c4dd97c879879046fbfad8b9d0980967d2355edb20077e5a9926ae \
+--cri-socket=unix:///var/run/crio/crio.sock 
+
+```
+
 
 
 만약 aws, gcp, azure와 같은 클라우드 환경이라면 파드에 배정할 수 있는 IP가 한정됩니다.
@@ -335,34 +352,24 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
-#TODO
+
 ### Set up pod network
 가장 골칫거리가 될 CNI 즉 pod network를 설정해야합니다.
 많이 사용되는 소프트웨어는 calico입니다.  
 calico는 kubernetes 클러스터의 네트워크 정책을 관리하는 오픈소스 솔루션입니다.
 클러스터의 CNI를 책임질 친구입니다. 
 ```bash
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/tigera-operator.yaml
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/custom-resources.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/tigera-operator.yaml
+# https://docs.tigera.io/calico/latest/reference/installation/api
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/custom-resources.yaml
 ```
 ### Check the status of the control-plane node
 ```bash
-$ sudo kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
-NAME        STATUS     ROLES                  AGE   VERSION
-abacus103   NotReady   control-plane,master   11m   v1.28.2
+$ kubectl get nodes
+NAME            STATUS   ROLES           AGE   VERSION
+192.168.0.103   Ready    control-plane   10h   v1.28.6
 ```
 
-
-
-1. 각 노드 서버에 접속하여 [공식문서 - install kubeadm](https://kubernetes.io/ko/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) 를 설치하고
-join 커맨드를 적용합니다.
-성공적으로 세팅했다면 아래 명령어처럼 노드 목록이 나와야합니다.
-```bash
-$ sudo kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf
-NAME        STATUS     ROLES           AGE     VERSION
-abacus100   Ready      <none>          5m53s   v1.28.2
-abacus103   NotReady   control-plane   11m     v1.28.2
-```
 
 # Reference
 - [Kubernetes](https://kubernetes.io/)
