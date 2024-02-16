@@ -19,8 +19,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const dict = await getDictionary(lang)
   return {
-    title: 'ACL',
-    description: 'Access Control List in Linux',
+    title: 'Traefik',
+    description: 'Reverse proxy and load balancer for HTTP on a Traefik',
   }
 }
 

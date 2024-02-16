@@ -14,6 +14,7 @@
       - [PersistentVolumeClaim](#persistentvolumeclaim)
       - [Deployment](#deployment)
       - [Service](#service)
+    - [Secret](#secret)
     - [2. script 작성](#2-script-작성)
     - [POD 접속 테스트](#pod-접속-테스트)
     - [데이터 유지 테스트](#데이터-유지-테스트)
@@ -341,6 +342,17 @@ spec:
   type: ClusterIP
 ```
 
+### Secret
+```yaml
+apiVersion: v1
+data:
+  password: YWJhY3VzMTAh
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: mysql-secret
+```
+
 
 ### 2. script 작성
 기존에 있는 경우 `--force` 옵션 사용해서 지워버리고 다시만들자
@@ -358,10 +370,11 @@ kubectl describe deployment.apps/common-mysql -n db
 생성했다면 테스트를 위해 접속하여 상황을 좀 보자
 ### POD 접속 테스트
 ```sh
-$ kubectl exec -it common-mysql-59fb8bf9c7-77m9k --namespace db --container mysql -- bash
+# --namespace db
+$ kubectl exec -it $(k get pod --selector=app=mysql --output=name)  --container mysql -- bash
 $ mysql -uroot -p
 ```
-패스워드를 직접 입력하자. 참고로 decoded 된 평문을 입력 해야한다. `1234qwer!!`
+패스워드를 직접 입력하자. 참고로 decoded 된 평문을 입력 해야한다. 
 
 sql client 를 사용할 수 있다.
 ```sql
