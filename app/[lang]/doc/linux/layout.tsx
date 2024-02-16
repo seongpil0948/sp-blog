@@ -9,7 +9,7 @@ import { getTree } from '@/app/_utils/dir-tree'
 export const metadata: Metadata = {
   title: {
     default: `Linux`,
-    template: `%s - ${siteConfig.name}`,
+    template: `%s - Linux - ${siteConfig.name}`,
   },
   description: 'Linux Documentation',
 }

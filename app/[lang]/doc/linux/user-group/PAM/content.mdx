@@ -1,0 +1,95 @@
+# PAM
+PAM(Pluggable Authentication Modules)은 GNU/Linux 시스템에서 많은 애플리케이션 또는 서비스가 사용자를 중앙집중식으로 인증할 수 있도록 하는 시스템입니다.   
+> 관리자인 내가 왜 root 계정 사용시 비밀번호늘 쳐야하는가!!! ㅋㅋ
+- PAM은 사용자 인증을 위한 모듈을 제공한다.
+- 
+### Show related manual
+```bash
+$ apropos pam
+PAM (8)              - Pluggable Authentication Modules for Linux
+config-util (5)      - Common PAM configuration file for configuration utilities
+faillock.conf (5)    - pam_faillock configuration file
+fingerprint-auth (5) - Common configuration file for PAMified services
+group.conf (5)       - configuration file for the pam_group module
+limits.conf (5)      - configuration file for the pam_limits module
+pam (8)              - Pluggable Authentication Modules for Linux
+pam.conf (5)         - PAM configuration files
+pam.d (5)            - PAM configuration files
+pam_access (8)       - PAM module for logdaemon style login access control
+pam_console (8)      - determine user owning the system console
+pam_console_apply (8) - set or revoke permissions for users at the system console
+```
+
+
+
+
+## Terminology
+
+
+# Practice
+### If our user has sudo privileges, how do we change the password for the `root` account?
+```bash
+sudo passwd root
+```
+
+### Where can we find `PAM` configuration files?
+```bash
+ls /etc/pam.d
+cat /etc/pam.conf
+```
+
+### The root account is currently locked. Use the correct command to unlock it.
+```bash
+$ sudo passwd --help
+Usage: passwd [OPTION...] <accountName>
+  -k, --keep-tokens       keep non-expired authentication tokens
+  -d, --delete            delete the password for the named account (root only); also removes password lock
+                          if any
+  -l, --lock              lock the password for the named account (root only)
+  -u, --unlock            unlock the password for the named account (root only)
+$ sudo passwd -u root
+```
+위 명령을 실행할 때, 비밀번호를 입력하지 않아도 됩니다. 어떻게 가능할까요?
+
+### Edit the `PAM configuration file` for the `su` utility 
+this utility only accepts the requests from users that are part of the `wheel` group.
+```bash
+$ sudo vi /etc/pam.d/su
+# Add the following line to the top of the file
+<service>      <control>       <module-path> <module-arguments>
+auth           required        pam_wheel.so use_uid
+```
+만약 password 입력없이 root 계정으로 su 명령을 실행하고 싶다면, 아래와 같이 설정합니다.
+```bash
+$ sudo vi /etc/pam.d/su
+# Add the following line to the top of the file
+<service>      <control>       <module-path> <module-arguments>
+auth           sufficient      pam_wheel.so trust use_uid
+```
+to implicitly trust users in the "wheel" group.
+- `trust` 인수는 사용자가 이미 루트인 경우 성공한다는 의미입니다. 
+- `use_uid` 인수는 모듈이 처음에 제공된 이름을 사용하는 대신 대상 사용자의 이름을 결정하기 위해 호출 프로세스의 UID를 사용해야 함을 의미합니다.
+
+### Restrict the root access to SSH service via `PAM`
+You can use the `pam_listfile.so` module which offers great flexibility in limiting the privileges of specific accounts.   
+Please make sure you don't restrict the root SSH access from the SSH configuration.
+
+make deny list
+```bash
+sudo vi /etc/ssh/deniedusers
+# Add the following line to the file
+root
+```
+
+configure pam file
+```bash
+$ sudo vi /etc/pam.d/sshd
+# Add the following line to the top of the file
+auth required pam_listfile.so item=user sense=deny file=/etc/ssh/sshd.deny onerr=succeed
+or 
+auth    required       pam_listfile.so onerr=succeed  item=user  sense=deny  file=/etc/ssh/deniedusers
+```
+
+
+# Reference
+- [https://docs.rockylinux.org/ko/guides/security/pam/](https://docs.rockylinux.org/ko/guides/security/pam/)
