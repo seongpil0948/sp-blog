@@ -26,7 +26,7 @@ export default function RootLayout({
         leftTreeOptions={{
           dir: 'app/[lang]/doc/linux',
           options: {
-            depth: 1,
+            depth: 3,
           },
         }}
         drawerProps={{

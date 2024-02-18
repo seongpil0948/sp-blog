@@ -1,15 +1,17 @@
-# Getting Started with Linux Essential Commands
-리눅스를 처음 접하는 사람들을 위한 리눅스 명령어에 대한 기본적인 내용을 다룹니다.  
 
-- [Getting Started with Linux Essential Commands](#getting-started-with-linux-essential-commands)
+## Toc
+- [Linux Essential Commands](#linux-essential-commands)
   - [Read \& use system documentation](#read--use-system-documentation)
     - [섹션 별 의미](#섹션-별-의미)
   - [Package Manager](#package-manager)
+    - [Help DNF](#help-dnf)
     - [Repository update \& upgrade](#repository-update--upgrade)
     - [install](#install)
     - [bash: ldd로 의존성 탐색](#bash-ldd로-의존성-탐색)
-  - [Package repository](#package-repository)
+  - [Package repository in Ubuntu](#package-repository-in-ubuntu)
     - [Docker 설치 시나리오](#docker-설치-시나리오)
+  - [Package repository in CentOS](#package-repository-in-centos)
+    - [Docker 설치 시나리오](#docker-설치-시나리오-1)
   - [RHEL](#rhel)
   - [dnf's config-manager](#dnfs-config-manager)
   - [EPEL (Extra Packages for Enterprise Linux)](#epel-extra-packages-for-enterprise-linux)
@@ -27,7 +29,8 @@
     - [List what old packages can be upgraded and store the list in `/home/bob/upgrade.txt` file.](#list-what-old-packages-can-be-upgraded-and-store-the-list-in-homebobupgradetxt-file)
     - [Search the package related to `Apache HTTP Server`](#search-the-package-related-to-apache-http-server)
 
-
+# Linux Essential Commands
+리눅스를 처음 접하는 사람들을 위한 리눅스 명령어에 대한 기본적인 내용을 다룹니다.  
 ## Read & use system documentation 
 리눅스 명령어를 사용하는데 있어서 가장 중요한 것은 시스템의 메뉴얼을 읽고 사용하는 것입니다.  
 목적에 따라 어떤 명령어를 어떻게 사용할지 인지하는 것은 중잔기 따지지 않고 좋습니다.
@@ -70,6 +73,30 @@ man 과 더불어 `info` 또한 비슷한 문법으로 더 많은 기능을 제�
 - Centos의 dnf 가 있다
 > dnf 는 Dandified YUM의 약자로 기존 Red Hat 계열의 패키지 관리자인 yum의 단점인 "느린 속도", "과다한 메모리 사용", "의존성 결정이 느림" 과 같은 단점을 개선한 새로운 패키지 관리자입니다.
 
+### Help DNF
+자주 사용되는 dnf 명령어들을 알아보겠습니다.
+- `alias`: 명령어에 대한 별칭을 설정합니다.
+  - `dnf install` 대신 `dnf i` 를 사용할 수 있습니다.
+  - ex) list of aliaes `dnf alias list`
+  - ex) add alias `dnf alias add i=install`
+- `autoremove`: 사용하지 않는 패키지를 자동으로 삭제합니다.
+- `provides`: 패키지가 제공하는 파일을 찾습니다.
+- `repolist`: 저장소 목록을 보여줍니다.
+  - dnf install 시 저장소를 지정할 수 있습니다.
+  - `dnf install --disablerepo=repo1 --enablerepo=repo2`
+- `search`: 패키지를 검색합니다.
+  - `dnf search httpd`` 
+- `dnf list --installed`: 설치된 패키지 목록을 보여줍니다.
+  - ex) `dnf list --installed | grep ldap`
+  - `dnf list --available`: 사용 가능한 패키지 목록을 보여줍니다.
+- `repoquery`: 패키지에 대한 정보를 보여줍니다.
+  - `dnf repoquery --list httpd`: httpd 패키지에 포함된 파일 목록을 보여줍니다.
+  - `dnf repoquery --requires httpd`: httpd 패키지가 의존하는 패키지 목록을 보여줍니다.
+  - `dnf repoquery --provides httpd`: httpd 패키지가 제공하는 기능 목록을 보여줍니다.
+  - `dnf repoquery --whatprovides /usr/bin/httpd`: /usr/bin/httpd 파일을 제공하는 패키지 목록을 보여줍니다.
+
+
+
 ### Repository update & upgrade
 `apt update` 명령어는 시스템의 패키지 목록을 최신 상태로 업데이트합니다. 이 명령어를 실행하면, 시스템은 설정된 소프트웨어 리포지토리에서 사용 가능한 패키지와 그 버전 정보를 가져와 로컬 패키지 데이터베이스를 업데이트합니다.
 
@@ -80,13 +107,16 @@ sudo apt update && sudo apt upgrade
 ### install
 nginx 패키지를 설치해보겠습니다.
 ```sh
-sudo apt update
+# in ubuntu
 sudo apt install nginx
+# in centos
+sudo dnf install nginx
 ```
 우린 최신버전의 nginx 패키지(archive) 와 의존성들을 설치했습니다.  
 패키지는 프로그램과 더불어 document(man, info..., share, example) 등을 담고있습니다.  
 어떤 파일들로 구성되었는지 알아볼까요?  
 ```sh
+# in ubuntu
 $ dpkg --listfiles nginx
 /.
 /usr
@@ -97,11 +127,14 @@ $ dpkg --listfiles nginx
 /usr/share/doc/nginx/changelog.Debian.gz
 # in centos dnf
 $ dnf repoquery --list nginx 
-
 ```
 dependency 인 nginx-core도 확인해보겠습니다.
 ```sh
+# in ubuntu
 $ dpkg --listfiles nginx-core
+# in centos dnf
+$ dnf repoquery --list nginx-core
+
 /.
 /usr
 /usr/sbin
@@ -119,14 +152,21 @@ $ dpkg --listfiles nginx-core
 `nginx-core` 가 있는지 알기 쉽지않습니다.  
 bin 파일로부터 어떤 패키지에 속해있는지 알아보는 방법이 있을까요?  
 ```sh
+# in ubuntu
 $ dpkg -S /usr/sbin/nginx
 $ dpkg --search /usr/sbin/nginx
 nginx-core: /usr/sbin/nginx
+# in centos dnf
+$ dnf repoquery --requires nginx-
+$ dnf repoquery --requires nginx-core
 ```
 하나씩 알아보는건 성미에 맞지않습니다.
 패키지 자체에 대한 정보를 확인할 수 있는 명령어가 있을까요?  
 ```sh
+# in ubuntu
 $ apt show -a nginx
+# in centos dnf
+$ dnf info nginx
 Package: nginx
 Version: 1.18.0-0ubuntu1.4
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
@@ -150,12 +190,18 @@ Description: small, powerful, scalable web/proxy server
 패키지를 apt uninstall로 삭제하면 의존성이 있는 다른 패키지들도 같이 삭제됩니다.  
 이러한 의존성을 확인하고 싶다면 `apt-cache` 명령어를 사용하면 됩니다.
 ```sh
+# in ubuntu
 apt-cache depends bash
+# in centos dnf
+dnf repoquery --requires bash
 ```
 이 명령어는 bash가 의존하고 있는 패키지들을 보여줍니다.
 또한 orphan dependencies를 자동으로 삭제하려면
 ```sh
+# in ubuntu
 sudo apt autoremove
+# in centos dnf
+sudo dnf autoremove
 ```
 를 사용하면 됩니다.
 
@@ -170,20 +216,26 @@ $ ldd /bin/bash
         /lib64/ld-linux-x86-64.so.2 (0x00007f1a61216000)
 ```
 
-## Package repository
+## Package repository in Ubuntu
 리눅스 패키지 매니저는 패키지를 설치할 때 패키지 저장소에서 패키지를 다운로드합니다.
 동료가 만든 리눅스 패키지를 설치하고 싶다면 어떻게 해야할까요?  
 패키지 저장소를 추가하면 됩니다.  
 ```sh
+# in ubuntu
 sudo add-apt-repository ppa:nginx/stable
 ```
 
 설명전 패키지 저장소 목록을 확인해보겠습니다.
 패키지 관리자는 `/etc/apt/sources.list`, `/etc/apt/sources.list.d` 디렉토리에 저장소 정보를 가지고 있습니다.
 ```sh
+# in ubuntu
 $ cat /etc/apt/sources.list
 # types  uri  code-name(release name) ...components 
 deb http://us.archive.ubuntu.com/ubuntu focal main restricted
+
+# in centos dnf
+$ dnf repolist
+$ ls /etc/yum.repos.d
 ```
 > List of configured APT data sources
 - main: The core software for the distribution.
@@ -238,7 +290,56 @@ $ sudo add-apt-repository ppa:nginx/stable
 ```sh
 $ sudo add-apt-repository --list
 $ sudo add-apt-repository --remove ppa:nginx/stable
+
 ```
+
+## Package repository in CentOS
+CentOS는 Red Hat 계열의 리눅스 배포판입니다, dnf을 사용하여 패키지를 관리합니다.
+아래 명령어는 현재 시스템에 등록된 저장소 목록을 보여줍니다.
+```sh
+$ dnf repolist
+$ ls /etc/yum.repos.d
+```
+
+### Docker 설치 시나리오
+Docker의 최신 안정 버전을 설치한다고 가정해 보겠습니다.
+가장 먼저 해야 할 일은 공개 키를 다운로드하는 것입니다.
+Docker 팀은 새 패키지를 업로드할 때 개인 키와 공개 키를 사용하여 서명합니다.
+이는 악의적인 사용자가 패키지를 변조하지 못하도록 하는 보안 조치입니다.
+어떤 키로 서명되었는지 확인 할 수 있습니다.
+```sh
+$ curl -fsSL https://download.docker.com/linux/centos/gpg -o docker.key
+```
+이제 패키지 관리자가 이해 할 수 있도록 `gpg` 형식으로 변경합니다.
+```sh
+$ gpg --dearmor -o docker.key.gpg docker.key
+```
+이제 이 키를 저장소에 추가합니다.
+```sh
+$ sudo mv docker.key.gpg /etc/pki/rpm-gpg/
+```
+이제 앱 저장소를 시스템에 추가하면 됩니다.
+```sh
+$ echo "[docker]
+name=Docker CE Stable - $basearch
+baseurl=https://download.docker.com/linux/centos/7/$basearch/stable
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/docker.key.gpg" | sudo tee /etc/yum.repos.d/docker.repo
+```
+이제 패키지 목록을 업데이트하고 Docker를 설치할 수 있습니다.
+```sh
+$ sudo dnf update
+...
+Get:6 https://download.docker.com/linux/centos/7/x86_64/stable Packages [22.4 kB]
+
+$ sudo dnf install docker-ce
+
+```
+
+
+
+
 ## RHEL
 RHEL은 Red Hat Enterprise Linux의 약자로 레드햇에서 개발한 리눅스 배포판입니다.
 

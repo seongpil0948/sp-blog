@@ -76,7 +76,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     li: (props) => (
       <li
-        className="md:text-md mb-2 text-sm leading-6 [&::marker]:font-semibold [&:before]:mr-6 [&:before]:content-['-']"
+        className=" sm:text-md my-5  mb-2 text-sm font-normal leading-7 md:text-lg  [&::marker]:font-semibold [&:before]:mr-6 [&:before]:content-['-']"
         {...props}
       />
     ),
@@ -87,7 +87,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       />
     ),
     p: (props) => (
-      <p className="md:text-md my-5 text-sm font-normal leading-7" {...props} />
+      <p
+        className="sm:text-md my-5 text-sm font-normal leading-7 md:text-lg"
+        {...props}
+      />
     ),
     pre: (props) => {
       return (
@@ -139,7 +142,7 @@ const Link = ({
       // isExternal={!href?.startsWith('/') && !href?.includes(APP_DOMAIN)}
       isExternal={false}
       showAnchorIcon
-      className="text-xs text-sky-500 underline hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-100 md:text-sm"
+      className="text-sm text-sky-500 underline hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-100 md:text-sm"
     >
       {children}
     </NextLink>
