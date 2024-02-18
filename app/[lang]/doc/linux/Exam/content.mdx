@@ -1,0 +1,221 @@
+
+## Text Manipulation and Regular Expressions - 1
+### Task 
+In this exercise, you'll need to make some changes to the `/etc/settings.cfg` file.
+
+A. Add a new line at the end of this file. The line should have this content: `system51=reserved` . Save the file and exit the editor.
+
+
+B. Use the correct command to display only the systems that are `disabled` in this file. The command should output something like:
+```
+system1=disabled
+system4=disabled
+```
+and so on.
+Now redirect this filtered output to this file: /opt/disabledsystems.txt
+
+C. Use the correct tool to automate a search and replace action on the /etc/settings.cfg file. All of the words enabled should be changed to the word disabled.
+
+
+### Solution
+You should use commands like `vi, sed, grep` and `redirection` to accomplish these tasks.
+Switch into the root user:
+```bash
+sudo su - 
+```
+
+Edit `/etc/settings.cfg` file to add the required content:
+
+```bash
+vi /etc/settings.cfg
+```
+
+Go to the bottom of the file by pressing SHIFT+g. Then add the given line in the bottom of the file:
+```
+system51=reserved
+```
+
+Now display only the systems that are disabled in this file and redirect the output to `/opt/disabledsystems.txt` file.
+```bash
+grep disabled /etc/settings.cfg > /opt/disabledsystems.txt
+```
+Change all words enabled to the word disabled.
+```bash
+sed -i "s/enabled/disabled/g" /etc/settings.cfg
+```
+
+## Storage Management - 1
+
+### Task
+In this exercise you'll prepare the disk found at` /dev/vdb` to be used by this system.
+
+A. First, you'll see that this disk has `1GB` of unpartitioned space. 
+Create two partitions. Each should be exactly `500MB` in size.
+
+
+B. Format the first partition, `/dev/vdb1` to be used as swap and enable it.
+
+
+C. Edit the correct file in `/etc/` so that `/dev/vdb1` is automatically mounted as `swap` space every time the system boots up.
+
+
+D. Format the second partition at `/dev/vdb2` with the xfs filesystem.
+
+### Solution
+You can use `fdisk, mkswap` etc commands.
+Follow below given steps:
+```bash
+sudo fdisk /dev/vdb
+```
+Now enter below given responses:
+```
+Command (m for help): n
+Select (default p):  <just-leave-it-default-and-press-enter>
+Partition number (1-4, default 1): <just-leave-it-default-and-press-enter>
+First sector (2048-2097151, default 2048):  <just-leave-it-default-and-press-enter>
+Last sector, +sectors or +size{K,M,G,T,P} (2048-2097151, default 2097151): +500M
+Command (m for help): w
+```
+
+You can follow these same steps for the other partition.
+Now format `/dev/vdb1` as swap:
+
+```bash
+sudo mkswap /dev/vdb1
+sudo swapon /dev/vdb1
+```
+
+Edit `/etc/fstab` file and add an entry for swap partition:
+```bash
+sudo vi /etc/fstab
+```
+
+Add below given line in it:
+```
+/dev/vdb1 none swap defaults 0 0
+```
+
+
+Format `/dev/vdb2` as `xfs`:
+```bash
+sudo mkfs.xfs /dev/vdb2
+```
+
+## Storage Management - 2
+
+### Task
+In this exercise you'll need to create a Logical Volume Manager structure.
+
+A. First, add these two physical volumes to LVM: `/dev/vdc` and `/dev/vdd`
+
+B. Next, create a volume group called volume1 out of these two physical volumes, `/dev/vdc` and `/dev/vdd`
+
+C. Finally, create a `logical volume` of `1GB` on the volume group `volume1`. The name of this `logical volume` should be `logic1`
+
+### Solution
+You can use commands like `pvcreate, vgcreate` and `lvcreate`.
+
+Execute below given command to add the required two physical volumes to LVM: /:
+```bash
+sudo pvcreate /dev/vdc /dev/vdd
+```
+Execute below given command to create `volume1` volume group:
+
+```bash
+sudo vgcreate volume1 /dev/vdc /dev/vdd
+```
+
+
+Execute below given command to create a logical volume of `1GB` on the volume group `volume1`:
+```bash
+sudo lvcreate --size 1G --name logic1 volume1
+```
+
+## Operating Systems - 1
+
+### Task
+Send the `SIGHUP` signal to the `httpd` process.
+
+### Solution
+You can do this using `kill` command.
+Identify the PID of `httpd`:
+```bash
+sudo systemctl status httpd
+```
+
+Look for the `Main PID`, if main `PID` is `1234` then execute below command:
+```bash
+sudo kill -SIGHUP 1234
+```
+
+## User and Group Management - 1
+
+### Task
+In this exercise you'll deal with advanced file permissions or attributes.
+
+A. First, in your home directory you will find a file called `bobandjane`. Currently this file can only be `read by bob`.  
+Add a new `ACL` permission so that `jane` can also read this. Jane should `not` have `write` or execute permissions, but only the read permission.
+
+B. Next, in your `home` directory you will find a file named `frozenfile`.   
+This currently has the `immutable` attribute set on it. Remove the immutable attribute from this file
+
+### Solution
+You need to use setfacl command with appropriate options.
+Add a new ACL permission for user jane
+```bash
+sudo setfacl --modify user:jane:r bobandjane
+```
+
+`Remove` the `immutable` attribute from `frozenfile` file:
+```bash
+sudo chattr -i frozenfile
+```
+
+## Network Configuration - 1
+
+### Task
+SSH in to node01 using user bob and password caleston123
+
+A. Add an extra DNS resolver (nameserver) on this system: 8.8.8.8
+
+
+B. Add a static host so that the host called database resolves to this IP address: 10.0.0.12
+
+
+C. Find out the IP address of eth1 interface on node01 and add a temporary static route so that network traffic going to 192.168.5.0/24 is routed via the IP address you find.
+
+
+Don't forget to log out from node01 when you're done with this exercise.
+### Solution
+Solution
+SSH into node01 using given credentials:
+
+
+ssh node01
+
+
+
+Add a new nameserver:
+
+
+sudo vi /etc/resolv.conf
+
+
+
+Add nameserver 8.8.8.8 line at the end of the file:
+
+
+Add static host database:
+
+
+sudo vi /etc/hosts
+
+
+
+Add 10.0.0.12 database line at the end of the file:
+
+
+Find out the IP address of eth1 interface using ip a command and add a static route (let's say IP address is 10.5.2.2):
+
+
+sudo ip route add 192.168.5.0/24 via 10.5.2.2

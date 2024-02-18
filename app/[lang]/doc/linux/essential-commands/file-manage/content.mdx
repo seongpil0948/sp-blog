@@ -127,6 +127,22 @@ $ chmod u+s,g+s,o+t /home/bob/datadir
 $ sudo find /usr/ -size +5M -size -10M
 ```
 
+### Find all files in `/opt/findme/`  you need to filter out specific files and copy it to `/opt` directory
+- one that will make it look for objects that have at least the `u=x` permission enabled.
+- another that will filter results to only show `file type` objects, ignoring directories and others.
+
+```bash
+$ sudo find /opt/findme/ -type f -perm /u=x 
+/opt/findme/file009
+/opt/findme/file253
+/opt/findme/file688
+```
+
+###  Find any file that is `larger` than `1KB` and copy it to the `/opt/` directory.
+```bash
+$ sudo find /opt/findme/ -type f -size +1k -exec cp {} /opt/ \;
+```
+
 ### Update the permissions for `some_directory` to `rwxr-xr-x`
 ```bash
 $ chmod 0755 some_directory
@@ -175,8 +191,20 @@ $ grep -ic '^SECTION' testfile > /home/bob/count_lines
 ```bash
 tail -500 /home/bob/textfile
 ```
-## Archiving & Compression/Decompression
 
+
+### `/opt/dir1/` and `/opt/dir2/` have very similar files. Find out which files only exist in `/opt/dir2/` but not in `/opt/dir1`. Find the difference and save the output in the `/opt/onlyindir2.txt` file.
+
+
+With our sample output, the content in that file would be like:
+```
+Only in dir2: file1
+Only in dir2: file2
+Only in dir2: file3
+```
+```bash
+$ diff -rq /opt/dir1/ /opt/dir2/ | grep "Only in dir2" > /opt/onlyindir2.txt
+```
 
 # Reference
 - [https://man7.org/linux/man-pages/man1/find.1.html](https://man7.org/linux/man-pages/man1/find.1.html)
