@@ -16,7 +16,7 @@ export default async function SSGPage({ params: { lang } }: Param) {
   const dict = await getDictionary(lang)
   // const storyComp = () => <CmButton>{dict['button']['button']}</CmButton>
   return (
-    <section className="flex-center-col">
+    <section className="flex-center-col min-h-full">
       <div className="inline-block justify-center text-center">
         <div className="flex-center-col">
           <CmTitle className="m-auto" size="lg">

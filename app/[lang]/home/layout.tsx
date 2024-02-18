@@ -1,12 +1,9 @@
 import { Metadata } from 'next'
 
-import { LANDING_PATH, siteConfig } from '@/config/site'
+import { siteConfig } from '@/config/site'
 import CommonNavbar from '@/app/_components/server-client/navbar'
-import CommonDrawer from '../../_components/client-only/drawer'
-import { TreeSection } from '@/app/_components/client-only/tree-section'
 import { layout, main } from '@/app/_components/server-only/primitives'
 import { CmFooter } from '@/app/_components/server-only/footers'
-import { getTree } from '@/app/_utils/dir-tree'
 
 export const metadata: Metadata = {
   title: {
@@ -39,9 +36,7 @@ export default function RootLayout({
           dir: 'app/[lang]',
         }}
       ></CommonNavbar>
-      <main id="content-container" className={main()}>
-        {children}
-      </main>
+      <main className={main({ justify: 'center' })}>{children}</main>
 
       <CmFooter />
     </div>

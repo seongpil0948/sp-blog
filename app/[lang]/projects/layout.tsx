@@ -32,13 +32,8 @@ export default function RootLayout({
 }) {
   return (
     <div className={layout()}>
-      <CommonNavbar
-        leftTreeOptions={{ dir: 'app/[lang]/projects/' }}
-        drawerProps={{
-          title: 'Projects',
-        }}
-      />
-      <main className={docWrapper()}>{children}</main>
+      <CommonNavbar leftTreeOptions={{ dir: 'app/[lang]' }} />
+      <main className={main()}>{children}</main>
       <CmFooter />
     </div>
   )

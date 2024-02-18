@@ -1,12 +1,18 @@
 import { tv } from 'tailwind-variants'
 
 export const layout = tv({
-  base: 'flex flex-col h-screen relative',
+  // base: 'h-screen relative',
+  base: '',
 })
 
 export const main = tv({
-  base: 'flex-grow pt-36 px-8 relative',
+  base: 'flex-grow py-2 px-8 relative flex flex-col min-h-screen',
   variants: {
+    justify: {
+      center: 'justify-center',
+      start: 'justify-start',
+      end: 'justify-end',
+    },
     size: {
       sm: 'px-8 pt-6 pb-8',
       md: 'md:py-10',

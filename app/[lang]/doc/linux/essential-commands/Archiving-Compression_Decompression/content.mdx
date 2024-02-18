@@ -1,29 +1,6 @@
 # Compression, Decompression
 리눅스에서 파일을 압축하고 해제하는 방법에 대해 알아보겠습니다.
 
-## Error redirect
-리눅스에서 명령어를 실행할 때, 에러메시지를 파일로 저장하고 싶을 때가 있습니다.  
-- `1>` or `>` 를 사용하면 표준 출력을 파일로 저장할 수 있습니다.  
-- `2>` 를 사용하면 표준 에러를 파일로 저장할 수 있습니다.  
-- `2>&1` 를 사용하면 표준 출력과 표준 에러를 동시에 파일로 저장할 수 있습니다.
-  - 2의 출력을 1의 주소로 보내라는 의미입니다.
-### Execute `/home/bob/script.sh` script and save all normal output (except `errors/warnings`) in `/home/bob/output_stdout.txt` file. 
-```bash
-$ /home/bob/script.sh > /home/bob/output_stdout.txt
-```
-
-### 이번엔 error, warning , normal output을 모두 `/home/bob/output.txt` 파일로 저장하고 싶다면?
-```bash
-# 표준 출력을 /home/bob/output.txt 파일로 저장합니다. 
-# 이후 표준 에러를 표준 출력으로 보냅니다.
-$ /home/bob/script.sh > /home/bob/output.txt 2>&1
-```
-
-### 에러만 저장하고 싶다면?
-```bash
-$ /home/bob/script.sh 2> /home/bob/output_errors.txt
-```
-
 ## tar
 `tar` is a command-line utility that is used to create and manipulate archive files in Linux. It is a short form of "Tape Archive".  
 `tar`은 리눅스에서 아카이브 파일을 생성하고 조작하는 데 사용되는 명령 줄 유틸리티로 "Tape Archive"의 약자입니다.   
@@ -32,27 +9,27 @@ $ /home/bob/script.sh 2> /home/bob/output_errors.txt
 > It is also used to compress and decompress files.
 
 ### GNU-style usage
+```bash
+$ tar {--catenate|--concatenate} [OPTIONS] --file ARCHIVE ARCHIVE...
+$ tar --create [--file ARCHIVE] [OPTIONS] [FILE...]
+$ tar {--diff|--compare} [--file ARCHIVE] [OPTIONS] [FILE...]
+$ tar --delete [--file ARCHIVE] [OPTIONS] [MEMBER...]
+$ tar --append [--file ARCHIVE] [OPTIONS] [FILE...]
+$ tar --list [--file ARCHIVE] [OPTIONS] [MEMBER...]
+$ tar --test-label [--file ARCHIVE] [OPTIONS] [LABEL...]
+$ tar --update [--file ARCHIVE] [OPTIONS] [FILE...]
+$ tar {--extract|--get} [--file ARCHIVE] [OPTIONS] [MEMBER...]
 ```
-tar {--catenate|--concatenate} [OPTIONS] --file ARCHIVE ARCHIVE...
-tar --create [--file ARCHIVE] [OPTIONS] [FILE...]
-tar {--diff|--compare} [--file ARCHIVE] [OPTIONS] [FILE...]
-tar --delete [--file ARCHIVE] [OPTIONS] [MEMBER...]
-tar --append [--file ARCHIVE] [OPTIONS] [FILE...]
-tar --list [--file ARCHIVE] [OPTIONS] [MEMBER...]
-tar --test-label [--file ARCHIVE] [OPTIONS] [LABEL...]
-tar --update [--file ARCHIVE] [OPTIONS] [FILE...]
-tar {--extract|--get} [--file ARCHIVE] [OPTIONS] [MEMBER...]
-```
-- --concatenate: -A
-- --create: -c
-- --compare: -d
-- --delete: -D
-- --append: -r
-- --list: -t
-- --test-label: -l
-- --update: -u
-- --extract: -x
-- --verbose: -v
+- `--concatenate`: -A
+- `--create`: -c
+- `--compare`: -d
+- `--delete`: -D
+- `--append`: -r
+- `--list`: -t
+- `--test-label`: -l
+- `--update`: -u
+- `--extract`: -x
+- `--verbose`: -v
 
 ### Operation mode
 - `--diff` : Find differences between archive and file system
@@ -117,15 +94,20 @@ $ tar --extract --file=archive.tar --preserve-permissions
 리눅스에서 compression utilities는 세가지 종류(format)가 있습니다.  
 `[format]`: [tar option]과 예제들로 알아보겠습니다.
 - `gzip` :  `-z`, `--gzip`
-  - `$ tar -czf archive.tar.gz file1 file2 file3`
-  - `$ gzip file1 -> file1.gz`
+```bash
+$ tar -czf archive.tar.gz file1 file2 file3
+$ gzip file1 -> file1.gz
+```
 - `bzip2` : `-j`, `--bzip2`
-  - `$ tar -cjf archive.tar.bz2 file1 file2 file3`
-  - `$ bzip2 file1 -> file1.bz2`
+```bash
+$ tar -cjf archive.tar.bz2 file1 file2 file3
+$ bzip2 file1 -> file1.bz2
+```
 - `xz` : `-J`, `--xz`
-  - `$ tar -cJf archive.tar.xz file1 file2 file3`
-  - `$ xz file1 -> file1.xz`
-
+```bash
+$ tar -cJf archive.tar.xz file1 file2 file3`
+$ xz file1 -> file1.xz`
+```
 각 파일을 해제하고 싶다면 `c` -> `x` 로 변경하면 됩니다.  
 확장자에 따라 자동으로 압축 할 수 있는 옵션도 있습니다.
 ```bash
@@ -133,14 +115,13 @@ $ tar --create  --auto-compress --file archive.tar.xz  file1 file2 file3
 ```
 > 해제시는 압축된 파일 포맷에 따라 자동으로 추출됩니다.
 
-#TODO: 예제 추가
 ## Backup to remote server (Directory )
 원격서버에서 소프트웨어를 설치하거나 설정을 변경하면서 혹은 DB를 백업을 하고 싶을 때가 있습니다.   
 리눅스 백업 관련 툴인 rsync(remote synchronization)는 원격서버와 로컬서버간에 파일을 동기화(using ssh)하는데 사용되는 도구입니다.
 ```sh
 $ rsync -a /Pictures/ xxxx@xxxxxx:/backup/Pictures/
 ```
-위 명령어는 `/Pictures/` 디렉토리를 원격서버의 `/backup/Pictures/` 디렉토리로 동기화합니다.  
+위 명령어는 로컬의`/Pictures/` 디렉토리를 원격서버의 `/backup/Pictures/` 디렉토리로 동기화합니다.    
 `-a`=`--archive` 옵션은 아래 옵션들을 포함합니다.
 - `-r` : recursive
 - `-l` : copy symlinks as symlinks
@@ -148,8 +129,8 @@ $ rsync -a /Pictures/ xxxx@xxxxxx:/backup/Pictures/
 - `-t` : preserve modification times
 - `-g` : preserve group
 - `-o` : preserve owner
-- `-D` : same as `--devices --specials`
-만약 명령어를 두번째 실행하면 변경된 파일만(skip old data) 동기화합니다.   
+- `-D` : same as `--devices --specials`  
+만약 명령어를 두번째 실행하면 변경된 파일만(skip old data), 즉 증분 동기화합니다.   
 반대로, 원격서버의 파일을 로컬로 동기화하고 싶다면 아래와 같이 명령어를 실행합니다.
 ```sh
 $ rsync -a xxxx@xxxxxx:/backup/Pictures/ /Pictures/

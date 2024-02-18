@@ -19,13 +19,18 @@ import { CommonNavbarProps } from './types'
 import { LANDING_PATH } from '@/config/site'
 import { AccordionItem, Accordion } from '@nextui-org/accordion'
 import CommonDrawer from '../../client-only/drawer'
-import { TreeSection } from '../../client-only/tree-section'
+import { TreeSection, TreeSectionProps } from '../../client-only/tree-section'
 import { useRouter } from 'next/navigation'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
   return (
-    <NextUINavbar classNames={classes} maxWidth="full" position="sticky">
+    <NextUINavbar
+      classNames={classes}
+      maxWidth="full"
+      // position="sticky"
+      shouldHideOnScroll
+    >
       <NavbarContent>
         <PrefixComp {...props} />
         <NavbarBrand as="li">
@@ -124,55 +129,62 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
     </NextUINavbar>
   )
 }
-
 function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   const router = useRouter()
-  if (props.prefix) {
-    return props.prefix
-  }
-  const { treeLeft } = props
+  const { prefix, treeLeft, drawerProps } = props
 
-  if (!treeLeft) return <></>
-  else if (
-    treeLeft.children &&
-    treeLeft.children.map((c) => c.children).flat().length > 0
-  ) {
-    const items = treeLeft.children.map((item, idx) => {
+  if (prefix) {
+    return prefix
+  }
+
+  if (!treeLeft) {
+    return <></>
+  }
+
+  const renderAccordionItems = (items: TreeSectionProps[]): JSX.Element[] => {
+    return items.map((item, idx) => {
+      const child = isChildGroup(item) ? (
+        <Accordion>{renderAccordionItems(item.children!)}</Accordion>
+      ) : (
+        <TreeSection treeProps={item.children ?? []} />
+      )
+
       return (
         <AccordionItem
+          key={item.href + idx}
+          title={item.label}
           onDoubleClick={() => {
             router.push(item.href)
           }}
-          key={item.href + idx}
-          title={item.label}
         >
-          <TreeSection treeProps={item.children ?? []} />
+          {child}
         </AccordionItem>
       )
     })
-    return (
-      <CommonDrawer
-        title="Home"
-        sheetProps={{
-          placement: 'left',
-          defaultOpen: true,
-        }}
-        {...props.drawerProps}
-      >
-        <Accordion>{...items}</Accordion>
-      </CommonDrawer>
-    )
-  } else {
-    return (
-      <CommonDrawer
-        title="Home"
-        sheetProps={{
-          placement: 'left',
-        }}
-        {...props.drawerProps}
-      >
-        <TreeSection treeProps={treeLeft?.children ?? []} />
-      </CommonDrawer>
-    )
   }
+
+  const items = renderAccordionItems(treeLeft.children ?? [])
+  const hasChildren = treeHasChildren(treeLeft)
+  return (
+    <CommonDrawer
+      title="Home"
+      sheetProps={{
+        placement: 'left',
+        defaultOpen: hasChildren,
+      }}
+      {...drawerProps}
+    >
+      {hasChildren ? (
+        <Accordion>{items}</Accordion>
+      ) : (
+        <TreeSection treeProps={treeLeft.children ?? []} />
+      )}
+    </CommonDrawer>
+  )
 }
+
+const treeHasChildren = (tree: TreeSectionProps) =>
+  tree.children?.some((item) => item.children && item.children?.length > 0)
+const isChildGroup = (item: TreeSectionProps) =>
+  treeHasChildren(item) &&
+  item.children!.map((c) => c.children).flat().length > 0
