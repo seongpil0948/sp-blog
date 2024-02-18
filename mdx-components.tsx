@@ -54,7 +54,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     },
     h4: (props) => (
       <h4
-        className="text-md mb-2 font-semibold leading-6 text-slate-900 underline decoration-indigo-500 dark:text-slate-200"
+        className="text-md my-2 font-semibold leading-6 text-slate-900   dark:text-slate-200"
         {...props}
       />
     ),
@@ -142,7 +142,7 @@ const Link = ({
       // isExternal={!href?.startsWith('/') && !href?.includes(APP_DOMAIN)}
       isExternal={false}
       showAnchorIcon
-      className="text-sm text-sky-500 underline hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-100 md:text-sm"
+      className="text-sm text-sky-500 underline underline-offset-4 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-100 md:text-sm"
     >
       {children}
     </NextLink>
