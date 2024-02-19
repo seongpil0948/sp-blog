@@ -9,7 +9,12 @@ export default function RootLayout({
 }) {
   return (
     <div className={layout()}>
-      <CommonNavbar leftTreeOptions={{ dir: 'app/[lang]/doc' }} />
+      <CommonNavbar
+        drawerProps={{
+          title: 'Documentation',
+        }}
+        leftTreeOptions={{ dir: 'app/[lang]/doc' }}
+      />
       <main id="content-container" className={main()}>
         {children}
       </main>

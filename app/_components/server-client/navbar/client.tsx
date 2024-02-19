@@ -153,7 +153,8 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
         <AccordionItem
           key={item.href + idx}
           title={item.label}
-          onDoubleClick={() => {
+          onDoubleClick={(evt) => {
+            evt.stopPropagation()
             router.push(item.href)
           }}
         >
@@ -167,12 +168,12 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   const hasChildren = treeHasChildren(treeLeft)
   return (
     <CommonDrawer
-      title="Home"
       sheetProps={{
         placement: 'left',
         defaultOpen: hasChildren,
       }}
       {...drawerProps}
+      title={drawerProps?.title ?? treeLeft.label}
     >
       {hasChildren ? (
         <Accordion>{items}</Accordion>

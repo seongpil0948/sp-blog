@@ -31,7 +31,9 @@ export default function RootLayout({
   return (
     <div className={layout()}>
       <CommonNavbar
-        // prefix={<div></div>}
+        drawerProps={{
+          title: 'Home',
+        }}
         leftTreeOptions={{
           dir: 'app/[lang]',
         }}
