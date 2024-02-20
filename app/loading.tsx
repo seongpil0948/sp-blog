@@ -1,11 +1,20 @@
 import { Spinner } from '@nextui-org/spinner'
-import DocumentContainer from './[lang]/doc/_components/server-only/DocumentContainer'
+import { docWrapper } from './_components/server-only/primitives'
+import clsx from 'clsx'
 
 export default function Loading() {
   // Or a custom loading skeleton component
+  console.log('Loading...')
   return (
-    <DocumentContainer lang="en">
-      <Spinner label="Loading..." color="primary" labelColor="primary" />
-    </DocumentContainer>
+    <main
+      className={clsx(
+        docWrapper(),
+        'flex-center-col min-h-screen justify-center',
+      )}
+    >
+      <section className="">
+        <Spinner label="Loading..." color="primary" labelColor="primary" />
+      </section>
+    </main>
   )
 }
