@@ -1,3 +1,25 @@
+# Toc
+- [Toc](#toc)
+  - [Text Manipulation and Regular Expressions - 1](#text-manipulation-and-regular-expressions---1)
+    - [Task](#task)
+    - [Solution](#solution)
+  - [Storage Management - 1](#storage-management---1)
+    - [Task](#task-1)
+    - [Solution](#solution-1)
+  - [Storage Management - 2](#storage-management---2)
+    - [Task](#task-2)
+    - [Solution](#solution-2)
+  - [Operating Systems - 1](#operating-systems---1)
+    - [Task](#task-3)
+    - [Solution](#solution-3)
+  - [User and Group Management - 1](#user-and-group-management---1)
+    - [Task](#task-4)
+    - [Solution](#solution-4)
+  - [Network Configuration - 1](#network-configuration---1)
+    - [Task](#task-5)
+    - [Solution](#solution-5)
+
+
 
 ## Text Manipulation and Regular Expressions - 1
 ### Task 
@@ -12,8 +34,7 @@ system1=disabled
 system4=disabled
 ```
 and so on.
-Now redirect this filtered output to this file: /opt/disabledsystems.txt
-
+Now redirect this filtered output to this file: `/opt/disabledsystems.txt`
 C. Use the correct tool to automate a search and replace action on the /etc/settings.cfg file. All of the words enabled should be changed to the word disabled.
 
 
@@ -154,7 +175,8 @@ sudo kill -SIGHUP 1234
 In this exercise you'll deal with advanced file permissions or attributes.
 
 A. First, in your home directory you will find a file called `bobandjane`. Currently this file can only be `read by bob`.  
-Add a new `ACL` permission so that `jane` can also read this. Jane should `not` have `write` or execute permissions, but only the read permission.
+Add a new `ACL` permission so that `jane` can also read this.   
+Jane should `not` have `write` or execute permissions, but only the read permission.
 
 B. Next, in your `home` directory you will find a file named `frozenfile`.   
 This currently has the `immutable` attribute set on it. Remove the immutable attribute from this file
@@ -176,7 +198,7 @@ sudo chattr -i frozenfile
 ### Task
 SSH in to node01 using user bob and password caleston123
 
-A. Add an extra DNS resolver (nameserver) on this system: 8.8.8.8
+A. Add an extra DNS resolver (nameserver) on this system: `8.8.8.8`
 
 
 B. Add a static host so that the host called database resolves to this IP address: 10.0.0.12

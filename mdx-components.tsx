@@ -52,12 +52,15 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         />
       )
     },
-    h4: (props) => (
-      <h4
-        className="text-md my-2 font-semibold leading-6 text-slate-900   dark:text-slate-200"
-        {...props}
-      />
-    ),
+    h4: (props) => {
+      return (
+        <HeaderWithLink
+          props={props}
+          level={4}
+          className="text-md my-2 font-semibold leading-6 text-slate-900   dark:text-slate-200"
+        />
+      )
+    },
     hr: (props) => (
       <div
         {...props}
@@ -149,6 +152,7 @@ const Link = ({
   )
 }
 
+// https://developers.google.com/style/headings-targets
 const HeaderWithLink = ({
   props,
   level,
@@ -163,7 +167,7 @@ const HeaderWithLink = ({
 }) => {
   const text = typeof props.children === 'string' ? props.children : ''
 
-  const slug = text.toLowerCase()
+  const slug = text.toLowerCase().replaceAll(' ', '-')
   return createElement(
     `h${level}`,
     {
