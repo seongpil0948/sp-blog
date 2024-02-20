@@ -1,0 +1,585 @@
+# Toc
+- [Toc](#toc)
+  - [Text Manipulation and Regular Expressions - 1](#text-manipulation-and-regular-expressions---1)
+    - [Task](#task)
+    - [Solution](#solution)
+  - [Storage Management - 1](#storage-management---1)
+    - [Task](#task-1)
+    - [Solution](#solution-1)
+  - [Storage Management - 2](#storage-management---2)
+    - [Task](#task-2)
+    - [Solution](#solution-2)
+  - [Operating Systems - 1](#operating-systems---1)
+    - [Task](#task-3)
+    - [Solution](#solution-3)
+  - [User and Group Management - 1](#user-and-group-management---1)
+    - [Task](#task-4)
+    - [Solution](#solution-4)
+  - [Network Configuration - 1](#network-configuration---1)
+    - [Task](#task-5)
+    - [Solution](#solution-5)
+
+
+
+## 1
+### Task 
+
+
+In your home directory you will find a directory called `collection`. Take the following steps:
+
+A. `Copy` this `entire "collection" directory` to the `/opt/` directory. But make sure to `preserve` `all permission and ownership` information about the files it contains. Hint: consult the manual for the copying command and look for the `archive` option. Use that to preserve all permission/ownership info.
+
+
+B. With your copy safely in place, you can now remove this entire `collection` directory from your home directory
+
+
+C. Finally, create a new directory called collection2 in your `/opt/ `directory.
+
+
+### Solution
+First switch to root user:
+
+sudo su - root
+
+
+Execute below given command to copy entire collection directory to /opt directory:
+
+
+cp -rp /home/bob/collection /opt/collection
+
+
+
+Execute below given command to remove collection directory:
+
+
+rm -rf /home/bob/collection
+
+
+
+Execute below given command to create collection2 directory:
+
+
+mkdir /opt/collection2
+
+---
+
+## 2
+### Task 
+
+There is a directory called /opt/databases/. This should belong to your user, called bob. But someone entered the wrong commands and messed up the permissions and ownership information. Correct these in the following way:
+
+A. Change the user owner and group owner for this directory. /opt/databases/ should be owned by the user called bob and the group also called bob. Make sure to make this a recursive change, so that ownership is changed for the directory itself along with the files/directories it contains.
+
+
+
+B. The permissions for /opt/databases/ directory are 777 currently, which are way too open. Anyone can read and write to this directory. Change these permissions so that only the user called bob can read, write and execute within /opt/databases/ directory. Permissions for the group and for others should be all denied. These permissions should only be applied to the directory itself, not to the files/directories inside.
+
+
+C. Change permissions for all files inside the /opt/databases/ directory (file1, file2, file3). The user bob should have permissions to read and write to these files, but not to execute them. The group should have read only permissions on these files, nothing else. And others should not have any permissions at all (all denied).
+
+
+
+### Solution
+First switch to the root user:
+
+
+sudo su -
+
+
+
+Execute below given command to change the user and group ownership for the databases directory:
+
+
+chown -R bob:bob /opt/databases
+
+
+
+Execute below given command to update the permissions for databases directory:
+
+
+chmod 0700 /opt/databases
+
+
+
+Execute below given command to change permissions for all the files under databases directory:
+
+
+chmod 0640 /opt/databases/*
+
+---
+
+## 3
+
+
+sed -i 's/SSH/NULL/g' /opt/services.txt
+
+---
+
+## 4
+### Task 
+
+A process called memcached is running on this system. Change its nice value to +10.
+
+### Solution
+Execute below given command to change the nice value to +10. But first check the PID of memcached process because you need the PID to change the nice value:
+
+
+ps -ef | grep memcached 
+sudo renice -n +10 $PID_memcached
+
+
+---
+
+## 5
+### Task 
+
+
+In this exercise you will create two scheduled jobs.
+
+
+A. First, create an anacron job with the following parameters:
+
+
+* Job will run once every three days.
+
+* The job delay is 10 minutes.
+
+* The job identifier (name) is exam.
+
+* The command it should run is /opt/anacron.sh.
+
+
+B. Next, create an at job. Schedule it to run at this exact date: August 21 2040. The at job should run the following command:
+
+echo 'Wow, this took a long time!' > finally.txt
+
+### Solution
+First create an anacron job:
+
+
+sudo vi /etc/anacrontab
+
+
+
+Add given line at the end of the file.
+
+
+3 10 exam /opt/anacron.sh
+
+
+
+Now, create the at job:
+
+
+at 082140
+
+
+
+Add the given command , ctrl +d to save the command:
+
+
+echo 'Wow, this took a long time!' > finally.txt
+
+---
+
+## 6
+### Task 
+
+
+C. Add the user called jane to the developers group. This should be a secondary/supplementary group, her primary group should remain unchanged.
+
+D. Configure a resource limit for the developers group so that this group cannot exceed 5 logins (maxlogins).
+
+
+
+
+### Solution
+Execute below given command to add user jane to the developers group:
+
+
+sudo usermod -a -G developers jane
+
+
+
+Edit /etc/security/limits.conf file and add @developers      -       maxlogins       5 line at the end of file:
+
+
+sudo vi /etc/security/limits.conf
+
+---
+
+## 7
+### Task 
+
+
+A. Create a new user called john and set D3vU3r321 password for this user.
+
+B. Edit the sudoers file and make sure that john can only run the shutdown command with sudo and without entering any password. It does not matter if you use localhost or ALL in the host section.
+
+
+### Solution
+Execute below given command to create a new user called john and set a password for the same:
+
+
+sudo useradd john
+sudo passwd john
+
+
+
+Edit /etc/sudoers file so that john can run the shutdown command with sudo without entering any password:
+
+
+sudo visudo
+
+
+
+Add below given line at the end of this file:
+
+
+john ALL=(ALL)  NOPASSWD: /sbin/shutdown
+
+---
+
+## 8
+### Task 
+
+
+Modify the following kernel runtime parameter:
+vm.swappiness
+
+
+Set a value 10 for it. This can be a temporary change, so the parameter should temporarily keep this value in the current session, but the change should be forgotten at next boot.
+
+### Solution
+Set a value 10 for it. This can be a temporary change, so the parameter should temporarily keep this value in the current session, but the change should be forgotten at next boot.
+
+
+---
+
+## 9
+### Task 
+
+Inspect the httpd service and figure out its unit file. Further, find out the SELinux label that it has. Save this label to this file:
+/opt/label.txt
+
+
+For example, the SELinux label for /bin/sudo shows up like this system_u:object_r:sudo_exec_t:s0 /usr/bin/sudo In that case, you would write system_u:object_r:sudo_exec_t:s0 to that file, skipping the /usr/bin/sudo part.
+
+
+### Solution
+Execute below given command to find out the unit file:
+
+
+systemctl status httpd
+
+
+
+You will find the unit file besides loaded parameter, execute below given command to find out the SELinux label:
+
+
+ls -Z /usr/lib/systemd/system/httpd.service
+
+
+
+Save the required value in /opt/label.txt file:
+
+
+sudo vi /opt/label.txt
+
+
+
+The file content would be something like:
+
+
+system_u:object_r:httpd_unit_file_t:s0
+
+---
+
+## 10
+### Task 
+
+SSH into node01 using user bob and password caleston123 , further perform the following actions on it:
+
+
+A. List all firewall rules and save the output in /opt/rules.txt file. Make sure to append the file so that you don't overwrite any existing content of the file.
+
+
+B. Add a new firewall rule so that traffic to port 80/tcp is allowed on this host. This rule should be applied immediately, for the current session. But also make this rule permanent so that it remains active for new sessions as well.
+
+
+Don't forget to log out from this system when you finish this exercise.
+
+
+### Solution
+SSH into node01 using the given credentials:
+
+
+ssh bob@node01
+
+
+
+Switch to the root user, save the firewall rules in /opt/rules.txt file.
+
+
+sudo su -
+firewall-cmd --list-all >> /opt/rules.txt
+
+
+
+Allow 80/tcp port permanently:
+
+
+firewall-cmd --add-port=80/tcp --permanent
+
+
+Restart firewalld service:
+
+
+systemctl restart firewalld
+
+---
+
+## 11
+### Task 
+
+
+Now, let's set up some email aliases:
+
+
+A. Add an email alias so that all emails sent to the user called bob are redirected to the user called root
+
+
+B. Add another email alias so that all emails sent to the user called john are redirected to an external email address: john@example.com
+
+
+
+### Solution
+Edit /etc/aliases file:
+
+sudo vi /etc/aliases
+
+
+
+Add below given line in it:
+
+
+bob: root
+john: john@example.com
+
+
+
+Save and exit.
+
+
+Refresh the new aliases:
+
+
+sudo newaliases
+
+---
+
+## 12
+### Task 
+
+
+SSH into node01 host using user bob and password caleston123 . You'll need to make some changes to the configuration of the SSH daemon (not the client).
+
+
+A. First, disable the SSH root user login.
+
+
+B. Next, make sure the login grace time is changed from the default 2 minutes to 1 minute.
+
+
+Don't forget to log out from this system when you finish this exercise.
+
+
+
+### Solution
+SSH into node01 using the given credentials:
+
+
+ssh bob@node01
+
+
+
+Edit SSH server configuration as needed:
+
+
+sudo vi /etc/ssh/sshd_config
+
+
+
+Now, change PermitRootLogin yes to PermitRootLogin no and change #LoginGraceTime 2m to LoginGraceTime 1m, finally restart the SSHD service:
+
+
+sudo systemctl restart sshd
+
+---
+
+## 13
+### Task 
+
+Edit the main config file of the httpd daemon and make sure that Indexes are disabled for the /var/www/html/directory.
+
+
+### Solution
+Edit httpd configuration and make the required changes:
+
+
+sudo vi /etc/httpd/conf/httpd.conf
+
+
+
+Under DocumentRoot "/var/www/html" change Options Indexes FollowSymLinks to Options FollowSymLinks
+
+
+Restart httpd service:
+
+
+sudo systemctl restart httpd 
+
+---
+
+## 14
+### Task 
+
+
+In this exercise you'll be working with a virtual machine. But first, you need to find out few things.
+
+
+A. List all VMs that exist on this host. Your VM is currently stopped so it won't show up in the regular command that lists virtual machines. Make sure to add the correct option to list all VMs, even the ones that are not currently running.
+
+
+B. Start this virtual machine.
+
+
+
+### Solution
+List all VMs including stopped VMs:
+
+
+sudo virsh list --all
+
+
+
+Start VM1
+
+
+sudo virsh start VM1
+
+---
+
+## 15
+### Task 
+
+
+We have /dev/vdb disk on this system. Perform the following actions on it.
+
+
+A. Create a partition /dev/vdb1 of 400MB in size and format it as xfs file system. Edit the correct file in /etc/ so that /dev/vdb1 is automatically mounted into the /backups directory every time the system boots up. Default mount options should be used.
+
+
+B. Create a partition /dev/vdb2 of 100MB in size, format it as ext4 file system and mount it in /mnt/ . We want to keep some sensitive data on ext4 filesystem and we want to make sure that it's not modified. To solve this problem, mount /dev/vdb2 into the /mnt directory using read-only mount option. It does not matter what the other mount options are. Just make sure this mount point is read-only so that users cannot change contents on this filesystem.
+
+
+C. Create a partition /dev/vdb3 of 450MB in size and format it with the xfs filesystem. To make this easier to spot in the future, among the other filesystems, set the filesystem label to ExamFS when you format it. Make sure that the label is exactly ExamFS and not examfs or anything that has different letters in UPPERCASE or lowercase. We will make use of this /dev/vdb3 partition in the upcoming questions so create it before moving to the next question.
+
+
+
+### Solution
+Switch to the root user:
+
+
+sudo su - 
+
+
+Follow below given steps:
+
+
+fdisk /dev/vdb
+
+
+
+Now enter below given responses:
+
+
+Command (m for help): n
+Select (default p):  <just-leave-it-default-and-press-enter>
+Partition number (1-4, default 1): <just-leave-it-default-and-press-enter>
+First sector (2048-2097151, default 2048):  <just-leave-it-default-and-press-enter>
+Last sector, +sectors or +size{K,M,G,T,P} (2048-2097151, default 2097151): +500M
+Command (m for help): w
+You can follow these same steps for all three partitions.
+
+
+Further format the partitions:
+
+
+mkfs.xfs /dev/vdb1
+mkfs.ext4 /dev/vdb2
+mkfs.xfs -L "ExamFS" /dev/vdb3
+
+
+
+Make sure /dev/vdb1 is automatically mounted:
+
+
+vi /etc/fstab
+
+
+
+Add this line in it:
+
+
+/dev/vdb1 /backups xfs defaults 0 0
+
+
+
+Save and exit.
+
+
+Mount /dev/vdb2 as read only filesystem:
+
+
+mount --read-only /dev/vdb2 /mnt/
+
+---
+
+## 16
+### Task 
+
+Create a mirrored (level 1) RAID array with these two devices: /dev/vdc and /dev/vdd. The array should be created at /dev/md0
+
+
+
+### Solution
+Execute below given command:
+
+
+sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdc /dev/vdd
+
+
+\
+Enter y and press Enter if asked for the confirmation.
+
+---
+
+## 17
+### Task 
+
+
+Edit the disk quota for the user called bob. Limit the amount of storage space he can use (not inodes). Set a soft limit of 100MB and a hard limit of 500MB on /mydata partition.
+
+
+
+### Solution
+Execute below given command:
+
+
+sudo xfs_quota -x -c 'limit bsoft=100m bhard=500m bob' /mydata/
+
+---
+
+
+FFFFFFFFFFFFFFFFFFuck
