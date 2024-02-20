@@ -19,8 +19,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const dict = await getDictionary(lang)
   return {
-    title: dict['doc']['linux']['network']['ufw']['title'],
-    description: dict['doc']['linux']['network']['ufw']['description'],
+    title: 'Networking and Hostname resolution',
+    description: 'Configure IPv4 and IPv6 networking and hostname resolution',
   }
 }
 

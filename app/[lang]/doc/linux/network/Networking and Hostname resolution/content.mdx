@@ -1,14 +1,25 @@
-# Summary
-이곳은 배치 전 일단 정리해둔 곳입니다.
+# Toc
 
-## TODO
-- `apropos` 에 정규식 사용하는 예제 추가
+## What is Networking and Hostname resolution?
+hostname resolution 은 IP 주소를 호스트 이름으로 변환하거나 호스트 이름을 IP 주소로 변환하는 것을 의미합니다.  
+
+### step for hostname to ip
+1. localhost dns cache
+2. using `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` or `/etc/nsswitch.conf`
+3. using `dns` server
+
 
 
 #### Configure static resolution so that example.com hostname resolves to IP address 8.8.8.8
+
 ```bash
 echo "8.8.8.8         example.com" >> /etc/hosts
 ``` 
+위 코드는 `example.com` 을 resolve 하기 위해서 `8.8.8.8` 의 nameserver 를 사용하도록 설정한다.  
+- DNS 서버를 우회하여 IP 주소를 찾을 수 있게 해준다.
+- /etc/hosts 에 위치한다.
+- 우선순위가 가장 높다. 즉, hosts 파일에 등록된 내용이 DNS 서버에 등록된 내용보다 먼저 참조된다.
+- 특정 도메인을 특정 IP 주소로 연결할 수 있다. 
 ---  
 
 #### Our system uses dynamic network configuration. Leave it as it is, dynamically configured, but add an extra IP to eth1 interface on this system
@@ -38,6 +49,9 @@ hostnamectl | grep "Transient" | awk '{print $3}' > /home/bob/t-hostname
 ```bash
 sudo hostnamectl set-hostname dev-host01
 ```
+
+## Reference
+- [naver blog 1](https://www.google.com/search?q=Networking+and+Hostname+resolution&oq=Networking+and+Hostname+resolution&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBBzE5N2owajeoAgCwAgA&sourceid=chrome&ie=UTF-8)
 
 
 
