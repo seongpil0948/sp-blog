@@ -1,4 +1,149 @@
-# Toc
+# Networking
+난 맞춰지지 않는 지식들이 싫다. 자신있게 내의견을 말할 수 없다.  
+*IP는 무엇이냐~, CIDR이 뭐냐~ host는 뭐고* 이런 기본적인 내용은 알겠다. 
+내가 궁금한 것은 그래서. 이제 뭘 할 수 있는가? 난 무엇이 궁금한가?   
+컴퓨터 A와 B가 있고 노트북과 데스크톱, 클라우드 VM이 있을때  
+시스템 A가 어떻게 B와 연결되죠?  
+1. 네트워크 디바이스는 무엇이고 어떻게 확인하는가?
+2. ip를 디바이스에 어떻게 할당하고 세팅하는가?  
+3. 할당된 디바이스는 어떻게 통신하는가
+--- 
+우리는 위 3가지 질문을 바탕으로 정리하고자 한다.  
+가보자.
+
+## What is Network Device?
+네트워크와 연결되어 있는 장치를 의미하는 dev는 switch, router, hub, bridge, gateway, repeater,  modem, network interface card(NIC) 등 무엇이든 될 수 있다.  
+또한 물리적일 수도 있고 가상일 수도 있다.  
+물리적인 장치는 공인 IP 주소를 가질 수도 있고, 공인 IP 주소를 가진 장치에 의해 내부 IP를 가지고   
+NAT(Network Address Translation)을 통해 외부 네트워크와 통신할 수도 있다.  
+
+
+### How to check network device?
+우린 가장 먼저 `ip link` 명령어를 사용하여 네트워크 장치를 확인할 수 있다.
+```bash
+$ ip link
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: enp2s0f0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000
+```
+- `lo` : loopback interface
+  - it's used for communication between processes on the same host(i.e server request itself)
+  - 일종의 fallback 인터페이스로서, 호스트 자신과 통신할 때 사용된다.  
+  - 가상의 인터페이스로서, 물리적인 네트워크 카드가 없어도 사용할 수 있다.  
+- `enp2s0f0`: 물리적 네트워크 인터페이스: /link/ether 일 경우 ethernet card  
+자주 사용되는 많은 디바이스이름들을 간단히 설명한다.  
+  - `eht0`: 물리적 네트워크 인터페이스: ethernet card
+  - `docker0`: 도커 가상 인터페이스: docker bridge
+  - `br0`: 가상 브릿지 인터페이스: bridge
+  - `veth`: 가상 네트워크 인터페이스: veth pair
+
+## How to connect to each other? 
+우선 상황에 따라 여러 방법이 있다.
+- 직접 연결: 각 장치에 대한 라우팅 테이블을 설정한다.
+- 가상 라우터: 가상 라우터를 사용하여 각 장치에 대한 라우팅 테이블을 설정한다.
+- 브릿지
+- NAT(Network Address Translation)
+- VLAN(Virtual Local Area Network)
+- Namespace : docker container, k8s pod 등 네트워크 네임스페이스를 사용하여 네트워크를 분리한다.
+  - 자세한 내용은 network container 페이지에서 다룬다.
+
+이후 내용에 대한 이해를 위해 Linux 명령어에 대한 설명을 추가한다.   
+### Ip route
+우리는 `ip route` 명령어를 사용하여 현재 시스템의 라우팅 테이블을 확인할 수 있다.
+```bash
+$ ip route
+# 1
+192.168.0.0/24 dev enp2s0f0 proto kernel scope link src 192.168.0.103 metric 100 
+# 2
+default via 192.168.0.1 dev enp2s0f0 proto dhcp src 192.168.0.103 metric 100 
+```
+1. 패킷의 목적지 IP 주소가 `192.168.0.0/24` 서브넷에 속하는 경우:
+   1. `192.168.0.0/24` 라우팅 정보를 사용하여 패킷을 처리합니다.
+   2. 이 경우 패킷은 `enp2s0f0` 인터페이스를 통해 `192.168.0.103` 컴퓨터로부터 전달됩니다.
+2. 패킷의 목적지 IP 주소가 `192.168.0.0/24` 서브넷에 속하지 않는 경우:
+   1. `default` 라우팅 정보를 사용하여 패킷을 처리합니다.
+   2. 이 경우 패킷은 `192.168.0.1` 게이트웨이로 전달됩니다.
+--- 
+- `metric` : 라우팅 테이블에 있는 라우팅 정보의 우선순위를 나타내는 값입니다.
+  - 두 개 이상의 라우팅 정보가 동일한 목적지에 대해 존재하는 경우, 가장 낮은 메트릭 값을 가진 라우팅 정보가 사용됩니다.
+
+#### 예시
+-   `192.168.0.103` 로부터 `192.168.0.100` 컴퓨터로 패킷을 전송하는 경우:
+   -  패킷의 목적지 IP 주소는 `192.168.0.0/24` 서브넷에 속합니다.
+   -  따라서 `192.168.0.0/24` 라우팅 정보가 사용됩니다.
+   -  패킷은 `enp2s0f0` 인터페이스를 통해 `192.168.0.103` 컴퓨터로부터 전달됩니다.
+   
+-  `192.168.0.103` 로부터 `192.168.1.100`  컴퓨터로 패킷을 전송하는 경우:
+   -  패킷의 목적지 IP 주소는 `192.168.0.0/24` 서브넷에 속하지 않습니다.
+   -  따라서 `default` 라우팅 정보가 사용됩니다.
+   -  패킷은 `192.168.0.1` 게이트웨이로 전달됩니다.
+
+
+### Go Go
+우리는 이제 네트워크 장치를 확인하고, 라우팅 테이블을 확인하는 방법을 알았다.  
+가즈아!  
+
+1. 필자는 환경상 Nic가 
+2. NIC(network interface card)는 서로 통신하기 위해 IP 주소를 할당받아야 한다.   
+그리고, host **s1**(`192.168.1.0`)은 라우팅 테이블에 저장된 정보를 통해 패킷을 전달한다.
+> host 는 물리 네트워크 장치 혹은 컴퓨터 한대  정의하기 나름입니다.  
+```bash
+# eth0에 IP 주소 A 할당
+ip addr add 192.168.1.10/24 dev eth0
+# eth1에 IP 주소 B 할당
+ip addr add 192.168.1.11/24 dev eth1
+# in s1 network
+ping 192.168.1.11
+ping 192.168.1.10
+```
+우리는 host **s1**(`192.168.1.0`)  내에서 *A*, *B*와 통신할 수 있습니다.
+
+---
+**s2**(`192.168.2.0` host network)  내에 *C*(`192.168.2.10`),*D*(`192.168.2.11`)와 통신하기 위해서 어떻게 해야할까요?  
+이때 등장하는 것이 **라우터**입니다. 라우터는 두 네트워크를 연결하는 장치입니다.  
+라우터는 두 네트워크와 각각 연결된 인터페이스(라우터 인터페이스)를 가지고 있습니다.   
+예시는 **r1**(`192.168.1.1`) interface 를 통해 **s1**과 연결하고, **r2**(`192.168.2.1`) interface 를 통해 **s2**와 연결하여 두 네트워크를 연결합니다.  
+좋습니다. 그러면 B(`1.11/24`)에서 C(`2.10/24`)로 패킷을 보내고 싶다면 어떻게 해야할까요?     
+먼저 라우터는 그저 네트워크의 경계에 있는 장치(네트워크 장비의 일종으로,패킷(packet, 네트워크 전송 데이터의 최소 단위)을 다른 네트워크 보내주는(forward) 역할을 한다.)일 뿐입니다.  
+그래서 B는 패킷을 보내기 위해 라우터에게 패킷을 전달해야 합니다.  
+> 다시한번 강조하면 host s1,s1는 컴퓨터가 될 수도 namespace 가 될 수 도 있습니다.  
+
+```bash
+# use r1 to reach the s2 
+ip route add 192.168.2.0/24 via 192.168.1.1
+# use r2 to reach the s1  
+ip route add 192.168.1.0/24 via 192.168.2.1
+```
+네트워크는 내부망이 될 수도 있고, 외부망이 될 수도 있습니다.   
+현재 **r1, r2**는 내부망입니다.  **r2**를 외부 네트워크와 연결하기 위해 라우팅 테이블을 설정합니다.    
+```bash
+# need access to Google at 172.217.194.0 network on the internet. 
+ip route add 172.217.194.0/24 via 192.168.2.1
+```
+**r2**에 모든 경로를 등록해야 할까요? 아닙니다. 
+default route를 사용하여 내부망 s1(`192.168.0.1`) 을 제외하고 모든 패킷을 **r2** 라우터가 패킷을 처리하도록 할 수 있습니다.  
+```bash
+ip route add default via $AnyRouterIP
+# or
+ip route add 0.0.0.0 via $AnyRouterIP
+```
+> 참고로 ‘tracert(trace route)’ 명령은 목적지까지 거치는 라우터를 추적하는 역할이다.
+보안을 위해 한 호스트 네트워크에서 두 개의 NIC으로는 전달(forward) 되지 않습니다 
+예로 r1(private), r2(public) 라우터가 있을 때, r2로 오는 패킷을 r1에 임의로 전달되서는 안됩니다.  
+만약 관리자가 이를 잘 인지한다면 수동으로 설정할 수 있습니다.  
+```bash
+$ sudo vi /proc/sys/net/ipv4/ip_forward
+# allow forwarding 
+1
+# disallow 
+0
+
+
+
+
+
+
+
 
 ## What is Networking and Hostname resolution?
 hostname resolution 은 IP 주소를 호스트 이름으로 변환하거나 호스트 이름을 IP 주소로 변환하는 것을 의미합니다.  
@@ -51,9 +196,14 @@ $ nslookup naver.com 8.8.8.8
 
 #TODO: dig, nslookup 명령어에 대한 설명 추가
 
+---
+사용자의 입장에서 필요한 서비스에 접근하기 위해 domain resolution 은 필수적이다.  
+하지만 시스템 관리자의 입장에서 제한된 리소스로 사용자에게 최적의 서비스를 제공하기 위해서는 DNS 뿐만 아니라 다양한 네트워크 설정이 필요하다.
 
+## network device
+네트워크 장치는 네트워크와 연결되어 있는 장치를 의미한다.
+- `ip link` 명령어를 사용하여 네트워크 장치를 확인할 수 있다.
 
----  
 
 ### Our system uses dynamic network configuration. Leave it as it is, dynamically configured, but add an extra IP to eth1 interface on this system
 
@@ -212,65 +362,6 @@ default         _gateway        0.0.0.0         UG    0      0        0 enp2s0f0
 이경우 패킷은 `route` 테이블의 Gateway(router)를 확인하여(없을경우 default) destination 찾습니다.
 그래서 커널은 패킷을 1.2.3.4로 
 
-## Packet Filter
-항상 방화벽 설정 전에는 ssh 연결조차 끊길 수 있다.
-대비를 마련하자.
-
-ufw의 한계를 극복하기 위해 iptables를 사용한다.
-하지만 확장된 기능을 제공하는 ufw-framework 를 통해 사용성을 최대화 시킬 수 있다.
-```sh
-man ufw-framework
-```
-
-```bash
-sudo ufw status
-# Status: inactive
-```
-inactive 상태이면 아래 명령어로 활성화 시킨다.
-```bash
-sudo ufw enable
-# Firewall is active and enabled on system startup
-```
-### Allow Permanent TCP incoming connections to port 7869
-```bash
-sudo ufw deny 7869/tcp
-sudo ufw status
-```
-or for centos
-```bash
-sudo firewall-cmd --add-port=7869/tcp --permanent
-sudo firewall-cmd --reload
-```
-
-### Add a permanent firewall rule to allow the https service.
-```bash
-sudo ufw allow https
-```
-or for centos
-```bash
-sudo firewall-cmd --add-service=https --permanent
-```
-
-### You will see that there is only one port allowing UDP traffic, remove it using below given command:
-```bash
-sudo ufw delete allow 53/udp
-```
-or for centos
-```bash
-# not permanent
-sudo firewall-cmd --remove-port=53/udp
-# to make all permanent
-sudo firewall-cmd --runtime-to-permanent
-```
-
-### (10.11.12.0 ~ 10.11.12.255(예: 10.11.12.0/24))의 모든 IP에서 들어오는 모든 트래픽을 허용하고 신뢰할 수 있는 영역에 필요한 규칙을 추가하며 규칙은 영구적이어야 합니다.
-```bash
-# sudo ufw allow from 
-```
-or for centos
-```bash
-sudo firewall-cmd --add-source=10.11.12.0/24 --zone=trusted --permanent
-```
 
 ## Port Redirection & NAT
 

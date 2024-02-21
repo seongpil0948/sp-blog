@@ -1,1 +1,60 @@
-###
+
+## Packet Filter
+항상 방화벽 설정 전에는 ssh 연결조차 끊길 수 있다.
+대비를 마련하자.
+
+ufw의 한계를 극복하기 위해 iptables를 사용한다.
+하지만 확장된 기능을 제공하는 ufw-framework 를 통해 사용성을 최대화 시킬 수 있다.
+```sh
+man ufw-framework
+```
+
+```bash
+sudo ufw status
+# Status: inactive
+```
+inactive 상태이면 아래 명령어로 활성화 시킨다.
+```bash
+sudo ufw enable
+# Firewall is active and enabled on system startup
+```
+### Allow Permanent TCP incoming connections to port 7869
+```bash
+sudo ufw deny 7869/tcp
+sudo ufw status
+```
+or for centos
+```bash
+sudo firewall-cmd --add-port=7869/tcp --permanent
+sudo firewall-cmd --reload
+```
+
+### Add a permanent firewall rule to allow the https service.
+```bash
+sudo ufw allow https
+```
+or for centos
+```bash
+sudo firewall-cmd --add-service=https --permanent
+```
+
+### You will see that there is only one port allowing UDP traffic, remove it using below given command:
+```bash
+sudo ufw delete allow 53/udp
+```
+or for centos
+```bash
+# not permanent
+sudo firewall-cmd --remove-port=53/udp
+# to make all permanent
+sudo firewall-cmd --runtime-to-permanent
+```
+
+### (10.11.12.0 ~ 10.11.12.255(예: 10.11.12.0/24))의 모든 IP에서 들어오는 모든 트래픽을 허용하고 신뢰할 수 있는 영역에 필요한 규칙을 추가하며 규칙은 영구적이어야 합니다.
+```bash
+# sudo ufw allow from 
+```
+or for centos
+```bash
+sudo firewall-cmd --add-source=10.11.12.0/24 --zone=trusted --permanent
+```
