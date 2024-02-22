@@ -54,14 +54,16 @@ $ cryptsetup + <tap> <tap>
 benchmark          isLuks             luksDump           luksHeaderRestore  luksResume         open               status             
 close              luksAddKey         luksFormat         luksKillSlot       luksSuspend        repair             tcryptDump         
 erase              luksChangeKey      luksHeaderBackup   luksRemoveKey      luksUUID           resize 
-```
+```  
+
 for change password
 ```bash
 $ sudo cryptsetup luksChangeKey /dev
 ```
 use `cryptsetup luksDump /dev/vde` to check the status of the disk.
 ```bash
-# a very small block of data to the storage device called a header, and by reading that header cryptsetup can automatically detect the encryption type.
+# a very small block of data to the storage device called a header, and
+# by reading that header cryptsetup can automatically detect the encryption type.
 $ sudo cryptsetup open /dev/vde mysecuredisk
 
 $ sudo mkfs.xfs /dev/mapper/mysecuredisk

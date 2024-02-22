@@ -1,5 +1,5 @@
 # Network block device
-> network block device (NBD) is a [network protocol](https://en.wikipedia.org/wiki/Network_protocol) that can be used to forward a [block device](https://en.wikipedia.org/wiki/Device_node) (typically a hard disk or partition) from one machine to a second machine. As an example, a local machine can access a hard disk drive that is attached to another computer.
+> network block device (NBD) is a [network protocol](https://en.wikipedia.org/wiki/Network_protocol) that can be used to forward a [block device](https://en.wikipedia.org/wiki/Device_node) (typically a hard disk or partition) from one machine to a second machine. As an example, a local machine can access a `hard disk drive` that is attached to another computer.
 > used to access remote storage device that does not physically reside in the local machine. 
 기술적으로 네트워크 블록 장치는 서버 부분, 클라이언트 부분, 이들 사이의 네트워크라는 세 가지 구성 요소로 구현됩니다. 
 파일 디바이스가 있는 클라이언트 시스템에서 파일에 접근할때(커널 드라이버가 장치를 제어합니다). 
@@ -46,7 +46,7 @@ apt-get install nbd-client
 modprobe nbd-client
 ```
 ### Mount
-map/mount remote NBD exported device as local device/dev/nbd0
+map/mount remote NBD exported device as local device `/dev/nbd0`
 ```bash
 nbd-client 192.168.1.100 9999 /dev/nbd0
 nbd-client 192.168.1.100 9998 /dev/nbd1

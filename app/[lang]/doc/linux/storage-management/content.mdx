@@ -24,20 +24,20 @@
     - [Increase the existing swap (i.e /swapfile) size by 1GB.](#increase-the-existing-swap-ie-swapfile-size-by-1gb)
     - [Resize the /dev/vdb3 partition (which you created earlier) to 21MB.](#resize-the-devvdb3-partition-which-you-created-earlier-to-21mb)
     - [What file do we need to edit to tell the Linux OS which filesystems it should automatically mount when it boots up?](#what-file-do-we-need-to-edit-to-tell-the-linux-os-which-filesystems-it-should-automatically-mount-when-it-boots-up)
-    - [Create an xfs filesystem with the label "DataDisk" on /dev/vdb.](#create-an-xfs-filesystem-with-the-label-datadisk-on-devvdb)
-    - [Create an ext4 filesystem with a number of 2048 inodes on /dev/vdc](#create-an-ext4-filesystem-with-a-number-of-2048-inodes-on-devvdc)
-    - [Configure the system to automatically mount /dev/vdc when it boots up. This partition has an ext4 filesystem on it.](#configure-the-system-to-automatically-mount-devvdc-when-it-boots-up-this-partition-has-an-ext4-filesystem-on-it)
-    - [Change the label for /dev/vdb filesystem to SwapFS](#change-the-label-for-devvdb-filesystem-to-swapfs)
+    - [Create an `xfs` filesystem with the label "DataDisk" on /dev/vdb.](#create-an-xfs-filesystem-with-the-label-datadisk-on-devvdb)
+    - [Create an `ext4` filesystem with a number of `2048 inodes` on `/dev/vdc`](#create-an-ext4-filesystem-with-a-number-of-2048-inodes-on-devvdc)
+    - [Configure the system to automatically mount `/dev/vdc` when it boots up. This partition has an `ext4` filesystem on it.](#configure-the-system-to-automatically-mount-devvdc-when-it-boots-up-this-partition-has-an-ext4-filesystem-on-it)
+    - [Change the label for `/dev/vdb` filesystem to SwapFS](#change-the-label-for-devvdb-filesystem-to-swapfs)
   - [Refer](#refer)
 ---
 
 # Intro
 2TB Solid State Drive(SSD)가 있다고 상상해 보세요.  
-그 위에 윈도우, 리눅스 배포판 모두 설치하고 싶습니다. 하지만 한개의 OS만 설치할 수 있습니다..ㅠㅠ  
-파일 시스템도 문제입니다! Windows는 NTFS 파일 시스템을 사용하고,   
-Linux는 다른 ext4(extended file system 4) 시스템을 사용하기 때문이죠.  
-하지만! 우리는 SSD의 저장 공간을 간단히 나눌 수 있습니다.  
-윈도우용으로 1TB, 리눅스용으로 1TB를 할당하여 각각의 운영 체제를 설치할 수 있습니다.  
+그 위에 `window`, `linux` 배포판 모두 설치하고 싶습니다. 하지만 한개의 OS만 설치할 수 있습니다..ㅠㅠ  
+파일 시스템도 문제입니다! Windows는 `NTFS` 파일 시스템을 사용하고,   
+Linux는 다른 `ext4`(extended file system 4)또는 `xfs` 시스템을 사용하기 때문이죠.  
+하지만! 우리는 `SSD`의 저장 공간을 간단히 나눌 수 있습니다.  
+윈도우용으로 `1TB`, 리눅스용으로 `1TB`를 할당하여 각각의 운영 체제를 설치할 수 있습니다.  
 이러한 방식으로 스토리지 장치를 분할하는 것을 파티션이라고 합니다.   
 
 
@@ -58,11 +58,14 @@ $ sudo mount -t nfs 192.168.0.103:/nfs_shared /nfs_shared
 ```
 아래 명령어를 통해 마운트된 장치를 확인할 수 있습니다.
 ```bash
+# report file system space usage
+# T: print file system type
 $ df -Th
 # example
 Filesystem     Type      Size  Used Avail Use% Mounted on
 udev           devtmpfs  1.9G  1.8G  0.1G   99% /dev
 
+# findmnt는 마운트된 모든 파일 시스템을 나열하거나 파일 시스템. findmnt 명령은 /etc/fstab에서 검색할 수 있습니다.
 $ findmnt
 # example
 TARGET    SOURCE         FSTYPE OPTIONS
@@ -131,6 +134,9 @@ sr0                       11:0     1  1024M  0 rom
   * 이 디스크에는 0개의 파티션이 있습니다.
 
 ` sudo fdisk --list` 명령은 더 자세한 정보를 제공합니다.  
+> is a `dialog-driven(대화상자 기반)` program for creation and manipulation of partition tables. 
+> It understands GPT, MBR, Sun, SGI and BSD partition tables.  
+
 ```bash
 $ sudo fdisk --list
 # example1
@@ -343,9 +349,9 @@ log      =internal log           bsize=4096   blocks=2560, version=2
 realtime =none                   extsz=4096   blocks=0, rtextents=0
 ```
 
- 만약 xfs 파일 시스템을 사용한다면,  명령을 사용합니다.
- `xfs` 를 타이핑하고 탭을 누르면 가능한 모든 옵션을 볼 수 있습니다.
- ```bash
+만약 xfs 파일 시스템을 사용한다면,  명령을 사용합니다.
+`xfs` 를 타이핑하고 탭을 누르면 가능한 모든 옵션을 볼 수 있습니다.
+```bash
 $ xfs_ + tab
 xfs_admin      xfs_copy       xfs_estimate   xfs_fsr        xfs_info       xfs_logprint   xfs_metadump   xfs_ncheck     xfs_repair     xfs_scrub      xfs_spaceman   
 xfs_bmap       xfs_db         xfs_freeze     xfs_growfs     xfs_io         xfs_mdrestore  xfs_mkfile     xfs_quota      xfs_rtcp       xfs_scrub_all  
@@ -673,12 +679,12 @@ $ sudo cfdisk /dev/vdb
 -> /etc/fstab
 
 
-### Create an xfs filesystem with the label "DataDisk" on /dev/vdb. 
+### Create an `xfs` filesystem with the label "DataDisk" on /dev/vdb. 
 ```bash
 $ sudo mkfs.xfs -L DataDisk /dev/vdb
 ```
 
-### Create an ext4 filesystem with a number of 2048 inodes on /dev/vdc
+### Create an `ext4` filesystem with a number of `2048 inodes` on `/dev/vdc`
 ```bash
 $ man mkfs.ext4 | grep inodes
 -N number-of-inodes
@@ -688,14 +694,15 @@ $ man mkfs.ext4 | grep inodes
 $ sudo mkfs.ext4 -N 2048 /dev/vdc
 ```
 
-### Configure the system to automatically mount /dev/vdc when it boots up. This partition has an ext4 filesystem on it. 
-It should mount the filesystem to the /test directory. 
+### Configure the system to automatically mount `/dev/vdc` when it boots up. This partition has an `ext4` filesystem on it. 
+It should mount the filesystem to the `/test` directory. 
 ```bash
 $ sudo mkdir -p /test
+# device, mount point, file system type, options, dump, pass
 $ echo '/dev/vdc  /test ext4 defaults 0 2' | sudo tee --append /etc/fstab
 ```
 
-### Change the label for /dev/vdb filesystem to SwapFS
+### Change the label for `/dev/vdb` filesystem to SwapFS
 파일 시스템 타입별로 방법은 다르다.
 `df -TH ` 명령어로 확인하자.
 ```bash
