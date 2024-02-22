@@ -14,12 +14,12 @@ export interface TreeSectionProps {
 export function TreeSection(props: {
   treeProps: TreeSectionProps[]
   startDepth?: number
+  linkTextClass?: (label: string) => string
 }) {
-  let { treeProps, startDepth } = props
+  let { treeProps, startDepth, linkTextClass } = props
   startDepth = startDepth || 0
 
   const { wrapper, topMenu, menu, menuItem } = tree()
-
   return (
     <>
       {treeProps.length > 0 && (
@@ -36,7 +36,14 @@ export function TreeSection(props: {
                 <div className={menuItem()}>
                   {/* <Icon path={mdiFolder} size={0.8} /> */}
                   <Link key={item.href} href={item.href}>
-                    <div className={`pl-${startDepth! * 2}`}>{item.label}</div>
+                    <div
+                      className={clsx(
+                        `pl-${startDepth! * 2}`,
+                        linkTextClass && linkTextClass(item.label),
+                      )}
+                    >
+                      {item.label}
+                    </div>
                   </Link>
                 </div>
                 {item.children && (

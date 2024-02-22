@@ -20,7 +20,7 @@ import { LANDING_PATH } from '@/config/site'
 import { AccordionItem, Accordion } from '@nextui-org/accordion'
 import CommonDrawer from '../../client-only/drawer'
 import { TreeSection, TreeSectionProps } from '../../client-only/tree-section'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
@@ -131,6 +131,8 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
 }
 function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   const router = useRouter()
+  const path = usePathname()
+  const defaultExpandedKeys = path.split('/')
   const { prefix, treeLeft, drawerProps } = props
 
   if (prefix) {
@@ -140,19 +142,34 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   if (!treeLeft) {
     return <></>
   }
+  const getTitleClass = (label: string) => {
+    if (defaultExpandedKeys.includes(label)) {
+      return 'text-primary-700'
+    } else {
+      return ''
+    }
+  }
+  const TitleComp = (props: { title: string }) => (
+    <div className={getTitleClass(props.title)}>{props.title}</div>
+  )
 
   const renderAccordionItems = (items: TreeSectionProps[]): JSX.Element[] => {
     return items.map((item, idx) => {
       const child = isChildGroup(item) ? (
-        <Accordion>{renderAccordionItems(item.children!)}</Accordion>
+        <Accordion defaultExpandedKeys={defaultExpandedKeys}>
+          {renderAccordionItems(item.children!)}
+        </Accordion>
       ) : (
-        <TreeSection treeProps={item.children ?? []} />
+        <TreeSection
+          linkTextClass={getTitleClass}
+          treeProps={item.children ?? []}
+        />
       )
 
       return (
         <AccordionItem
-          key={item.href + idx}
-          title={item.label}
+          key={item.label}
+          title={<TitleComp title={item.label} />}
           onDoubleClick={(evt) => {
             evt.stopPropagation()
             router.push(item.href)
@@ -176,9 +193,12 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
       title={drawerProps?.title ?? treeLeft.label}
     >
       {hasChildren ? (
-        <Accordion>{items}</Accordion>
+        <Accordion defaultExpandedKeys={defaultExpandedKeys}>{items}</Accordion>
       ) : (
-        <TreeSection treeProps={treeLeft.children ?? []} />
+        <TreeSection
+          linkTextClass={getTitleClass}
+          treeProps={treeLeft.children ?? []}
+        />
       )}
     </CommonDrawer>
   )
