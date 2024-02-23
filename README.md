@@ -1,6 +1,8 @@
 # Introduction
 
-애버컨스 컨버전스 리액트 프레임워크 프론트엔드 개발 템플릿입니다.
+zz
+## TODO
+- visudo 서버 적용 admin
 
 ## Technologies Used
 

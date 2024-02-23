@@ -1,11 +1,10 @@
 'use client'
 import { toast } from 'react-toastify'
 import InputTag from './input-tag'
-import { Input } from '@nextui-org/input'
-import { Kbd } from '@nextui-org/kbd'
+import { Input, InputProps } from '@nextui-org/input'
 import { SearchIcon } from '../../server-only/icons'
 
-export function SearchInput() {
+export function SearchInput(props: InputProps) {
   return (
     <Input
       aria-label="Search"
@@ -13,17 +12,12 @@ export function SearchInput() {
         inputWrapper: 'bg-default-100',
         input: 'text-sm',
       }}
-      endContent={
-        <Kbd className="hidden lg:inline-block" keys={['command']}>
-          K
-        </Kbd>
-      }
       labelPlacement="outside"
-      placeholder="Search..."
       startContent={
         <SearchIcon className="pointer-events-none flex-shrink-0 text-base text-default-400" />
       }
       type="search"
+      {...props}
     />
   )
 }

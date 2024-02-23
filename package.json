@@ -90,6 +90,7 @@
   },
   "devDependencies": {
     "@mdi/js": "^7.4.47",
+    "@nextui-org/listbox": "^2.1.16",
     "@storybook/addon-essentials": "^7.6.10",
     "@storybook/addon-interactions": "^7.6.10",
     "@storybook/addon-links": "^7.6.10",

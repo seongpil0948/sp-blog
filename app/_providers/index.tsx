@@ -10,6 +10,7 @@ import { I18nProvider } from 'react-aria'
 import { useRouter } from 'next/navigation'
 import CommonProvider from './common'
 import { AnimatePresence, motion } from 'framer-motion'
+import { SearchProvider } from './search'
 // import { ErrorBoundary } from '../_utils/exceptions'
 
 export interface ProvidersProps {
@@ -27,36 +28,38 @@ export function Providers({ children, themeProps }: ProvidersProps) {
         <I18nProvider locale="ko">
           <CommonProvider>
             <ReduxProvider>
-              <LoadingProvider>
-                <AnimatePresence
-                  mode="wait"
-                  // initial={true}
-                  // onExitComplete={() => window.scrollTo(0, 0)}
-                >
-                  <motion.div
-                    initial={{ x: 300, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: 300, opacity: 0 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 260,
-                      damping: 20,
-                    }}
+              <SearchProvider>
+                <LoadingProvider>
+                  <AnimatePresence
+                    mode="wait"
+                    // initial={true}
+                    // onExitComplete={() => window.scrollTo(0, 0)}
                   >
-                    {children}
-                  </motion.div>
-                </AnimatePresence>
+                    <motion.div
+                      initial={{ x: 300, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: 300, opacity: 0 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 260,
+                        damping: 20,
+                      }}
+                    >
+                      {children}
+                    </motion.div>
+                  </AnimatePresence>
 
-                <ToastContainer
-                  position="top-right"
-                  autoClose={false}
-                  pauseOnHover={false}
-                  hideProgressBar={false}
-                  theme={theme === 'dark' ? 'dark' : 'light'}
-                  newestOnTop={false}
-                  rtl={false}
-                />
-              </LoadingProvider>
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={false}
+                    pauseOnHover={false}
+                    hideProgressBar={false}
+                    theme={theme === 'dark' ? 'dark' : 'light'}
+                    newestOnTop={false}
+                    rtl={false}
+                  />
+                </LoadingProvider>
+              </SearchProvider>
             </ReduxProvider>
           </CommonProvider>
         </I18nProvider>

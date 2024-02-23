@@ -21,9 +21,12 @@ import { AccordionItem, Accordion } from '@nextui-org/accordion'
 import CommonDrawer from '../../client-only/drawer'
 import { TreeSection, TreeSectionProps } from '../../client-only/tree-section'
 import { useRouter, usePathname } from 'next/navigation'
+import { Kbd } from '@nextui-org/kbd'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
+
+  // onKeyDown={handleKeyDown}
   return (
     <NextUINavbar
       classNames={classes}
@@ -53,7 +56,16 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <SearchInput />
+          <SearchInput
+            placeholder="click to search"
+            disabled
+            className=" cursor-pointer"
+            endContent={
+              <Kbd className="hidden lg:inline-block" keys={['command']}>
+                K
+              </Kbd>
+            }
+          />
         </NavbarItem>
         <NavbarItem>
           <ThemeSwitch />
@@ -175,6 +187,7 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
           key={item.label}
           title={<TitleComp title={item.label} />}
           isCompact
+          textValue={item.label}
           hideIndicator={child === null}
           disableIndicatorAnimation={child === null}
           disableAnimation={child === null}

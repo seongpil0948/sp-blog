@@ -1,29 +1,5 @@
-# Toc
-- [Toc](#toc)
-  - [Text Manipulation and Regular Expressions - 1](#text-manipulation-and-regular-expressions---1)
-    - [Task](#task)
-    - [Solution](#solution)
-  - [Storage Management - 1](#storage-management---1)
-    - [Task](#task-1)
-    - [Solution](#solution-1)
-  - [Storage Management - 2](#storage-management---2)
-    - [Task](#task-2)
-    - [Solution](#solution-2)
-  - [Operating Systems - 1](#operating-systems---1)
-    - [Task](#task-3)
-    - [Solution](#solution-3)
-  - [User and Group Management - 1](#user-and-group-management---1)
-    - [Task](#task-4)
-    - [Solution](#solution-4)
-  - [Network Configuration - 1](#network-configuration---1)
-    - [Task](#task-5)
-    - [Solution](#solution-5)
-
-
-
-## 1
+## Essetial Command - 1
 ### Task 
-
 
 In your home directory you will find a directory called `collection`. Take the following steps:
 
@@ -38,157 +14,174 @@ C. Finally, create a new directory called collection2 in your `/opt/ `directory.
 
 ### Solution
 First switch to root user:
-
+```bash
 sudo su - root
-
-
+```
 Execute below given command to copy entire collection directory to /opt directory:
 
-
+```bash
 cp -rp /home/bob/collection /opt/collection
-
-
+```
 
 Execute below given command to remove collection directory:
-
-
+```bash
 rm -rf /home/bob/collection
-
-
-
+```
 Execute below given command to create collection2 directory:
 
-
+```bash
 mkdir /opt/collection2
-
+```
 ---
 
-## 2
+## Essetial Command - 2
 ### Task 
 
-There is a directory called /opt/databases/. This should belong to your user, called bob. But someone entered the wrong commands and messed up the permissions and ownership information. Correct these in the following way:
+There is a directory called `/opt/databases/`. This should **belong to** your user, called `bob`. But someone entered the wrong commands and messed up the permissions and ownership information. Correct these in the following way:
 
-A. Change the user owner and group owner for this directory. /opt/databases/ should be owned by the user called bob and the group also called bob. Make sure to make this a recursive change, so that ownership is changed for the directory itself along with the files/directories it contains.
-
-
-
-B. The permissions for /opt/databases/ directory are 777 currently, which are way too open. Anyone can read and write to this directory. Change these permissions so that only the user called bob can read, write and execute within /opt/databases/ directory. Permissions for the group and for others should be all denied. These permissions should only be applied to the directory itself, not to the files/directories inside.
+A. Change the user `owner and group owner` for this directory. `/opt/databases/` should be owned by the `user` called `bob` and the `group` also called `bob`.   
+Make sure to make this a recursive change, so that ownership is changed for the directory itself along with the `files/`directories it contains.
 
 
-C. Change permissions for all files inside the /opt/databases/ directory (file1, file2, file3). The user bob should have permissions to read and write to these files, but not to execute them. The group should have read only permissions on these files, nothing else. And others should not have any permissions at all (all denied).
+
+B. The permissions for `/opt/databases/` directory are **777** currently, which are way **too open**.Anyone can read and write to this directory.   
+Change these permissions so that only the user called `bob` can **read**, **write** and **execute** within `/opt/databases/` directory.   
+Permissions for the `group` and for others should be **all denied**. These permissions should **only** be applied to the **directory itself**, not to the **files/directories** inside.
+
+
+C. Change permissions for **all files** inside the `/opt/databases/` directory (`file1`, `file2`, `file3`).   
+The **user bob** should have permissions to **read** and **write** to these files, but not to execute them.  
+The **group** should have **read only** permissions on these files, nothing else.  
+**others** should not have **any permissions** at all (all denied).
 
 
 
 ### Solution
-First switch to the root user:
-
-
-sudo su -
-
-
 
 Execute below given command to change the user and group ownership for the databases directory:
-
-
+```bash
 chown -R bob:bob /opt/databases
-
-
-
+```
 Execute below given command to update the permissions for databases directory:
-
-
+```bash
 chmod 0700 /opt/databases
-
-
-
+```
 Execute below given command to change permissions for all the files under databases directory:
-
-
+```bash
 chmod 0640 /opt/databases/*
+```
 
 ---
 
 ## 3
 
+file `/opt/services.txt` and perform the following tasks:  
+replace all occurrences of the word `SSH` with `NULL` in this file.
 
+```bash
 sed -i 's/SSH/NULL/g' /opt/services.txt
+```
+- `-i` : This option is used to edit the file in place. It means it will replace the original file with the updated file.  
+- `s` : This option is used to substitute the string.
+- `g` : This option is used to replace all occurrences of the string in the file.
+
+## Other sed examples
+Task 2: 파일에서 특정 패턴을 찾아 삭제하기
+sed를 사용하여 파일에서 특정 패턴을 찾아 삭제할 수도 있습니다. 이 작업은 /pattern/d 형식의 sed 명령어를 사용하여 수행할 수 있습니다.
+
+### filename 파일에서 'foo'라는 패턴을 찾아 해당 라인을 삭제합니다.
+```bash
+sed '/foo/d' filename
+```
+
+### 파일에서 특정 라인을 출력하기
+sed를 사용하여 파일에서 특정 라인을 출력할 수 있습니다. 이 작업은 n,p 형식의 sed 명령어를 사용하여 수행할 수 있습니다.
+
+이 명령어는 filename 파일에서 5번째 라인을 출력합니다.
+```bash
+sed -n '5,p' filename
+```
+5 ~ 10 라인까지 출력
+```bash
+sed -n '5,10p' filename
+```
+
+```bash
+sed -e '/^$/d' -e '/foo/d' -e '/bar/d' filename $filename
+```
+위 명령어는 filename 파일에서 **빈 줄**, `/foo`, `/bar` 을 삭제합니다.
+- `-e` : 이 옵션은 sed 명령어를 여러 개 사용할 때 사용합니다.
+
+```bash
+sed -n -e '5p' -e '10p' filename
+```
+이 명령어는 filename 파일에서 5번째 라인과 10번째 라인을 출력합니다.
+
+```bash
+sed -e 's/foo/bar/' -e 's/baz/qux/' filename
+```
+이 명령어는 filename 파일에서 'foo'를 'bar'로, 'baz'를 'qux'로 바꿉니다.
 
 ---
 
 ## 4
 ### Task 
 
-A process called memcached is running on this system. Change its nice value to +10.
+A process called memcached is running on this system. Change its **nice** value to `+10`.
 
 ### Solution
-Execute below given command to change the nice value to +10. But first check the PID of memcached process because you need the PID to change the nice value:
-
-
+Execute below given command to change the **nice value** to `+10`.  
+But first check the PID of memcached process because you need the PID to change the nice value:
+```bash
 ps -ef | grep memcached 
 sudo renice -n +10 $PID_memcached
-
+```
 
 ---
 
 ## 5
 ### Task 
 
-
 In this exercise you will create two scheduled jobs.
+A. First, create an **anacron** job with the following parameters:
+
+* Job will run **once every three days**.
+* The job delay is **10** minutes.
+* The job **identifier** (name) is `exam`.
+* The command it should run is `/opt/anacron.sh`
 
 
-A. First, create an anacron job with the following parameters:
-
-
-* Job will run once every three days.
-
-* The job delay is 10 minutes.
-
-* The job identifier (name) is exam.
-
-* The command it should run is /opt/anacron.sh.
-
-
-B. Next, create an at job. Schedule it to run at this exact date: August 21 2040. The at job should run the following command:
-
+B. Next, create an at job. Schedule it to run at this exact date: `August 21 2040`. The at job should run the following command:
+```bash
 echo 'Wow, this took a long time!' > finally.txt
-
+```
 ### Solution
 First create an anacron job:
-
-
+```bash
 sudo vi /etc/anacrontab
-
-
-
+```
 Add given line at the end of the file.
-
-
+```
 3 10 exam /opt/anacron.sh
-
-
+```
 
 Now, create the at job:
-
-
+```bash
 at 082140
-
-
-
+```
 Add the given command , ctrl +d to save the command:
-
-
+```bash
 echo 'Wow, this took a long time!' > finally.txt
-
+```
 ---
 
 ## 6
 ### Task 
 
 
-C. Add the user called jane to the developers group. This should be a secondary/supplementary group, her primary group should remain unchanged.
+C. Add the user called `jane` to the `developers` group. This should be a **secondary/supplementary** group, her **primary group** should remain unchanged.
 
-D. Configure a resource limit for the developers group so that this group cannot exceed 5 logins (maxlogins).
+D. Configure a **resource limit** for the `developers` group so that this group **cannot exceed 5 logins**(maxlogins).
 
 
 
@@ -196,74 +189,73 @@ D. Configure a resource limit for the developers group so that this group cannot
 ### Solution
 Execute below given command to add user jane to the developers group:
 
-
+```bash
 sudo usermod -a -G developers jane
+```
 
 
-
-Edit /etc/security/limits.conf file and add @developers      -       maxlogins       5 line at the end of file:
-
-
-sudo vi /etc/security/limits.conf
-
+Edit `/etc/security/limits.conf` file and add
+``` 
+@developers      -       maxlogins       5 
+```
 ---
 
 ## 7
 ### Task 
+A. Create a new user called `john` and set `D3vU3r321` password for this user.
 
-
-A. Create a new user called john and set D3vU3r321 password for this user.
-
-B. Edit the sudoers file and make sure that john can only run the shutdown command with sudo and without entering any password. It does not matter if you use localhost or ALL in the host section.
+B. Edit the **sudoers** file and make sure that `john` **can only run** the `shutdown` command with `sudo` and **without entering any password**.   
+It does not matter if you use `localhost or ALL` in the **host** section.
 
 
 ### Solution
-Execute below given command to create a new user called john and set a password for the same:
-
-
+Execute below given command to create a new user called `john` and set a password for the same:
+```bash
 sudo useradd john
 sudo passwd john
+```
 
-
-
-Edit /etc/sudoers file so that john can run the shutdown command with sudo without entering any password:
-
-
+Edit `/etc/sudoers` file so that john can run the shutdown command with sudo without entering any password:
+```bash
 sudo visudo
-
-
-
+```
 Add below given line at the end of this file:
-
-
+```
 john ALL=(ALL)  NOPASSWD: /sbin/shutdown
-
+```
 ---
 
 ## 8
 ### Task 
 
 
-Modify the following kernel runtime parameter:
-vm.swappiness
+Modify the following **kernel runtime parameter**:
+`vm.swappiness`
 
 
-Set a value 10 for it. This can be a temporary change, so the parameter should temporarily keep this value in the current session, but the change should be forgotten at next boot.
+Set a value `10` for it.   
+This can be a temporary change, so the parameter should **temporarily keep** this value in the **current session**, but the change should be forgotten at next boot.
 
 ### Solution
-Set a value 10 for it. This can be a temporary change, so the parameter should temporarily keep this value in the current session, but the change should be forgotten at next boot.
-
-
+```bash
+sudo sysctl -w vm.swappiness=10
+```
+if you want permanent change, you can add the following line to `/etc/sysctl.conf` file:
+```bash
+vm.swappiness=10
+```
 ---
 
 ## 9
 ### Task 
 
-Inspect the httpd service and figure out its unit file. Further, find out the SELinux label that it has. Save this label to this file:
-/opt/label.txt
+Inspect the `httpd` service and figure out its **unit file**.   
+Further, find out the **SELinux label** that it has.   
+Save this label to this file: `/opt/label.txt`
 
 
-For example, the SELinux label for /bin/sudo shows up like this system_u:object_r:sudo_exec_t:s0 /usr/bin/sudo In that case, you would write system_u:object_r:sudo_exec_t:s0 to that file, skipping the /usr/bin/sudo part.
+For example, the SELinux label for `/bin/sudo` shows up like this `system_u:object_r:sudo_exec_t:s0` `/usr/bin/sudo`    
+In that case,  you would write `system_u:object_r:sudo_exec_t:s0` to that file, skipping the `/usr/bin/sudo` part.
 
 
 ### Solution
