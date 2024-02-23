@@ -154,22 +154,35 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
   )
 
   const renderAccordionItems = (items: TreeSectionProps[]): JSX.Element[] => {
-    return items.map((item, idx) => {
-      const child = isChildGroup(item) ? (
-        <Accordion defaultExpandedKeys={defaultExpandedKeys}>
-          {renderAccordionItems(item.children!)}
-        </Accordion>
-      ) : (
+    return items.map((item) => {
+      let child: null | JSX.Element = (
         <TreeSection
           linkTextClass={getTitleClass}
           treeProps={item.children ?? []}
         />
       )
-
+      if (!item.children || item.children.length < 1) {
+        child = null
+      } else if (isChildGroup(item)) {
+        child = (
+          <Accordion isCompact defaultExpandedKeys={defaultExpandedKeys}>
+            {renderAccordionItems(item.children!)}
+          </Accordion>
+        )
+      }
       return (
         <AccordionItem
           key={item.label}
           title={<TitleComp title={item.label} />}
+          isCompact
+          hideIndicator={child === null}
+          disableIndicatorAnimation={child === null}
+          disableAnimation={child === null}
+          onPress={(evt) => {
+            if (child === null) {
+              router.push(item.href)
+            }
+          }}
           onDoubleClick={(evt) => {
             evt.stopPropagation()
             router.push(item.href)
@@ -187,13 +200,16 @@ function PrefixComp(props: CommonNavbarProps): React.ReactNode {
     <CommonDrawer
       sheetProps={{
         placement: 'left',
-        defaultOpen: hasChildren,
+        // defaultOpen: hasChildren,
+        defaultOpen: true,
       }}
       {...drawerProps}
       title={drawerProps?.title ?? treeLeft.label}
     >
       {hasChildren ? (
-        <Accordion defaultExpandedKeys={defaultExpandedKeys}>{items}</Accordion>
+        <Accordion isCompact defaultExpandedKeys={defaultExpandedKeys}>
+          {items}
+        </Accordion>
       ) : (
         <TreeSection
           linkTextClass={getTitleClass}
