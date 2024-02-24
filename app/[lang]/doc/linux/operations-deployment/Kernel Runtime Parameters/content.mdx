@@ -1,0 +1,105 @@
+# Kernel Runtime Parameters 
+런타임 매개변수는 Linux 커널 로드 될 때 수행하는 방식에 대한 기본 설정을 나타내는 멋진 용어일 뿐입니다.   
+커널은  row level에서 동작하며, 설정에 따라 메모리 할당, 프로세스 관리, 파일 시스템 관리 등을 수행합니다.  
+
+
+커널런타임에 사용될 모든 파라미터를 확인하려면, 아래 명령어를 입력합니다.  
+```bash
+$ sudo sysctl -a
+fs.pipe-user-pages-soft = 12344
+fs.pipe-user-pages-hard = 0
+net.ipv6.conf.default.disable_ipv6 = 0
+...
+```
+위 설정에서 ipv6가 활성화되어 있는 것을 확인할 수 있습니다.  
+>   `sysctl` is used to modify kernel parameters at runtime.  The
+>   parameters available are those listed under `/proc/sys/`.  Procfs
+>   is required for sysctl support in Linux.  You can use sysctl to
+>   both read and write sysctl data.
+>  이러한 설정들은 `/etc/sysctl.conf` 파일에 저장되어 있습니다.
+
+이와같이 네트워크 부터 파일시스템, 메모리 관리, vm 등 커널이 수행하는 모든 작업에 대한 설정을 확인할 수 있습니다.   
+ipv6를 비활성화하고 싶다면, 아래 명령어를 입력합니다.  
+```bash
+# change not permanently
+$ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+# check
+$ sudo sysctl -a | grep ipv6
+or
+$ sudo sysctl net.ipv6.conf.default.disable_ipv6
+```
+변경된 값이 영구적으로 적용되게 하려면, 설정 파일을 수정해야 합니다.  
+```bash
+$ man sysctl.d
+SYNOPSIS
+       /etc/sysctl.d/*.conf
+       /run/sysctl.d/*.conf
+       /usr/lib/sysctl.d/*.conf
+$ vi /etc/sysctl.d/99-sysctl.conf 
+[input]
+net.ipv6.conf.default.disable_ipv6 = 1
+```
+
+### 시나리오
+만약 vm의 메모리를 설정하고 싶습니다.
+
+```bash
+$ sysctl -a | grep vm
+vm.panic_on_oom = 0
+vm.swappiness = 30
+```
+위 설정에서 `vm.swappiness`는 30으로 설정되어 있습니다.
+> swappiness는 커널이 메모리를 어떻게 사용할지에 대한 정책입니다.
+> 0이면, 메모리를 적게 사용하고, 100이면 스왑을 최대한 사용합니다.
+
+만약 이 값을 10으로 변경하고 싶다면, 아래 명령어를 입력합니다.
+```bash
+sudo vim /etc/sysctl.d/99-sysctl.conf
+[append]
+vm.swappiness=10
+```
+이제 next boot시에 변경된 값이 적용됩니다.   
+만약 즉시 적용하고 싶다면, 아래 명령어를 입력합니다.
+```bash
+-p : permanent file
+$ sudo sysctl -p /etc/sysctl.d/99-sysctl.conf
+```
+
+
+
+
+
+
+
+# Practice
+
+### Turn on `kernel.modules_disabled` kernel runtime parameter, so that loading new kernel modules will be disabled.
+```bash
+$ apropos kernel | grep parameter
+bootparam (7)        - introduction to boot time parameters of the Linux ke...
+kernel-command-line (7) - Kernel command line parameters
+sysctl (8)           - configure kernel parameters at runtime
+sysctl.d (5)         - Configure kernel parameters at boot
+systemd-sysctl (8)   - Configure kernel parameters at boot
+systemd-sysctl.service (8) - Configure kernel parameters at boot
+
+$ sudo vi /etc/sysctl.d/99-sysctl.conf
+[append]
+kernel.modules_disabled=1
+# -p: persistent
+$ sudo sysctl -p /etc/sysctl.d/99-sysctl.conf
+or 
+$ sudo sysctl --system
+```
+
+### Use the sysctl command to make sure this kernel runtime parameter is actively enabling its settings:
+`net.ipv6.conf.lo.seg6_enabled`
+check
+```bash
+$ sudo sysctl -a | grep net.ipv6.conf.lo.seg6_enabled
+or
+$ sudo sysctl net.ipv6.conf.lo.seg6_enabled
+net.ipv6.conf.lo.seg6_enabled = 0
+
+$ sudo sysctl -w net.ipv6.conf.lo.seg6_enabled=1
+```

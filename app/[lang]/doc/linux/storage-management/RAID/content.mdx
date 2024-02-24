@@ -114,8 +114,6 @@ mdadm [mode] <raiddevice> [options] <component-devices>
 - --uuid: RAID array의 UUID를 설정합니다.
 
 
-
-
 Let's jump to the commands
 ---
 만약 이전시에 LVM을 사용했다면 /dev/vdc, /dev/vdd, /dev/vde 디스크를 release 해주자.  
@@ -176,7 +174,7 @@ md0 : active raid1 vde[2] vdd[1] vdc[0]
 
 # Practice
 
-### Create a level 1 RAID array, at /dev/md0, with two devices: /dev/vdc and /dev/vdd.
+### Create a level 1 RAID array, at `/dev/md0`, with two devices: `/dev/vdc` and `/dev/vdd`.
 
 ```bash
 $ sudo mdadm --create --level=1 /dev/md0  --raid-devices=2 /dev/vdc /dev/vdd
