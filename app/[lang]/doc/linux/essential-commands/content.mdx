@@ -1,11 +1,13 @@
 
 ## Toc
 - [Linux Essential Commands](#linux-essential-commands)
+  - [OS](#os)
   - [Read \& use system documentation](#read--use-system-documentation)
     - [섹션 별 의미](#섹션-별-의미)
   - [Package Manager](#package-manager)
+    - [Check OS](#check-os)
     - [Help DNF](#help-dnf)
-    - [Repository update \& upgrade](#repository-update--upgrade)
+    - [Repository update \& upgrade in Ubuntu](#repository-update--upgrade-in-ubuntu)
     - [install](#install)
     - [bash: ldd로 의존성 탐색](#bash-ldd로-의존성-탐색)
   - [Package repository in Ubuntu](#package-repository-in-ubuntu)
@@ -22,6 +24,9 @@
     - [Hard Link](#hard-link)
       - [Limitation](#limitation)
     - [Soft Link](#soft-link)
+- [By topic](#by-topic)
+  - [Setting](#setting)
+    - [시스템 에디터가 `nano` 라 못해먹겠어요!](#시스템-에디터가-nano-라-못해먹겠어요)
 - [Practice](#practice)
     - [How do we get a list of all CentOS repositories that are `enabled` or `disabled`?](#how-do-we-get-a-list-of-all-centos-repositories-that-are-enabled-or-disabled)
     - [install the group that brings in software related to `Container Management`.](#install-the-group-that-brings-in-software-related-to-container-management)
@@ -31,6 +36,27 @@
 
 # Linux Essential Commands
 리눅스를 처음 접하는 사람들을 위한 리눅스 명령어에 대한 기본적인 내용을 다룹니다.  
+
+## OS
+리눅스는 Ubuntu, Centos, ... etc 다양한 배포판이 존재합니다.  
+일부 상이한 명령어와 호환성 문제가 있을 수 있습니다.  
+운영체제를 확인하는 방법을 알아 보겠습니다.  
+```sh
+# in ubuntu
+$ lsb_release -a
+# in centos
+$ cat /etc/redhat-release
+```
+- `lsb_release -a`: LSB(Linux Standard Base) 정보를 출력합니다.
+- `cat /etc/redhat-release`: 레드햇 계열의 배포판에서 사용하는 명령어로, 레드햇 계열의 배포판의 버전을 확인할 수 있습니다.  
+커널이란 운영체제의 핵심 부분으로, 하드웨어와 소프트웨어를 연결하는 역할을 합니다.  
+커널의 버전을 확인하는 방법은 다음과 같습니다.
+```sh
+$ uname -r
+```
+`uname` 명령어는 커널의 정보를 출력합니다.
+
+
 ## Read & use system documentation 
 리눅스 명령어를 사용하는데 있어서 가장 중요한 것은 시스템의 메뉴얼을 읽고 사용하는 것입니다.  
 목적에 따라 어떤 명령어를 어떻게 사용할지 인지하는 것은 중잔기 따지지 않고 좋습니다.
@@ -73,6 +99,16 @@ man 과 더불어 `info` 또한 비슷한 문법으로 더 많은 기능을 제�
 - Centos의 dnf 가 있다
 > dnf 는 Dandified YUM의 약자로 기존 Red Hat 계열의 패키지 관리자인 yum의 단점인 "느린 속도", "과다한 메모리 사용", "의존성 결정이 느림" 과 같은 단점을 개선한 새로운 패키지 관리자입니다.
 
+### Check OS
+운영체제별 패키지 매니저를 확인하는 방법은 다음과 같습니다.
+```sh
+# in ubuntu
+$ dpkg --version
+# in centos
+$ dnf --version
+```
+
+
 ### Help DNF
 자주 사용되는 dnf 명령어들을 알아보겠습니다.
 - `alias`: 명령어에 대한 별칭을 설정합니다.
@@ -97,7 +133,7 @@ man 과 더불어 `info` 또한 비슷한 문법으로 더 많은 기능을 제�
 
 
 
-### Repository update & upgrade
+### Repository update & upgrade in Ubuntu
 `apt update` 명령어는 시스템의 패키지 목록을 최신 상태로 업데이트합니다. 이 명령어를 실행하면, 시스템은 설정된 소프트웨어 리포지토리에서 사용 가능한 패키지와 그 버전 정보를 가져와 로컬 패키지 데이터베이스를 업데이트합니다.
 
 이렇게 하면, `apt upgrade`나 `apt install` 명령어를 사용할 때 최신 패키지를 설치하거나 기존 패키지를 최신 버전으로 업그레이드할 수 있습니다.
@@ -472,6 +508,20 @@ ls -l | grep "^l"
 readlink c.yaml
 ```
 
+# By topic
+
+## Setting
+
+### 시스템 에디터가 `nano` 라 못해먹겠어요!
+필자는 killer 페이지에서 시험 연습을 하고있는 상황에서  
+`sudo visudo` 명령어를 입력하였습니다.  하지만 `nano` 에디터가 열렸습니다.
+왓더.. 찾아보니 `EDITOR` 환경변수를 설정하면 된다고 합니다.
+시스템 전역일 경우 `/etc/environment` 에 추가하면 되고,  
+사용자별로 설정하고 싶다면 `~/.bashrc` 에 추가하면 됩니다.  
+```sh
+$ export EDITOR=vim
+```
+
 # Practice
 
 ### How do we get a list of all CentOS repositories that are `enabled` or `disabled`?  
@@ -539,3 +589,4 @@ store the output in /home/bob/webservers.txt file.
 ```sh
 $ dnf search Apache HTTP Server > /home/bob/webservers.txt
 ```
+

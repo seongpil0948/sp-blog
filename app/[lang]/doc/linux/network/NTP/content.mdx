@@ -1,0 +1,162 @@
+# NTP(Network Time Protocol)?
+NTP(Network Time Protocol)는 네트워크를 통해 시간을 동기화하는 프로토콜이며 여러 서버의 시간을 동기화하는데 사용됩니다.    
+즉, 네트워크 장치의 시계를 동기화하는 서버 클러스터입니다. 
+NTP는 수억 대의 컴퓨터와 장치에서 인터넷을 통해 시계를 동기화하는 데 사용됩니다.
+
+[linux network](/doc/linux/network) 에서 다뤘던 `timedatectl` 명령어와 `systemd-timesyncd` 서비스를 사용하여 시스템 시간을 동기화할 수 있습니다.
+
+## timedatectl
+> timedatectl may be used to query and change the system clock and its settings, and enable or disable time synchronization services.  
+
+
+`timedatectl` 명령어는 시스템 시간과 날짜를 설정하고 확인하는데 사용되는 명령어입니다.  
+
+### Sysnopis
+```bash
+timedatectl [OPTIONS...] {COMMAND}
+```
+### COMMAND  
+
+- `status`, `show` : Show current settings of the system clock and RTC.
+- `set-time [TIME]`: 시스템 시간을 설정합니다. 
+  - The time may be specified in the format `2012-10-30 18:17:16`
+- `set-timezone [ZONE]`: 시스템의 타임존을 설정합니다.
+```bash
+$ timedatectl list-timezones | grep -i Asia
+$ sudo timedatectl set-timezone Asia/Seoul
+``` 
+- `set-local-rtc [BOOL]`: RTC를 로컬 시간으로 설정합니다.
+- `set-ntp [BOOL]`: true(1) 이면 `/etc/systemd/timesyncd.conf` 파일에 설정된 NTP 서버를 사용하여 시간을 동기화합니다.
+  - 즉 `systemd-timesyncd` 서비스를 사용하여 시간을 동기화합니다.
+
+자 먼저 필요한 패키지를 설치해보겠습니다.
+```bash
+sudo apt update
+sudo apt install systemd-timesyncd
+sudo systemctl enable systemd-timesyncd
+sudo systemctl start systemd-timesyncd
+sudo timedatectl set-ntp true
+# System clock synchronized: yes
+# systemd-timesyncd.service active: yes
+```
+동기화 되는 로그시간을 확인해 보죠
+```bash
+sudo journalctl -u systemd-timesyncd
+# systemctl status systemd-timesyncd.service
+```
+음 잘되네염, 여느 데몬을 수정하듯 이것도 수정할 수 있습니다.
+npt 서버 추가, fallback 서버 추가, poll interval 변경 등등 
+```bash
+timedatectl timesync-status
+## edit
+# sudo vi /etc/systemd/timesyncd.conf
+# sudo systemctl restart systemd-timesyncd
+```
+
+만약 아래의 요구사항이 주어졌다 가정해보겠습니다.  
+Time synchronisation configuration needs to be updated:
+
+1. Set `0.pool.ntp.org` and `1.pool.ntp.org` as **main** NTP servers
+2. Set `ntp.ubuntu.com` and `0.debian.pool.ntp.org` as fallback NTP servers
+3. The maximum poll interval should be `1000` seconds and the connection retry `20 `seconds
+
+> **Info**: Use `man timesyncd.conf` for help
+conf 파일의 구성은 다음과 같습니다.
+- `NTP`: NTP server host name or IP address, 리스트 형태로 response를 받을때까지 순차적으로 시도합니다.
+- `FallbackNTP`: 설정하지 않으면 `timesyncd`는 주요 NTP 서버에 연결할 수 없는 경우 시스템 시간을 동기화하지 않습니다.
+  - 주요 NTP 서버만큼 안정적이지 않을 수 있습니다.
+  - 여러 개의 FallbackNTP 서버를 설정하는 것이 좋습니다.
+- `RootDistanceMaxSec`: 최대 시간 오차를 설정합니다. (default 5s)
+- `PollIntervalMinSec`, `PollIntervalMaxSec`:  NTP 서버에 시간 동기화 요청을 보내는 최소 간격을 설정하는 옵션입니다. 
+  - Min 값이 낮을경우 빠르게 동기화가 되지만, 서버에 부하를 줄 수 있습니다.
+  - Max 값이 높을경우 느리게 동기화가 되지만
+- `ConnectionRetrySec`: NTP 서버에 연결을 잃었을 때 다시 연결을 시도하는 간격을 설정합니다.  
+- `SaveIntervalSec`: 시스템 시간을 저장하는 간격을 설정합니다. (default 1min)
+
+---
+
+문제 ? 법대로해!! 우린 아니죠 `man` 대로 해!!!! 맞습니다. 네 시험준비하며 돌아버린것 같습니다.  
+이번 2024.02.25 기준 다음주 시험입니다.  홧팅  
+
+--- 
+
+수정하기 전 현재 상황을 확인해보겠습니다.  
+```bash
+$ timedatectl timesync-status
+# Server:
+# Poll interval: 32min 28s (min: 32s; max 34min 8s)
+# Leap: normal
+# Last attempt: 2024-01-17 17:42:37 UTC (UTC)
+# Next attempt: 2024-01-17 18:15:05 UTC (UTC)
+
+$ $ timedatectl
+# Local time: Wed 2024-01-17 17:42:37 UTC
+# Universal time: Wed 2024-01-17 17:42:37 UTC
+# RTC time: Wed 2024-01-17 17:42:37
+# Time zone: Etc/UTC (UTC, +0000)
+# System clock synchronized: yes
+# NTP service active: yes
+# RTC in local TZ: no
+```
+우선 요놈들이 유효한지 테스트를 해야하겠습니다.  
+`0.de.pool.ntp.org 1.de.pool.ntp.org 2.de.pool.ntp.org`
+> 참고로 `de`는 독일시간임 ㅋ  
+```bash
+$ ntpdate -q 0.de.pool.ntp.org
+server 0.de.pool.ntp.org, stratum 2, offset 0.0000542, delay 0.005086
+...
+$ ntpdate -q www.google.com
+11 Feb 17:42:37 ntpdate[1234]: no server suitable for synchronization found
+...
+
+```
+google 은 NTP 서버를 제공하지 않습니다. 실패!  
+
+---
+찐 문제 풀이 시 작!  
+
+메뉴얼대로! `/etc/systemd/timesyncd.conf` 파일을 수정해보겠습니다.   
+add main NTP servers
+```bash
+$ sudo vi /etc/systemd/timesyncd.conf
+# [insert]
+[Time]
+NTP=0.pool.ntp.org 1.pool.ntp.org
+FallbackNTP=ntp.ubuntu.com 0.debian.pool.ntp.org
+PollIntervalMaxSec=1000
+ConnectionRetrySec=20
+```
+데몬은 restart 해야 설정파일 다시 읽는거 알G?
+```bash
+$ sudo service systemd-timesyncd restart
+$ sudo service systemd-timesyncd status
+● systemd-timesyncd.service - Network Time Synchronization
+     Loaded: loaded (/lib/systemd/system/systemd-timesyncd.service; enabled; vendor preset: enabled)
+     Active: active (running) since Thu 2023-07-27 15:40:11 UTC; 2s ago
+       Docs: man:systemd-timesyncd.service(8)
+   Main PID: 161213 (systemd-timesyn)
+     Status: "Initial synchronization to time server 162.159.200.123:123 (0.pool.ntp.org)."
+      Tasks: 2 (limit: 2234)
+     Memory: 1.3M
+        CPU: 100ms
+     CGroup: /system.slice/systemd-timesyncd.service
+             └─161213 /lib/systemd/systemd-timesyncd
+
+Jul 27 15:40:11 terminal systemd[1]: Starting Network Time Synchronization...
+Jul 27 15:40:11 terminal systemd[1]: Started Network Time Synchronization.
+Jul 27 15:40:11 terminal systemd-timesyncd[161213]: Initial synchronization to time server 162.159.200.123:123 (0.pool.ntp.org).
+```
+잘 된것 같아요. 로그 안보면 섭하죠?  
+```bash
+$ sudo journalctl -u systemd-timesyncd
+$ sudo grep systemd-timesyncd /var/log/syslog
+Jul 27 15:40:11 ubuntu2204 systemd[1]: systemd-timesyncd.service: Deactivated successfully.
+Jul 27 15:40:11 ubuntu2204 systemd-timesyncd[161213]: Initial synchronization to time server 162.159.200.123:123 (0.pool.ntp.org).
+```
+server `0.pool.ntp.org`와 싱크되었군여. gg 염
+
+
+
+
+
+

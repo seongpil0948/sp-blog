@@ -162,6 +162,26 @@ $ sudo dd if=disk-image.raw of=/dev/vda bs=1M status=progress
 # Practice
 > tar: Removing leading '/' from member names는 tar 명령어를 실행할 때 종종 나타나는 메시지입니다. 이 메시지는 tar가 절대 경로를 상대 경로로 변환하고 있음을 알려줍니다.
 
+### 두개의 tar 파일은 같은 파일일까?  
+현재 디렉토리는
+```sh
+➜ root@data-001:/imports$ ls -lh
+total 4.5K
+drwxr-xr-x 7 ubuntu ubuntu   7 Jul 16 13:32 import001
+-rw-r--r-- 1 root   root   550 Jul 16 13:57 import001.tar.bz2
+-rw-r--r-- 1 root   root   531 Jul 16 14:00 import001.tar.gz
+```
+두개의 tar 파일은 같은 파일일까?  
+```sh
+$ tar --diff --file=import001.tar.bz2 import001.tar.gz
+or
+$ tar tf import001.tar.bz2 | sort > import001.tar.bz2.txt
+$ tar tf import001.tar.gz | sort > import001.tar.gz.txt
+$ diff import001.tar.bz2.txt import001.tar.gz.txt
+```
+- `--diff` : Find differences between archive and file system
+- `tf` : List the contents of an archive file.
+
 
 ### Create a tar archive `logs.tar` (under bob's home) of `/var/log/` directory.  
 ```bash
