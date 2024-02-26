@@ -1,0 +1,455 @@
+
+
+## 1
+In your home directory you will find some text files. Perform the following actions on these
+### Task 
+First, look for `reversed.txt`. The text inside makes no sense when you read from top to bottom.     
+But there is a command that lets you read a file **backwards**, from **bottom to top**.   
+Use that command to display this file and redirect the reversed output to `/opt/corrected.txt`
+
+### Solution
+```bash
+tac /home/bob/reversed.txt > /opt/corrected.txt
+```
+
+---
+
+
+## 2
+### Look for a file called `shuffled.txt`. You will find `200` lines Inside it, in a random order. Do not change the contents of this file throughout this exercise. There are lines that contain the word line followed by a number between `00` and `99`, and some lines that contain the word `LINE` followed by a number between `00` and `99`.    
+
+Filter out only the lines written in **CAPITAL LETTERS**, containing the word `LINE`. Then sort this filtered output so that these lines appear in their natural order, from **LINE00, LINE01, LINE02, all the way to LINE99**.   
+Save this filtered and sorted output to this file: `/opt/sortedLINES.txt `
+
+
+### Solution
+```bash
+grep 'LINE[0-9][0-9]' /home/bob/shuffled.txt | sort > /opt/sortedLINES.txt
+```
+
+---
+
+
+## 3
+### Task 
+ Archive the databases directory again. But this time, do it differently. First of all, save the archive at /opt/archive2.tar.gz.
+This time the tar tf /opt/archive2.tar.gz command should show bob/databases/ as the base directory instead of home/bob/databases/. Here's an example :
+
+### Solution
+```bash
+$ cd /home
+$ sudo tar -czf /opt/archive2.tar.gz bob/databases
+
+# check list
+$ tar tf /opt/archive2.tar.gz
+bob/databases/file85
+bob/databases/file86
+bob/databases/file87
+bob/databases/file88
+bob/databases/file89
+bob/databases/file90
+bob/databases/file91
+bob/databases/file92
+bob/databases/file93
+bob/databases/file94
+```
+
+
+---
+
+
+
+
+## 4
+### Task 
+What is the SELinux security context for the process running with PID 2? Write this context to the `/opt/context.txt` file. Here is an example:say a user found this when inspecting SELinux aspects of PID 848:
+
+### Solution
+```bash
+$ ps -eZ | grep 2 
+system_u:system_r:kernel_t:s0       2 ?        00:00:00 kthreadd
+or 
+$ ps -Z -p 2 
+
+$ echo 'system_u:system_r:kernel_t:s0' > /opt/context.txt
+```
+---
+
+
+## 5 
+### Task 
+Analyze the system logs and find out what is the last user that had a password change.   
+Save the name of this user to the /opt/user.txt file.
+
+### Solution
+```bash
+$ sudo grep 'password changed' /var/log/messages | tail -n 1 
+/var/log/secure:Feb 26 14:13:11 centos-host sudo[64406]:     bob : TTY=pts/1 ; PWD=/home/bob ; USER=root ; COMMAND=/bin/grep -r password change /var/log
+$ echo 'root' > /opt/user.txt
+```
+
+
+---
+
+## 6
+### Task 
+Setup the following three cron jobs for root user:
+
+A. Make sure that /usr/local/bin/script1.sh runs every Monday at 4AM
+
+B. Make sure that /usr/local/bin/script2.sh runs every first day of the month at 04:30 AM
+
+C. Make sure that /usr/local/bin/script3.sh runs every day at 1AM, 2AM and 3AM. For script3.sh make sure to create a single cron job, not three separate ones for each hour.
+
+
+
+### Solution
+```bash
+# if you target user bob, then run -u bob
+$ sudo crontab -e
+# add the following lines
+# m h dom mon dow command
+0 4 * * 1 /usr/local/bin/script1.sh
+30 4 1 * * /usr/local/bin/script2.sh
+0 1-3 * * * /usr/local/bin/script3.sh
+```
+
+
+
+
+
+
+---
+
+
+
+
+## 7
+#TODO: `du` 명령어 정리
+### Task 
+A. How much total RAM does this system have? Write one of these answers:
+More than 1GB
+or
+Less than 1GB
+
+to the following file:
+/opt/memory.txt
+
+
+B. How much space in MBs does the /usr/bin/ directory use on our disk?
+
+
+Write your answer to this file:
+
+/opt/dirsize.txt.
+
+Example of a valid answer format:318M.
+
+
+### Solution
+```bash
+$ free -mh
+              total        used        free        shared     buff/cache   available
+Mem:          968Mi       241Mi       131Mi        12Mi       595Mi       559Mi
+Swap:         2.0Gi        14Mi       2.0Gi
+
+$ echo 'Less than 1GB' > /opt/memory.txt
+$ du -sh /usr/bin
+325M    /usr/bin/
+
+$ echo '325M' > /opt/dirsize.txt
+
+```
+
+---
+
+
+
+
+## 8
+### Task 
+Create a new user called jane and then perform the following actions:
+
+
+A. Set her password to examPassed
+
+
+B. Make sure that she can run sudo commands.
+
+
+C. Set her account to expire on 2028-12-10. This is account expiration, not to be confused with password expiration, or password locking, which are different things.
+
+
+D. There is an another user called david . Mark the password for david as expired. This will effectively force him to change his password next time he logs in.
+
+
+### Solution
+```bash
+$ sudo useradd jane
+$ sudo passwd jane
+examPassed
+# check all  sudo groups 
+$ cat /etc/sudoers 
+# Allows people in group wheel to run all commands
+%wheel  ALL=(ALL)       ALL
+$ sudo usermod -aG wheel jane
+
+# or 
+$ sudo usermod -aG sudo jane
+# or without password
+$ sudo visudo
+# add the following line
+jane ALL=(ALL) NOPASSWD: ALL
+
+
+$ sudo chage -E 2028-12-10 jane
+# or 
+$ sudo usermod -e 2028-12-10 jane
+
+$ sudo chage -d 0 david
+# or 
+$ sudo passwd -e david
+
+```
+
+
+
+
+---
+
+
+
+#TODO
+## 9
+### Task 
+Currently, when you use the su command it will ask for root's password to allow you to log in as user root.   
+Modify the PAM configuration for the su command so that you no longer have to type that password.
+
+More specifically, modify the PAM config for su so that users in the wheel group are not required to type that, because they're implicitly trusted.
+
+### Solution
+```bash
+
+```
+
+
+
+
+
+
+---
+
+
+
+
+## 10
+### Task 
+#### A bind DNS server is installed on this system. Find the DNS zone file for the example.com domain and open it for editing.
+
+A. An inexperienced sysadmin added two lines but made a small mistake that made those lines invalid. Due to that the named service is not coming up now. Can you spot and correct those two lines? Also make sure to start named service after that.
+
+B. Add a new nameserver called ns3.example.com. This nameserver should have the following IP address: 10.11.12.11
+
+C. After you've made your modifications, don't forget to increment the serial number (0 to 1).
+
+### Solution
+Try to start named service:
+
+
+sudo systemctl start named
+
+
+
+Now check its status:
+
+
+sudo systemctl status named
+
+
+
+You should see issue related to CNAME and TXT record which are having typos, fix the same in /var/named/example.com.zone and start named service:
+
+
+sudo vi /var/named/example.com.zone
+
+
+
+Change www             CNAM   example.com. to www             CNAME   example.com.
+
+
+and
+
+
+Change example.com.    TX     "We can write anything in here!" to example.com.    TXT     "We can write anything in here!"
+
+
+sudo systemctl start named
+
+
+
+Edit /var/named/example.com.zone file to add a new NS (you can add under ns2.example.com.):
+
+
+sudo vi /var/named/example.com.zone
+
+
+
+The entry should be like:
+
+
+@               NS      ns1.example.com.
+@               NS      ns2.example.com.
+@               NS      ns3.example.com.
+ns1             A       10.11.12.9
+ns2             A       10.11.12.10
+ns3             A       10.11.12.11
+
+
+
+Also increment the serial number from 0 to 1
+
+
+Restart named service:
+
+
+sudo systemctl restart named
+
+
+
+---
+
+
+
+
+## 1
+### Task 
+
+Change the disk quota for the group called nginx. Limit the inodes that this group can create. Set a soft limit of 3500 inodes and a hard limit of 4000 inodes on /mnt partition.
+### Solution
+
+Set quota for group nginx:
+
+
+sudo edquota -g nginx 
+
+
+
+For /dev/vdb1 under inodes set values for soft and hard
+
+
+It should be something like:
+
+
+Filesystem                   blocks       soft       hard     inodes     soft     hard
+ /dev/vdb1                     0            0          0          0      3500     4000
+
+---
+
+
+
+
+## 1
+### Task 
+
+Make sure you're logged in as the user called bob and you perform this task using user bob only (without sudo). If you're currently logged in as root, exit from this user session and return to your main user session under bob.
+
+
+A. Find all directories in the /home/bob/library/ directory. This means files should not appear in the result list. Narrow your search to directories only. Some directories are unreadable and will show up as errors (stderr) in this result list. In your find command, redirect all error messages to this file /home/bob/errors.out.
+
+
+B. Now, redirect all standard messages (non-errors, stdout) to /home/bob/standard.out
+
+
+C. Perform the same search as above, but this time, redirect BOTH error messages and standard messages (stdout,stderr) to the same file: /home/bob/all.out Basically, what you would see in your terminal if you would use the find command normally (without any redirects) is the exact content you should have in /home/bob/all.out, with results, errors and standard output, appearing in the same order.
+
+
+### Solution
+Save all errors:
+
+
+find library/ -type d 2> errors.out
+
+
+
+Save stdout:
+
+
+find library/ -type d > standard.out
+
+
+
+Save both stderr and stdout:
+
+
+find library/ -type d > all.out 2>&1
+
+
+---
+
+
+## 1
+### Task 
+
+
+Prepare the disk at /dev/vde for encryption:
+
+
+A. Format it with LUKS. Choose the password ExamPassed
+
+
+B. Open the encrypted device and map it to the virtual unencrypted device called examdrive
+
+
+C. Create an xfs filesystem on this unencrypted mapped device, examdrive
+
+
+### Solution
+Execute below given command:
+
+
+sudo cryptsetup luksFormat /dev/vde
+
+
+
+Once asked for the confirmation, enter YES and press Enter
+
+
+Enter the passphrase (i.e ExamPassed) and verify passphrase.
+
+
+Execute below given command to map it to the virtual unencrypted device called examdrive:
+
+
+sudo cryptsetup open /dev/vde examdrive
+
+
+
+Enter ExamPassed password when asked:
+
+
+Execute below given command to create an xfs filesystem on this unencrypted mapped device, examdrive:
+
+
+sudo mkfs.xfs /dev/mapper/examdrive
+
+---
+
+## 1
+### Task 
+
+
+Create a mirrored (level 1) RAID array with these two devices: /dev/vdc and /dev/vdd.
+The array should be created at /dev/md0.
+
+### Solution
+Execute below given command:
+
+
+sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdc /dev/vdd
+
+
+
+Enter y and press Enter if asked for the confirmation.
+---
+
+

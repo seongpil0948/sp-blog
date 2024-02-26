@@ -17,11 +17,8 @@ import { Logo } from '@/app/_components/server-only/icons'
 import { SearchInput } from '@/app/_components/client-only/input/search'
 import { CommonNavbarProps } from './types'
 import { LANDING_PATH } from '@/config/site'
-import { AccordionItem, Accordion } from '@nextui-org/accordion'
-import CommonDrawer from '../../client-only/drawer'
-import { TreeSection, TreeSectionProps } from '../../client-only/tree-section'
-import { useRouter, usePathname } from 'next/navigation'
 import { Kbd } from '@nextui-org/kbd'
+import { PrefixComp } from './side'
 
 export default function CommonClientNavbar(props: CommonNavbarProps) {
   const { tree, children, landingPath, links, classes } = props
@@ -141,100 +138,3 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
     </NextUINavbar>
   )
 }
-function PrefixComp(props: CommonNavbarProps): React.ReactNode {
-  const router = useRouter()
-  const path = usePathname()
-  const defaultExpandedKeys = path.split('/')
-  const { prefix, treeLeft, drawerProps } = props
-
-  if (prefix) {
-    return prefix
-  }
-
-  if (!treeLeft) {
-    return <></>
-  }
-  const getTitleClass = (label: string) => {
-    if (defaultExpandedKeys.includes(label)) {
-      return 'text-primary-700'
-    } else {
-      return ''
-    }
-  }
-  const TitleComp = (props: { title: string }) => (
-    <div className={getTitleClass(props.title)}>{props.title}</div>
-  )
-
-  const renderAccordionItems = (items: TreeSectionProps[]): JSX.Element[] => {
-    return items.map((item) => {
-      let child: null | JSX.Element = (
-        <TreeSection
-          linkTextClass={getTitleClass}
-          treeProps={item.children ?? []}
-        />
-      )
-      if (!item.children || item.children.length < 1) {
-        child = null
-      } else if (isChildGroup(item)) {
-        child = (
-          <Accordion isCompact defaultExpandedKeys={defaultExpandedKeys}>
-            {renderAccordionItems(item.children!)}
-          </Accordion>
-        )
-      }
-      return (
-        <AccordionItem
-          key={item.label}
-          title={<TitleComp title={item.label} />}
-          isCompact
-          textValue={item.label}
-          hideIndicator={child === null}
-          disableIndicatorAnimation={child === null}
-          disableAnimation={child === null}
-          onPress={(evt) => {
-            if (child === null) {
-              router.push(item.href)
-            }
-          }}
-          onDoubleClick={(evt) => {
-            evt.stopPropagation()
-            router.push(item.href)
-          }}
-        >
-          {child}
-        </AccordionItem>
-      )
-    })
-  }
-
-  const items = renderAccordionItems(treeLeft.children ?? [])
-  const hasChildren = treeHasChildren(treeLeft)
-  return (
-    <CommonDrawer
-      sheetProps={{
-        placement: 'left',
-        // defaultOpen: hasChildren,
-        defaultOpen: true,
-      }}
-      {...drawerProps}
-      title={drawerProps?.title ?? treeLeft.label}
-    >
-      {hasChildren ? (
-        <Accordion isCompact defaultExpandedKeys={defaultExpandedKeys}>
-          {items}
-        </Accordion>
-      ) : (
-        <TreeSection
-          linkTextClass={getTitleClass}
-          treeProps={treeLeft.children ?? []}
-        />
-      )}
-    </CommonDrawer>
-  )
-}
-
-const treeHasChildren = (tree: TreeSectionProps) =>
-  tree.children?.some((item) => item.children && item.children?.length > 0)
-const isChildGroup = (item: TreeSectionProps) =>
-  treeHasChildren(item) &&
-  item.children!.map((c) => c.children).flat().length > 0

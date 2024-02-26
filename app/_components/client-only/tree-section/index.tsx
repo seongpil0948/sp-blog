@@ -1,7 +1,5 @@
 import clsx from 'clsx'
 import Link from 'next/link'
-import Icon from '@mdi/react'
-import { mdiFolder } from '@mdi/js'
 import { tree } from './theme'
 
 export interface TreeSectionProps {
