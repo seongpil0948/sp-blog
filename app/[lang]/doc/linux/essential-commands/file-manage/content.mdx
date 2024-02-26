@@ -138,6 +138,19 @@ $ sudo find /opt/findme/ -type f -perm /u=x
 /opt/findme/file688
 ```
 
+### Delete all files created before 2020.
+Always "debug" a command first by just listing without executing a command:  
+num of files: 300
+```bash
+$ find ! -newermt "01/01/2020" -type f | wc -l
+17
+$ find ! -newermt "01/01/2020" -type f -exec rm {} \;
+
+$ ls | grep backup | wc -l
+283 # 17 deleted
+```
+- `newermt` : 지정한 날짜 이후 변경된 파일 찾기에 사용됩니다.
+
 ###  Find any file that is `larger` than `1KB` and copy it to the `/opt/` directory.
 ```bash
 $ sudo find /opt/findme/ -type f -size +1k -exec cp {} /opt/ \;
