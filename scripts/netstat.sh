@@ -29,7 +29,7 @@ fi
 # kubectl get pods -n ns-16975174264043953 --show-labels
 # kubectl get pods -n ns-16975174264043953 --no-headers=true | awk '/sc-ixi-admin|pattern2/{print $1}'
 
-LABEL=app=cr-ixi-admin-simplenlp
+# LABEL=app=cr-ixi-admin-simplenlp
 NS=$(kubectl get pods -A -l $LABEL --no-headers=true | awk '{print $1}' | uniq | head -n 1)
 echo "$(kubectl get pods -n $NS  -o custom-columns=NAME:.metadata.name,IP:.status.podIP | grep -v -E 'instance')"
 
