@@ -345,7 +345,7 @@ Filesystem                   blocks       soft       hard     inodes     soft   
 
 
 
-## 1
+## 12
 ### Task 
 
 Make sure you're logged in as the user called `bob` and you perform this task using user `bob` only (without sudo).   
@@ -410,10 +410,17 @@ sudo cryptsetup open /dev/vde examdrive
 ```
 Enter ExamPassed password when asked:
 Execute below given command to create an `xfs` filesystem **on this unencrypted mapped device**, `examdrive`:
+`/dev/mapper/examdrive` is the unencrypted mapped device. 자동으로 생성되는 파일.
 ```bash
 sudo mkfs.xfs /dev/mapper/examdrive
 ```
 
+list file system:
+```bash
+$ lsblk
+vde         253:64   0    1G  0 disk  
+└─examdrive 252:0    0 1008M  0 crypt 
+```
 
 ---
 
@@ -428,9 +435,24 @@ The array should be created at `/dev/md0`.
 Execute below given command:
 
 ```bash
-sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdc /dev/vdd
+$ sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdc /dev/vdd
 ```
-Enter **y** and press **Enter** if asked for the confirmation.
+Enter **y** and press **Enter** if asked for the confirmation.  
+result 
+```
+lsblk
+NAME        MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+vda         253:0    0   11G  0 disk  
+└─vda1      253:1    0   10G  0 part  /
+vdb         253:16   0    1G  0 disk  
+└─vdb1      253:17   0 1023M  0 part  /mnt
+vdc         253:32   0    1G  0 disk  
+└─md0         9:0    0 1022M  0 raid1 
+vdd         253:48   0    1G  0 disk  
+└─md0         9:0    0 1022M  0 raid1 
+vde         253:64   0    1G  0 disk  
+└─examdrive 252:0    0 1008M  0 crypt
+```
 
 
 

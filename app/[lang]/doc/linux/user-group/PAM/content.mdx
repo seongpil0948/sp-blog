@@ -64,6 +64,16 @@ to implicitly trust users in the "wheel" group.
 - `trust` 인수는 사용자가 이미 루트인 경우 성공한다는 의미입니다. 
 - `use_uid` 인수는 모듈이 처음에 제공된 이름을 사용하는 대신 대상 사용자의 이름을 결정하기 위해 호출 프로세스의 UID를 사용해야 함을 의미합니다.
 
+### Currently, when you use the su command it will ask for root's password to allow you to log in as user root. Modify the PAM configuration for the su command so that you no longer have to type that password.
+
+More specifically, modify the PAM config for su so that users in the wheel group are not required to type that, because they're implicitly trusted.
+```bash
+$ sudo vi /etc/pam.d/su
+# Add the following line to the top of the file
+auth           sufficient      pam_wheel.so trust use_uid
+```
+
+
 ### Restrict the root access to SSH service via `PAM`
 You can use the `pam_listfile.so` module which offers great flexibility in limiting the privileges of specific accounts.   
 Please make sure you don't restrict the root SSH access from the SSH configuration.
