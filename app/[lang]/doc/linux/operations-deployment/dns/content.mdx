@@ -2,7 +2,7 @@
 # DNS란?
 > You don't get what you wish for. You get what you work for.
 
-Domain Name System(DNS)은 인터넷에서 사람이 읽을 수 있는 도메인 이름을 컴퓨터가 읽을 수 있는 IP 주소로 변환하는 분산형 데이터베이스 시스템입니다.
+Domain Name System(**DNS**)은 인터넷에서 사람이 읽을 수 있는 도메인 이름을 컴퓨터가 읽을 수 있는 IP 주소로 변환하는 분산형 데이터베이스 시스템입니다.
 
 인터넷에 연결된 모든 컴퓨터에는 고유한 IP 주소가 있습니다. IP 주소는 숫자의 집합으로 이루어져 있으며, 사람이 기억하기 어렵습니다.   
 따라서 인터넷을 사용하기 쉽게 하기 위해 도메인 이름이 사용됩니다. 도메인 이름은 사람이 이해하기 쉬운 문자열로 이루어져 있으며, IP 주소에 매핑됩니다.
@@ -10,7 +10,6 @@ Domain Name System(DNS)은 인터넷에서 사람이 읽을 수 있는 도메인
 예를 들어, `google.com`은 "142.250.190.142"이라는 IP 주소에 매핑됩니다. 따라서 사용자가 `google.com`을 입력하면 DNS 시스템은 이를 "142.250.190.142"으로 변환하여 해당 IP 주소에 연결합니다.
 
 ### DNS는 다음과 같은 단계로 작동합니다.
-
 1. 사용자는 브라우저에 도메인 이름을 입력합니다.
 2. 브라우저는 DNS 서버에 도메인 이름에 대한 정보를 요청합니다.
 3. DNS 서버는 도메인 이름에 대한 정보를 검색합니다.
@@ -54,6 +53,18 @@ Zone 파일은 각 Zone의 정보와 Zone 내의 Record 정보들을 기술한 �
 Zone 파일은 결국 DNS Zone에 대해 SOA(Start of Authority) 레코드와 해당 zone에 포함된 서브 도메인들의 Resource 레코드 값을 정의한 텍스트 파일이다.  
 (자세한 정보는 [RFC 1035](https://tools.ietf.org/html/rfc1035) 참고할 것)
 [출처] DNS(Domain Name System) Zone을 이해하자|작성자 테크유람
+
+
+
+## Named
+`named`는 DNS 서버의 데몬 프로세스로, BIND(Berkeley Internet Name Domain) 프로젝트의 일부입니다.  
+BIND 프로젝트는 DNS 서버를 구축하는 데 사용되는 가장 널리 사용되는 오픈 소스 소프트웨어입니다.  
+
+### Configuration
+- `named`는 `/etc/named.conf` 파일을 사용하여 구성됩니다.   
+- 기본적으로 `/var/named` 디렉토리에 있는 zone 파일을 사용하여 도메인 이름에 대한 정보를 저장합니다.  
+- `/var/run/named/named.pid`: 기본 PID 파일
+
 
 ### DNS Zone 파일의 구조
 Zone 파일은 DNS Zone에 대한 SOA(Start of Authority) 레코드와 해당 zone에 포함된 서브 도메인들의 Resource 레코드 값을 정의한 텍스트 파일이다.  
@@ -109,7 +120,7 @@ include "/etc/named.root.key";
 ```
 처음 파일을 작성할 때 국룰은, 템플릿 파일을 찾아 가져오는 것이다. 데몬 서비스가 실행 할 수 있도록 권한 그대로 복사해오자.  
 ```bash
-$ sudo ls /bar/named
+$ sudo ls /var/named
 $ sudo cp --preserve=ownership /var/named/named.localhost /var/named/example.com.zone
 $ cat /var/named/example.com.zone  
 ```
@@ -248,7 +259,8 @@ $ sudo dnf install bind bind-utils -y
 
 ```
 
-### Configure the Bind daemon to accept queries from any IP on the Internet. Make sure to start named service after making required changes in the configuration.
+### Configure the Bind daemon to accept queries from **any IP** on the Internet.   
+Make sure to start named service after making required changes in the configuration.
 ```bash
 # check keyword
 $ apropos named
@@ -263,7 +275,9 @@ options {
 
 $ sudo systemctl restart named
 ```
-### Query the local DNS server and identify the current `A` record value for `example.com` domain. (without updating any relevant configuration) and save the value in `/home/bob/a-record` file. (only the IP address)
+### Query the local DNS server and identify the current `A` record value for `example.com` domain.   
+(without updating any relevant configuration) and save the value in `/home/bob/a-record` file. (only the IP address)  
+
 Query the local DNS server
 
 응 ? 분명 `/var/named/example.com.zone` 와 값이 같아야 할텐데 왜 쿼리를 날리라고 하지? 굳이?  
