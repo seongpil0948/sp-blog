@@ -1,8 +1,9 @@
 # PAM
 PAM(Pluggable Authentication Modules)은 GNU/Linux 시스템에서 많은 애플리케이션 또는 서비스가 사용자를 중앙집중식으로 인증할 수 있도록 하는 시스템입니다.   
-> 관리자인 내가 왜 root 계정 사용시 비밀번호늘 쳐야하는가!!! ㅋㅋ
+> 관리자인 내가 왜 root 계정 사용시 비밀번호를 쳐야하는가!!! ㅋㅋ
 - PAM은 사용자 인증을 위한 모듈을 제공한다.
-- 
+
+
 ### Show related manual
 ```bash
 $ apropos pam
@@ -19,6 +20,13 @@ pam_access (8)       - PAM module for logdaemon style login access control
 pam_console (8)      - determine user owning the system console
 pam_console_apply (8) - set or revoke permissions for users at the system console
 ```
+PAM의 동작 원리는 다음과 같다.  
+
+1. 인증이 필요한 응용프로그램은 더 이상 `/etc/passwd` 파일을 열람하지 않고 ‘PAM’ 모듈에 사용자 인증을 요청한다.
+2. 2. PAM은 인증을 요청한 사용자의 정보를 가지고 결과를 도출하여 응용프로그램에 전달한다.
+
+
+--- 
 
 # Practice
 ### If our user has sudo privileges, how do we change the password for the `root` account?
@@ -97,3 +105,4 @@ auth    required       pam_listfile.so onerr=succeed  item=user  sense=deny  fil
 
 # Reference
 - [https://docs.rockylinux.org/ko/guides/security/pam/](https://docs.rockylinux.org/ko/guides/security/pam/)
+- [리눅스 모듈의 이해](https://www.igloo.co.kr/security-information/%EB%A6%AC%EB%88%85%EC%8A%A4-pam-%EB%AA%A8%EB%93%88%EC%9D%98-%EC%9D%B4%ED%95%B4/)

@@ -19,24 +19,24 @@ LDAP(Lightweight Directory Access Protocol) 는 디렉터리 서비스를 위한
 - `attribute`는 `value`의 집합이며 `objectClass`를 포함한다.
 - `objectClass`는 `entry`의 타입을 나타낸다.
 - `entry`는 `dn(Distinguished Name)`으로 식별된다.
-- dc(도메인 컴포넌트)는 LDAP 트리의 루트를 나타내는 컴포넌트이다.
-  - 여러 개의 dc를 사용하여 트리 내에 여러 도메인을 만들 수 있습니다.
-- cn(커먼 네임)은 LDAP 트리의 노드를 나타내는 컴포넌트이다.
-  - CN은 항목을 식별하는 데 사용되는 고유한 이름입니다.
-  - CN은 사용자 이름, 그룹 이름 또는 호스트 이름과 같은 항목과 관련된 의미 있는 이름을 포함해야 합니다.
-  - 여러 개의 cn을 사용하여 단일 항목을 식별할 수 있습니다.
-- sn(서브네임)은 사용자의 성을 나타내는 데 사용됩니다.
-- givenName은 사용자의 이름을 나타내는 데 사용됩니다.
-- uid(사용자 ID)는 사용자의 고유 식별자를 나타내는 데 사용됩니다.
-- gid(그룹 ID)는 그룹의 고유 식별자를 나타내는 데 사용됩니다.
-- ou(조직 단위)는 조직의 단위를 나타내는 데 사용됩니다.
-- mail은 사용자의 이메일 주소를 나타내는 데 사용됩니다.
-- l(로케이션)은 사용자의 위치를 나타내는 데 사용됩니다.
-- st(주)는 사용자의 주를 나타내는 데 사용됩니다.
-- c(국가)는 사용자의 국가를 나타내는 데 사용됩니다.
-- telephoneNumber는 사용자의 전화 번호를 나타내는 데 사용됩니다.
-- homeDirectory는 사용자의 홈 디렉터리를 나타내는 데 사용됩니다.
-- objectClass: entry의 타입을 나타낸다.
+- `dc`(도메인 컴포넌트)는 LDAP 트리의 루트를 나타내는 컴포넌트이다.
+  - 여러 개의 `dc`를 사용하여 트리 내에 여러 도메인을 만들 수 있습니다.
+- `cn`(커먼 네임)은 LDAP 트리의 노드를 나타내는 컴포넌트이다.
+  - `CN`은 항목을 식별하는 데 사용되는 고유한 이름입니다.
+  - `CN`은 사용자 이름, 그룹 이름 또는 호스트 이름과 같은 항목과 관련된 의미 있는 이름을 포함해야 합니다.
+  - 여러 개의 `cn`을 사용하여 단일 항목을 식별할 수 있습니다.
+- `sn`(서브네임)은 사용자의 성을 나타내는 데 사용됩니다.
+- `givenName`은 사용자의 이름을 나타내는 데 사용됩니다.
+- `uid`(사용자 ID)는 사용자의 고유 식별자를 나타내는 데 사용됩니다.
+- `gid`(그룹 ID)는 그룹의 고유 식별자를 나타내는 데 사용됩니다.
+- `ou`(조직 단위)는 조직의 단위를 나타내는 데 사용됩니다.
+- `mail은` 사용자의 이메일 주소를 나타내는 데 사용됩니다.
+- `l`(로케이션)은 사용자의 위치를 나타내는 데 사용됩니다.
+- `st`(주)는 사용자의 주를 나타내는 데 사용됩니다.
+- `c`(국가)는 사용자의 국가를 나타내는 데 사용됩니다.
+- `telephoneNumber`는 사용자의 전화 번호를 나타내는 데 사용됩니다.
+- `homeDirectory`는 사용자의 홈 디렉터리를 나타내는 데 사용됩니다.
+- `objectClass`: `entry`의 타입을 나타낸다.
   - `inetOrgPerson` : 사용자를 나타낸다.
   - `organizationalUnit` : 조직을 나타낸다.
 - loginShell: 사용자의 로그인 쉘을 나타낸다.
@@ -62,7 +62,7 @@ LDAP 연결을 수신(Default port 389)하고 요청받은 LDAP 작업에 응답
 ## Configure OpenLDAP
 
 ### Edit default configuration
-고유 이름(기본 DN)이 포함된 BASE 및 LDAP 서버에 대한 정규화된 도메인 이름 또는 IP 주소가 포함된 URI입니다
+고유 이름(기본 `DN`)이 포함된 BASE 및 LDAP 서버에 대한 정규화된 도메인 이름 또는 IP 주소가 포함된 URI입니다
 ```bash
 sudo vi /etc/openldap/ldap.conf
 # Add the following lines
@@ -71,26 +71,27 @@ URI      ldap://ldap.example.com ldap://ldap-master.example.com:666 ldap://192.1
 ```
 
 ### Configuring the root user
-관리 작업을 수행하려면 LDAP의 루트 사용자를 변경해야 합니다. LDAP 항목에서는 이 사용자를 olcRootDN이라고 합니다.  
+관리 작업을 수행하려면 LDAP의 **루트 사용자를 변경해야 합니다**. LDAP 항목에서는 이 사용자를 `olcRootDN`이라고 합니다.   
 `/etc/ldap/slapd.d` 또는 `/etc/openldap/slapd.d` 디렉토리의 LDIF 파일을 수동으로 편집하지 마십시오.  
 
-1. create password
+**1.** create password  
 ```bash
 # input adm
 slappasswd
-{SSHA}U/HJLDZqSyJnMs+i25qw7b0SUzWVKSzo
+{SSHA}9k8oeC7gLrpFew/e7W97Ji7chVhM1Blp
 ```
-2. create rootpw.ldif
+
+**2.** create rootpw.ldif
 ```bash
 vi rootpw.ldif
 # Add the following lines
 dn: olcDatabase={0}config,cn=config
 changetype: modify
 add: olcRootPW
-olcRootPW: {SSHA}U/HJLDZqSyJnMs+i25qw7b0SUzWVKSzo
+olcRootPW: {SSHA}9k8oeC7gLrpFew/e7W97Ji7chVhM1Blp
 ```
 
-3.  Apply the changes:
+**3.** Apply the changes:
 ```bash
 ldapadd -Y EXTERNAL -H ldapi:/// -f rootpw.ldif
 ```
@@ -132,15 +133,18 @@ olcRootDN: cn=Manager,dc=abacus,dc=co,dc=kr
 dn: olcDatabase={2}mdb,cn=config
 changetype: modify
 add: olcRootPW
-olcRootPW: {SSHA}U/HJLDZqSyJnMs+i25qw7b0SUzWVKSzo
+olcRootPW: {SSHA}9k8oeC7gLrpFew/e7W97Ji7chVhM1Blp
 ```
+> `/etc/openldap/slapd.d/cn=config/olcDatabase={2}mdb.ldif` 이 없을 수 있다 적절한 파일명을 넣어주자.  
+> no such object (32) 에러가 발생한다면 `olcDatabase={2}mdb.ldif` 파일을 찾아서 적절한 파일명을 넣어주자.
+
 반영
 ```bash
 ldapmodify -Y EXTERNAL -H ldapi:/// -f manager.ldif
 ```
 
 
-6. LDIF 파일을 생성하여 조직 그룹을 생성합니다.
+1. LDIF 파일을 생성하여 조직 그룹을 생성합니다.
 ```bash
 $ sudo vi org.ldif
 # Add the following lines
@@ -149,7 +153,7 @@ dn: dc=abacus,dc=co,dc=kr
 objectClass: top
 objectClass: dcObject
 objectclass: organization
-o: IBM RPA Server
+o: Abacus RPA Server
 dc: rpa
 
 dn: cn=Manager,dc=abacus,dc=co,dc=kr

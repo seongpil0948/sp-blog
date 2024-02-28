@@ -1,0 +1,481 @@
+
+--- 
+
+
+## 1
+### Task 
+In your home directory you will find a directory called collection. Perform the following tasks:
+
+
+A. Find the file(s) that are exactly 1 byte in size. Move these files to the /opt/foundfiles/ directory.
+
+
+B. All of the remaining files in collection/ have some text content inside. Look through these all files and find the files that contain the letter e or E. For example, a file with the word help or HELP should match. Once you found these files, also move them to /opt/foundfiles/ directory.
+
+
+C. Find the file that is not readable by other users, rest of permissions don't matter. Once you found this, restore the +r permission for other users. Make this single change, leaving all other permission unchanged, in their original form.
+### Solution
+
+A
+```bash
+$ find /home/bob/collection -type f -size 1c -exec mv {} /opt/foundfiles/ \;
+``` 
+B
+```bash
+$ find /home/bob/collection -type f -exec grep -l -i 'e' {} \; -exec mv {} /opt/foundfiles/ \;
+```
+C
+```bash
+$ find /home/bob/collection -type f ! -perm -o=r -exec chmod o+r {} \;
+```
+
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+In your home directory you will find two directories, `dir1` and `dir2`. They are almost identical, containing the same filenames.
+
+
+A. There is one unique file in one of the directories, remove this file so that the directories become truly identical.
+
+
+B. Edit dir1/file007 file and add this text inside: This file has been edited
+
+
+### Solution
+
+A
+```bash
+$ diff -rq /home/bob/dir1 /home/bob/dir2
+$ rm /home/bob/dir2/file387
+```
+- `-r`: 재귀적으로 디렉토리를 비교합니다.
+- `-q`: 파일이 다른 경우에만 파일 이름을 출력합니다.
+
+B
+```bash
+$ echo "This file has been edited" >> /home/bob/dir1/file007
+```
+
+--- 
+
+## 1
+### Task 
+Create a cron job for user root that will run every Monday, and Friday, at 3AM (03:00). This should be a single cron job. This job should run a command that archives the /etc/ directory and stores this archive at /opt/etcbackup.tar.gz
+### Solution
+```bash
+$ sudo crontab -e
+```
+Add the following line to the file
+```bash
+0 3 * * 1,5 tar -czf /opt/etcbackup.tar.gz /etc
+```
+
+--- 
+
+
+## 1
+### Task 
+
+A. Find out what DNS resolver(s) this system is using, save the IP address of at least one of the DNS resolvers to the following file: /opt/resolverandroutes.txt
+
+
+B. Print out the routing table of this system and save the output to the same file: /opt/resolverandroutes.txt Make sure you don't overwrite the previous file contents.
+
+
+C. Add a static host to this system. The hostname you should add is webserver and it should statically resolve to the following IP address: 1.1.1.1
+
+
+Remember to exit back from node01 host.
+
+
+
+### Solution
+
+A
+```bash
+cat /etc/resolv.conf  | grep 'nameserver' | awk '{print $2}' > /opt/resolverandroutes.txt
+```
+B 
+```bash
+$ ip route >> /opt/resolverandroutes.txt
+```
+C
+```bash
+$ sudo vi /etc/hosts
+# Add the following line to the file
+```
+
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+Create a new container called exam4 that will run the httpd daemon. Use the httpd docker image for this container. Make sure port 8081 on the host is mapped to port 80 of the container.
+
+### Solution
+```bash
+$ docker run -d -p 8081:80 --name exam4 httpd
+```
+
+
+---
+
+
+
+## 1
+### Task 
+
+You have a disk available at /dev/vdb.
+
+
+A. Create a 500MB partition on this disk.
+
+
+B. Create an ext4 filesystem with a block size of 2048 bytes on this partition.
+
+
+C. Manually mount this filesystem in the /mnt directory.
+
+
+Verify the partition.
+
+Verify the mount point.
+
+### Solution
+
+Follow below given steps:
+
+
+fdisk /dev/vdb
+
+
+
+
+Now enter below given responses:
+
+
+Command (m for help): n
+Select (default p):  <just-leave-it-default-and-press-enter>
+Partition number (1-4, default 1): <just-leave-it-default-and-press-enter>
+First sector (2048-2097151, default 2048):  <just-leave-it-default-and-press-enter>
+Last sector, +sectors or +size{K,M,G,T,P} (2048-2097151, default 2097151): +500M
+Command (m for help): w
+
+
+
+
+Further create an ext4 filesystem with a block size of 2048 bytes on this partition:
+
+
+mkfs.ext4 -b 2048 /dev/vdb1
+
+
+
+
+Mount this filesystem in the /mnt directory:
+
+
+mount /dev/vdb1 /mnt/
+
+```bash
+$ findmnt
+/mnt                                /dev/vdb1   ext4        rw,relatime,seclabel
+```
+---
+
+
+--- 
+
+
+## 1
+### Task 
+In your home directory you will find two files.
+
+A. Edit this file, imm.txt and add the following text under the existing line: New line added successfully
+
+
+B. Edit this file, app.txt and correct that equation. It should be 1+1=2 instead.
+
+### Solution
+**A**  
+
+아 이거 걍주는 문젠가 하고 아니었다. (삽질의 흔적)
+```bash
+[bob@centos-host ~]$ cat imm.txt 
+Keep this line, add your content under this line:
+[bob@centos-host ~]$ echo 'New line added successfully' | tee -a imm.txt 
+tee: imm.txt: Operation not permitted
+New line added successfully
+[bob@centos-host ~]$ echo 'New line added successfully' | tee --append imm.txt 
+tee: imm.txt: Operation not permitted
+New line added successfully
+[bob@centos-host ~]$ echo 'New line added successfully' | sudo tee --append imm.txt 
+tee: imm.txt: Operation not permitted
+New line added successfully
+[bob@centos-host ~]$ echo 'New line added successfully' >>  imm.txt 
+-bash: imm.txt: Operation not permitted
+stat imm.txt
+  File: imm.txt
+  Size: 50              Blocks: 8          IO Block: 4096   regular file
+Device: fd01h/64769d    Inode: 16801986    Links: 1
+Access: (0644/-rw-r--r--)  Uid: ( 1002/     bob)   Gid: ( 1002/     bob)
+Context: unconfined_u:object_r:user_home_t:s0
+Access: 2024-02-28 18:15:27.959692004 +0000
+Modify: 2024-02-28 16:16:13.073455312 +0000
+Change: 2024-02-28 16:16:13.084456409 +0000
+ Birth: -
+```
+파일명이 imm 인 이유가 immutalbe 힌트였다..
+파일의 attribute 까지 출력하려면 아래와 같은 방법이 있다.  
+```bash
+$ lsattr imm.txt
+----i--------- imm.txt
+```
+
+---
+
+Execute below given commands, first make imm.txt file mutable then edit file in vi mode and save New line added successfully line at end of file :
+```bash
+$ sudo chattr -i imm.txt
+$ lsattr imm.txt 
+-------------------- imm.txt
+
+$ echo 'New line added successfully' | sudo tee --append imm.txt 
+$ cat imm.txt
+Keep this line, add your content under this line:
+New line added successfully
+```
+- `chattr`: change file attributes on a Linux file system
+- `i`: set the immutable bit add immutalbe attribute to file if `+i` else remove immutalbe attribute from file if `-i`
+  - 어떠냐 나의 삼항연산자식 설명
+
+**B**
+
+Execute below given commands, first make `app.txt` file mutable for modification then edit file in vi mode and make this change `1+1=2` :
+```bash
+lsattr app.txt
+-----a-------------- app.txt
+```
+이놈은 또 **append only** 다
+```bash
+sudo chattr -a app.txt
+vi app.txt
+```
+
+--- 
+
+
+## 1
+### Task 
+There is a LVM structure available. Perform the following actions:
+
+A. Remove the following PV, physical volume: /dev/vdd
+
+
+B. Create a VG, volume group. The name of this volume should be examVG. This VG should consist of only the /dev/vdc physical volume.
+
+
+C. Create an LV, logical volume. Its size should be 100 megabytes. Its name should be examLV. Of course, this LV should be created on the examVG volume group.
+
+
+D. Create an xfs filesystem with a block size of 1024 bytes on the examLV logical volume.
+### Solution
+
+Execute below given command to remove physical volume /dev/vdd:
+
+
+sudo pvremove /dev/vdd
+
+
+
+
+Execute below given command to create volume group examVG and this only contains /dev/vdc physical volume:
+
+
+sudo vgcreate examVG /dev/vdc
+
+
+
+
+Execute below given command to logical volume examLV with size 100 MB and it should be created in examVG volume group:
+
+
+sudo lvcreate -L 100MB -n examLV examVG
+
+
+
+
+Execute below given command to create xfs filesystem with a block size of 1024 bytes on the examLV logical volume:
+
+#TODO: 이거 블록사이즈 1024로 만드는거 확인한번 가능 찾아보자
+#TODO: 각항목들에 대한 설명을 추가하자
+$ mkfs.xfs -b size=1024  /dev/examVG/examLV 
+meta-data=/dev/examVG/examLV     isize=512    agcount=4, agsize=25600 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1
+data     =                       bsize=1024   blocks=102400, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=1024   blocks=3527, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+In your home directory you will find a directory called databases.
+
+
+A. Remove the sticky bit special permission from this databases directory.
+
+
+B. Find the file in databases/ directory that has the SETUID (special permission) set on it. Remove the SETUID special permission and the executable permission for the user owner from this file.
+
+
+C. Add the special SETGID (set group ID) permission to the databases directory.
+
+### Solution
+Remove the sticky bit special permission from the databases directory:
+
+
+chmod -t databases/
+
+
+
+
+Find the file in databases directory that has the SETUID (special permission) set on it.
+
+
+find databases/ -perm /4000
+
+
+
+
+Remove the SETUID special permission and the executable permission for the user owner from this file.
+
+
+sudo chmod a-st-x databases/file3594
+
+
+
+
+Add the special SETGID (set group ID) permission to the databases directory:
+
+
+chmod g+s databases/
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+Look for a process which has the word cached in its name. Then perform the following actions:
+
+
+A. Save the PID number of this process to this file: /opt/pid.txt
+
+
+B. List the opened files used by this process and save this list to /opt/openedfiles.txt
+
+### Solution
+Filter the PID and save the PID number to this file: /opt/pid.txt:
+
+
+sudo netstat -p  | grep cached
+sudo bash -c "echo '<PID>' > /opt/pid.txt"
+
+
+
+
+Save the opened files list to /opt/openedfiles.txt file:
+
+
+sudo bash -c "lsof -p '<PID>'  >> /opt/openedfiles.txt"
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+
+
+--- 
+
+
+## 1
+### Task 
+
+### Solution
+
+---
+

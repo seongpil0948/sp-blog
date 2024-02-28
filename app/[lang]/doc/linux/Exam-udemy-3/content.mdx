@@ -168,19 +168,16 @@ $ echo '325M' > /opt/dirsize.txt
 
 ## 8
 ### Task 
-Create a new user called jane and then perform the following actions:
+**Create a new user** called `jane` and then perform the following actions:
+A. Set her password to `examPassed`
+B. Make sure that she can run **sudo** commands.
 
 
-A. Set her password to examPassed
+C. Set her account to **expire** on `2028-12-10`. This is `account expiration`  
+**not** to be confused with password **expiration**, or **password locking**, which are different things.
 
-
-B. Make sure that she can run sudo commands.
-
-
-C. Set her account to expire on 2028-12-10. This is account expiration, not to be confused with password expiration, or password locking, which are different things.
-
-
-D. There is an another user called david . Mark the password for david as expired. This will effectively force him to change his password next time he logs in.
+D. There is an another user called `david`. Mark the password for **david as expired**.   
+This will effectively force him to change his password next time he logs in.
 
 
 ### Solution
@@ -222,15 +219,29 @@ $ sudo passwd -e david
 #TODO
 ## 9
 ### Task 
-Currently, when you use the su command it will ask for root's password to allow you to log in as user root.   
-Modify the PAM configuration for the su command so that you no longer have to type that password.
-
-More specifically, modify the PAM config for su so that users in the wheel group are not required to type that, because they're implicitly trusted.
+Currently, when you use the `su` command it will **ask for root's password** to allow you to log in as user root.    
+Modify the `PAM` configuration for the `su` command so that you **no longer have to type that password**.  
+More specifically, modify the `PAM` config for `su` so that users in the `wheel` group are **not required to type** that, because they're implicitly `trusted`.
 
 ### Solution
+Edit `/etc/pam.d/su` file:
 ```bash
-
+sudo vi /etc/pam.d/su
 ```
+
+Uncomment below given line:  
+```
+#auth           sufficient      pam_wheel.so trust use_uid
+```
+
+so, it should look like
+```
+auth           sufficient      pam_wheel.so trust use_uid
+```
+
+Finally save the changes.
+
+
 
 
 

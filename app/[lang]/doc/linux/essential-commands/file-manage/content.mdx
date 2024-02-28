@@ -21,15 +21,18 @@ UNIX 에서 파일에 대한 권한은 비트로 표현됩니다.
   - 만약 `root`로 실행되야 하는 프로그램이 있다면, 사용자에게 root 비밀번호를 알려줄 것인가? 아니다.  
   이걸 핑계로 비번을 알려달라하는 동료에게 `setuid`가 있다는 현실을 알려주세요 ㅋ
   - `$ chmod 4755 file`
+  - `$ chmod +s file`
 - `setgid`: 2 = 010
   - 파일을 실행하는 사용자의 그룹이 아닌, 파일의 그룹의 권한으로 실행됩니다.
   - `docker` 명령어는 `docker` 그룹에 속한 사용자만 실행할 수 있습니다.  
   - `$ chmod 2755 file`
+  - `$ chmod +g file`
   한번 테스트 해보세요.
 - `sticky bit`: 1 = 001
   - 파일의 소유자 또는 root 사용자만 수정/삭제 operation을 허용합니다.
   - `-**S******` : sticky bit가 설정된경우 소유자 권한의 x가 S로 표시됩니다.
   - `$ chmod 1755 file`
+  - `$ chmod +t file`
 
 ## sed
 `sed(stream editor for filtering and transforming text)`  
@@ -231,6 +234,36 @@ Write the octal permission number for `/opt/bob` directory to this file: `/opt/o
 ```bash
 $ stat -c %a /opt/bob > /opt/octal.txt
 ```
+
+### Find word sort and list in `lsmanpage.txt` file and redirect the output to `/opt/filtered.txt` file:
+```bash
+sudo bash -c "grep -w 'sort' /home/bob/lsmanpage.txt  > /opt/filtered.txt"
+sudo bash -c "grep -iw 'list' lsmanpage.txt  >> /opt/filtered.txt"
+```
+- `-w` : 단어 단위로 검색합니다.
+- `-i` : 대소문자를 구분하지 않습니다.
+
+### Filter out all the lines in `shuffled.txt` file that **end with** the digit `0` and redirect the output to `/opt/filtsort.txt` file:
+```bash
+sudo bash -c "grep -i '\w*0\b' /home/bob/shuffled.txt > /opt/filtsort.txt"
+```
+
+정규식 `\w*0\b` 는 영문자, 숫자, 밑줄(_)로 구성된 문자열 뒤에 숫자 0이 한 번 나타나는 경우를 찾습니다.
+
+각 요소별 설명:
+
+- **\w**: 영문자(대/소문자), 숫자, 밑줄(_)에 일치합니다.
+- ***:** 앞의 문자가 0번 이상 반복될 수 있음을 나타냅니다.
+- **0**: 숫자 0에 일치합니다.
+- **\b**: 단어 경계에 일치합니다. 즉, 숫자 0이 단어의 마지막에 와야만 일치합니다.
+
+예시:
+- "hello0" - 일치합니다.
+- "world_0" - 일치합니다.
+- "123_0" - 일치합니다.
+- "0world" - 불일치합니다. 숫자 0이 단어의 시작에 있기 때문입니다.
+- "hello 0" - 불일치합니다. 숫자 0이 단어 경계에 있지 않기 때문입니다.
+
 
 
 
