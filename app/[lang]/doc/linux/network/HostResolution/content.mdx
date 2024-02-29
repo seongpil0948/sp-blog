@@ -139,12 +139,6 @@ $ sudo vi /proc/sys/net/ipv4/ip_forward
 0
 
 
-
-
-
-
-
-
 ## What is Networking and Hostname resolution?
 hostname resolution 은 IP 주소를 호스트 이름으로 변환하거나 호스트 이름을 IP 주소로 변환하는 것을 의미합니다.  
 
@@ -193,8 +187,6 @@ nameserver 168.126.63.2
 ```bash
 $ nslookup naver.com 8.8.8.8
 ```
-
-#TODO: dig, nslookup 명령어에 대한 설명 추가
 
 ---
 사용자의 입장에서 필요한 서비스에 접근하기 위해 domain resolution 은 필수적이다.  
@@ -362,15 +354,26 @@ default         _gateway        0.0.0.0         UG    0      0        0 enp2s0f0
 이경우 패킷은 `route` 테이블의 Gateway(router)를 확인하여(없을경우 default) destination 찾습니다.
 그래서 커널은 패킷을 1.2.3.4로 
 
+### Conclusion
+조금 난잡하고, 정리가 필요한 시점이다.  
+난 회사에 처음 출근했고 네트워크 디바이스를 확인하고, 라우팅 테이블을 확인하고, 패킷을 전달하는 과정을 확인해야한다.  
 
-## Port Redirection & NAT
-
-### Setup
-### check port forwarding
+**1.** nameserver ip 확인
 ```bash
-sudo sysctl net.ipv4.ip_forward
-sudo sysctl -a | grep forward
+cat /etc/resolv.conf | grep 'nameserver' | awk '{print $2}' 
+192.168.121.1
+172.28.128.1
+```
+**2.** route table 확인
+```bash
+$ ip route
+default via 192.168.121.1 dev eth0 proto dhcp metric 100 
+default via 172.28.128.1 dev eth1 proto dhcp metric 101 
+172.28.128.0/24 dev eth1 proto kernel scope link src 172.28.128.155 metric 101 
+192.168.121.0/24 dev eth0 proto kernel scope link src 192.168.121.134 metric 100 
 ```
 
-# References
-- [linux-ip-route](https://man7.org/linux/man-pages/man8/ip-route.8.html)
+음 nameserver `192.168.121.1`는 `eth0` 을 통해 **resolved**된 ip를 목적지로 네트워킹 중이고, `172.28.128.1`는 `eth1` 을 통하는구나  
+> `/etc/hosts` 에 도메인 매핑 정보가 있으면 그거 먼저 됌 ㅋ
+
+

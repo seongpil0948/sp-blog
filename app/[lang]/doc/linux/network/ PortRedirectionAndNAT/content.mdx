@@ -1,4 +1,11 @@
-### Toc
+## Table of Contents
+- [Port Redirection](#port-redirection)
+    - [Network Packet](#network-packet)
+  - [NAT(Network Address Translation)](#natnetwork-address-translation)
+    - [걍 경험담 (저번주)](#걍-경험담-저번주)
+    - [Setup](#setup)
+    - [check port forwarding](#check-port-forwarding)
+    - [Enable port forwarding](#enable-port-forwarding)
 - [IP TABLE](#ip-table)
   - [들어가기 전에](#들어가기-전에)
   - [Command `iptables`](#command-iptables)
@@ -28,13 +35,70 @@
       - [Step 2: Redirect all traffic on port `6000` to local port `6001`](#step-2-redirect-all-traffic-on-port-6000-to-local-port-6001)
     - [Step 3: Port `6002` should only be accessible from IP `192.168.10.80` (server `data-001`)](#step-3-port-6002-should-only-be-accessible-from-ip-1921681080-server-data-001)
     - [Step 4: Block all outgoing traffic to IP `192.168.10.70` (server `app-srv1`)](#step-4-block-all-outgoing-traffic-to-ip-1921681070-server-app-srv1)
+  - [NFT](#nft)
   - [References](#references)
 
 
+
+# Port Redirection
+port redirection 은 한 포트에서 다른 포트로 트래픽을 리디렉션하는 데 사용되는 기술입니다. 
+이는 일반적으로 공용/공인 IP 주소에서 개인/보안 IP 주소/네트워크로 트래픽을 전달하는 데 사용됩니다.   
+이는 보안 네트워크에서 실행되는 서비스가 있고 공용 네트워크에서 액세스할 수 있도록 하려는 경우에 유용합니다.   
+
+만약 님은 네트워크( 웹,게임,파일,DB 서버...등) 4개를 구성하고 싶은데 공용 IP 주소가 하나만 있다면?  
+가능함 ㅋ  
+
+### Network Packet
+네트워크 패킷은 소스 IP 주소와 대상 IP 주소를 포함합니다.  
+이 패킷은 서버에서 서버로, 라우터에서 라우터로, 스위치에서 스위치로 전달됩니다.  
+이러한 패킷의 소스 및 대상 주소는 모든 장치가 네트워크 데이터를 전달할 위치와 응답을 반환할 위치를 알 수 있도록 도와줍니다.  
+
+## NAT(Network Address Translation)
+위 예제에서는 공용 네트워크와 개인 네트워크 사이에 연결된 서버가 있습니다.  
+인터넷에 연결된 장치는 
+
+
+--- 
+
+### 걍 경험담 (저번주)
+필자는 spring 서버개발시 DB와 연결하는 포트를 `3306`으로 사용하고 있었습니다.  
+기능은 db client 라이브러리에게 맡겨두어 별 신경안쓰다 보니, 품질 검사시 `netstat -antl` 명령어로 포트를 확인하다가 `TIME_WAIT` 상태인 socket 이 만개가 넘어가는 것을 발견했습니다.    
+`establised` 상태의 socket은 20건 정도였구요   
+
+여기서 놀라웠던건 **send port**가 어플리케이션의 포트가 아니라 할당가능한 포트내의 임의의 포트들이 사용되고 있었다는 것이었습니다.   
+뭐 물론 이이슈는 remove-abandoned, remove-abandoned-timeout, keep-alive 설정등으로 해결되었지만 기능 자체는 커넥션풀링에 대해 고민해보는 계기가 되었습니다.  
+
+
+### Setup
+
+### check port forwarding
+```bash
+sudo sysctl net.ipv4.ip_forward
+sudo sysctl -a | grep forward
+```
+### Enable port forwarding
+```bash
+# temporary
+$ sudo sysctl -w net.ipv4.ip_forward=1
+
+# permanent
+$ sudo vi /etc/sysctl.conf
+or 
+$ sudo vi /etc/sysctl.d/99-sysctl.conf
+# Add the following line
+net.ipv4.ip_forward = 1
+net.ipv6.conf.all.forwarding = 1
+
+# apply changes
+$ sudo sysctl --system
+```
+
+
 # IP TABLE
+리눅스 커널은 NFT (Netfilter) 라는 패킷 필터링 프레임워크를 사용하여 네트워크 패킷을 필터링하고 NAT(Network Address Translation) 를 설정하는데 사용된다.  
+하지만 이것은 복잡하고 어렵기 때문에 `iptables` 를 사용하여 간단하게 설정할 수 있다.  
 
-
-IPv4 패킷을 필터링하고 NAT 를 설정하는데 사용되는 리눅스 커널의 서브시스템이다.
+IPTABLE은 IPv4 패킷을 필터링하고 NAT 를 설정하는데 사용되는 리눅스 커널의 서브시스템이다. 
 ufw 와 같은 방화벽 프로그램이 있지만, `iptables` 을 직접 사용하는 것이 더 좋다.  
 더 어렵고 더 복잡하지만, 더 많은 것을 할 수 있기 때문이다. 아래는 하나의 예시이다.
 
@@ -202,13 +266,11 @@ sudo iptables \
 
 
 
-
-
-
 ## 예시
-이제 우리는 `iptables` 을 사용할 준비가 되었다.
-어떤 예시들이 있을지 알아보자.
+이제 우리는 `iptables` 을 사용할 준비가 되었다. 어떤 예시들이 있을지 알아보자.
+
 ### 영구 적용
+참고로, iptables 로 설정한 `nft rule`은 일시적이다. 만약 영구적으로 적용하고 싶다면 아래 명령어를 실행하자. 
 ```sh
 sudo apt install iptables-persistent
 
@@ -414,16 +476,50 @@ $ iptables -A OUTPUT -d 192.168.10.70 -p tcp  -j DROP
 위에서 `app-srv1`에 대한 나가는 연결이 더 이상 작동하지 않고 시간 초과되는 것을 볼 수 있습니다.
 
 
-
-
-
 만약 잘못 설정했다면, 백업을 복구할 수 있다.
 ```sh
 $ sudo iptables-restore < /etc/iptables/rules.bak
 ```
 
+## NFT
+초반에 'iptables 는 netfilter 라는 패킷 필터링 프레임워크를 사용하여 네트워크 패킷을 필터링하고 NAT(Network Address Translation) 를 설정하는데 사용된다.' 라고 했다.  
+iptable이 설정한 규칙들은 아래 명령어로 확인 할 수 있다.
+```sh
+$ sudo nft list ruleset
+
+tablle ip filter {
+    chain input {
+        type filter hook input priority 0; policy accept;
+    }
+    chain forward {
+        type filter hook forward priority 0; policy accept;
+    }
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}
+
+table ip nat {
+    chain prerouting {
+        type nat hook prerouting priority 0; policy accept;
+        iifname "enp1s0" meta l4proto tcp ip saddr 10.0.0.0/24 tcp dport 8080 counter pacaet 0 bytes 0 dnat to 192.168.0.5:80
+    }
+    chain postrouting {
+        type nat hook postrouting priority 100; policy accept;
+        oifname "enp6s0" ip saddr 10.0.0.0/24 counter packet 0 bytes 0 masquerade masquerade  
+    }
+    chain output {
+        type nat hook output priority 100; policy accept;
+    }
+}
+```
+
+
+
+
 
 ## References
 * [iptables](https://en.wikipedia.org/wiki/Iptables)
+* [udemy](https://www.udemy.com/course/linux-foundation-certified-systems-administrator-lfcs/learn/lecture/40782160#content)
 * https://linux.die.net/man/8/iptables
 * https://yurmu.tistory.com/31
