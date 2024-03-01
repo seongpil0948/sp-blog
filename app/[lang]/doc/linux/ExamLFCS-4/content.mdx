@@ -5,17 +5,17 @@
 ## 1
 ### Task 
 In your home directory you will find a directory called collection. Perform the following tasks:
+A. **Find the file(s)** that are exactly `1 byte` in size. **Move these files** to the `/opt/foundfiles/` directory.  
 
+B. All of the remaining files in `collection/` have some text content inside.   
+Look through these all files and find the files that **contain the letter** `e or E`.   
+For example, a file with the word `help or HELP` should match. Once you found these files, also **move them** to `/opt/foundfiles/` directory.  
 
-A. Find the file(s) that are exactly 1 byte in size. Move these files to the /opt/foundfiles/ directory.
+C. **Find the file** that is **not readable by other users**, rest of permissions don't matter.   
+Once you found this, **restore** the `+r` permission for **other users**.   
+Make this single change, **leaving all other permission unchanged**, in their original form.
 
-
-B. All of the remaining files in collection/ have some text content inside. Look through these all files and find the files that contain the letter e or E. For example, a file with the word help or HELP should match. Once you found these files, also move them to /opt/foundfiles/ directory.
-
-
-C. Find the file that is not readable by other users, rest of permissions don't matter. Once you found this, restore the +r permission for other users. Make this single change, leaving all other permission unchanged, in their original form.
 ### Solution
-
 A
 ```bash
 $ find /home/bob/collection -type f -size 1c -exec mv {} /opt/foundfiles/ \;
@@ -38,14 +38,9 @@ $ find /home/bob/collection -type f ! -perm -o=r -exec chmod o+r {} \;
 
 ## 1
 ### Task 
-In your home directory you will find two directories, `dir1` and `dir2`. They are almost identical, containing the same filenames.
-
-
-A. There is one unique file in one of the directories, remove this file so that the directories become truly identical.
-
-
-B. Edit dir1/file007 file and add this text inside: This file has been edited
-
+In your home directory you will find two directories, `dir1` and `dir2`. They are almost identical, containing the same filenames.  
+A. There is **one unique file** in one of the directories, **remove this file** so that the directories **become truly identical**.  
+B. Edit `dir1/file007` file and add this text inside: `This file has been edited`
 
 ### Solution
 
@@ -66,7 +61,8 @@ $ echo "This file has been edited" >> /home/bob/dir1/file007
 
 ## 1
 ### Task 
-Create a cron job for user root that will run every Monday, and Friday, at 3AM (03:00). This should be a single cron job. This job should run a command that archives the /etc/ directory and stores this archive at /opt/etcbackup.tar.gz
+**Create a cron job** for user `root` that will run `every Monday, and Friday, at 3AM (03:00)`.   
+This should be a single cron job. This job should run a command that **archives** the `/etc/` directory and stores this archive at `/opt/etcbackup.tar.gz`
 ### Solution
 ```bash
 $ sudo crontab -e
@@ -78,25 +74,16 @@ Add the following line to the file
 
 --- 
 
-
 ## 1
 ### Task 
 
-A. Find out what DNS resolver(s) this system is using, save the IP address of at least one of the DNS resolvers to the following file: /opt/resolverandroutes.txt
+A. Find out what **DNS resolver(s)** this system is using, **save the IP address** of at least one of the DNS resolvers to the following file: `/opt/resolverandroutes.txt`  
 
+B. **Print out the routing table** of this system and save the output to the same file: `/opt/resolverandroutes.txt` Make sure you **don't overwrite** the previous file contents.
 
-B. Print out the routing table of this system and save the output to the same file: /opt/resolverandroutes.txt Make sure you don't overwrite the previous file contents.
-
-
-C. Add a static host to this system. The hostname you should add is webserver and it should statically resolve to the following IP address: 1.1.1.1
-
-
-Remember to exit back from node01 host.
-
-
+C. **Add a static host** to this system. The hostname you should add is `webserver` and it should statically resolve to the following IP address: `1.1.1.1`
 
 ### Solution
-
 A
 ```bash
 cat /etc/resolv.conf  | grep 'nameserver' | awk '{print $2}' > /opt/resolverandroutes.txt
@@ -109,102 +96,57 @@ C
 ```bash
 $ sudo vi /etc/hosts
 # Add the following line to the file
+webserver 1.1.1.1
 ```
-
-
----
-
-
 --- 
 
-
-## 1
-### Task 
-Create a new container called exam4 that will run the httpd daemon. Use the httpd docker image for this container. Make sure port 8081 on the host is mapped to port 80 of the container.
-
-### Solution
-```bash
-$ docker run -d -p 8081:80 --name exam4 httpd
-```
-
-
----
-
-
-
 ## 1
 ### Task 
 
-You have a disk available at /dev/vdb.
-
-
-A. Create a 500MB partition on this disk.
-
-
-B. Create an ext4 filesystem with a block size of 2048 bytes on this partition.
-
-
-C. Manually mount this filesystem in the /mnt directory.
-
-
-Verify the partition.
-
-Verify the mount point.
+You have a disk available at `/dev/vdb`.
+A. Create a `500MB` partition on this disk.
+B. Create an `ext4` filesystem with a block size of `2048 bytes` on this partition.
+C. Manually mount this filesystem in the `/mnt` directory.
 
 ### Solution
 
 Follow below given steps:
-
-
+```bash
 fdisk /dev/vdb
-
-
-
-
+```
 Now enter below given responses:
-
-
+```
 Command (m for help): n
-Select (default p):  <just-leave-it-default-and-press-enter>
-Partition number (1-4, default 1): <just-leave-it-default-and-press-enter>
-First sector (2048-2097151, default 2048):  <just-leave-it-default-and-press-enter>
+Select (default p): [just-leave-it-default-and-press-enter]
+Partition number (1-4, default 1): [just-leave-it-default-and-press-enter]
+First sector (2048-2097151, default 2048):  [just-leave-it-default-and-press-enter]
 Last sector, +sectors or +size{K,M,G,T,P} (2048-2097151, default 2097151): +500M
 Command (m for help): w
+```
 
-
-
-
-Further create an ext4 filesystem with a block size of 2048 bytes on this partition:
-
-
+Further create an `ext4` filesystem with a **block size** of `2048 bytes` on this partition:
+```bash
 mkfs.ext4 -b 2048 /dev/vdb1
+```
+- `-b`: Specify the size of blocks in bytes  
 
-
-
-
-Mount this filesystem in the /mnt directory:
-
-
+Mount this filesystem in the `/mnt` directory:  
+```bash
 mount /dev/vdb1 /mnt/
-
+```
+Verify the mount point:  
 ```bash
 $ findmnt
 /mnt                                /dev/vdb1   ext4        rw,relatime,seclabel
 ```
----
-
 
 --- 
-
 
 ## 1
 ### Task 
 In your home directory you will find two files.
-
-A. Edit this file, imm.txt and add the following text under the existing line: New line added successfully
-
-
-B. Edit this file, app.txt and correct that equation. It should be 1+1=2 instead.
+A. Edit this file, `imm.txt` and add the following text under the existing line: `New line added successfully`
+B. Edit this file, `app.txt` and correct that equation. It should be `1+1=2` instead.
 
 ### Solution
 **A**  
@@ -244,7 +186,7 @@ $ lsattr imm.txt
 
 ---
 
-Execute below given commands, first make imm.txt file mutable then edit file in vi mode and save New line added successfully line at end of file :
+Execute below given commands, first make `imm.txt` file **mutable then edit** file in vi mode and save New line added successfully line at end of file :
 ```bash
 $ sudo chattr -i imm.txt
 $ lsattr imm.txt 
@@ -277,48 +219,30 @@ vi app.txt
 
 ## 1
 ### Task 
-There is a LVM structure available. Perform the following actions:
-
-A. Remove the following PV, physical volume: /dev/vdd
-
-
-B. Create a VG, volume group. The name of this volume should be examVG. This VG should consist of only the /dev/vdc physical volume.
-
-
-C. Create an LV, logical volume. Its size should be 100 megabytes. Its name should be examLV. Of course, this LV should be created on the examVG volume group.
-
-
-D. Create an xfs filesystem with a block size of 1024 bytes on the examLV logical volume.
+There is a LVM structure available. Perform the following actions:  
+A. **Remove** the following PV, physical volume: `/dev/vdd`  
+B. **Create** a VG, volume group. The name of this volume should be `examVG`.   
+This VG should consist of only the `/dev/vdc` physical volume.  
+C. **Create** an LV, logical volume. Its size should be `100 megabytes`.   
+Its name should be `examLV`. Of course, this LV should be created on the `examVG` volume group.  
+D. Create an `xfs` filesystem with a **block size** of `1024 bytes` on the `examLV` logical volume.
 ### Solution
-
-Execute below given command to remove physical volume /dev/vdd:
-
-
+Execute below given command to remove physical volume `/dev/vdd`:  
+```bash
 sudo pvremove /dev/vdd
+```
 
-
-
-
-Execute below given command to create volume group examVG and this only contains /dev/vdc physical volume:
-
-
+Execute below given command to create volume group `examVG` and this only contains `/dev/vdc` physical volume:
+```bash
 sudo vgcreate examVG /dev/vdc
-
-
-
-
-Execute below given command to logical volume examLV with size 100 MB and it should be created in examVG volume group:
-
-
+```
+Execute below given command to logical volume `examLV` with size `100 MB` and it should be created in `examVG` volume group:  
+```bash
 sudo lvcreate -L 100MB -n examLV examVG
-
-
-
+```
 
 Execute below given command to create xfs filesystem with a block size of 1024 bytes on the examLV logical volume:
-
-#TODO: 이거 블록사이즈 1024로 만드는거 확인한번 가능 찾아보자
-#TODO: 각항목들에 대한 설명을 추가하자
+```bash
 $ mkfs.xfs -b size=1024  /dev/examVG/examLV 
 meta-data=/dev/examVG/examLV     isize=512    agcount=4, agsize=25600 blks
          =                       sectsz=512   attr=2, projid32bit=1
@@ -330,8 +254,14 @@ naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
 log      =internal log           bsize=1024   blocks=3527, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
 
----
+verify the filesystem:  
+```bash
+$ file -s /dev/examVG/examLV
+/dev/examVG/examLV: SGI XFS filesystem data (blksz 1024, inosz 512, v2 dirs)
+```
+
 
 
 --- 
@@ -339,143 +269,56 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 
 ## 1
 ### Task 
-In your home directory you will find a directory called databases.
+In your home directory you will find a directory called `databases`.
+
+A. Remove the **sticky bit** special permission from this `databases` directory.  
+
+B. Find the file in `databases/` directory that has the **SETUID (special permission)** set on it.   
+**Remove the SETUID** special permission and the **executable permission for the user owner** from this file.
 
 
-A. Remove the sticky bit special permission from this databases directory.
-
-
-B. Find the file in databases/ directory that has the SETUID (special permission) set on it. Remove the SETUID special permission and the executable permission for the user owner from this file.
-
-
-C. Add the special SETGID (set group ID) permission to the databases directory.
+C. Add the **special SETGID (set group ID)** permission to the `databases` directory.
 
 ### Solution
-Remove the sticky bit special permission from the databases directory:
-
-
+**Remove the sticky bit** special permission from the databases directory:
+```bash
 chmod -t databases/
+```
 
-
-
-
-Find the file in databases directory that has the SETUID (special permission) set on it.
-
-
+Find the file in `databases` directory that has the **SETUID (special permission)** set on it.
+```bash
 find databases/ -perm /4000
+```
 
-
-
-
-Remove the SETUID special permission and the executable permission for the user owner from this file.
-
-
+**Remove the SETUID** special permission and the **executable permission** for the **user owner** from this file.
+```bash
 sudo chmod a-st-x databases/file3594
-
-
-
-
-Add the special SETGID (set group ID) permission to the databases directory:
-
-
+```
+**Add the special SETGID** (set group ID) permission to the `databases` directory:
+```bash
 chmod g+s databases/
-
----
-
+```
 
 --- 
 
-
 ## 1
 ### Task 
-Look for a process which has the word cached in its name. Then perform the following actions:
+Look for a process which has the word `cached` in its name. Then perform the following actions:
 
-
-A. Save the PID number of this process to this file: /opt/pid.txt
-
-
-B. List the opened files used by this process and save this list to /opt/openedfiles.txt
+A. Save the **PID number** of this process to this file: `/opt/pid.txt`
+B. List the **opened files used by this process** and save this list to `/opt/openedfiles.txt`
 
 ### Solution
-Filter the PID and save the PID number to this file: /opt/pid.txt:
-
-
+Filter the PID and save the PID number to this file: `/opt/pid.txt`:
+```bash
 sudo netstat -p  | grep cached
-sudo bash -c "echo '<PID>' > /opt/pid.txt"
+sudo bash -c "echo '[PID]' > /opt/pid.txt"
+```
 
+Save the opened files list to `/opt/openedfiles.txt` file:
 
-
-
-Save the opened files list to /opt/openedfiles.txt file:
-
-
-sudo bash -c "lsof -p '<PID>'  >> /opt/openedfiles.txt"
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
----
-
-
---- 
-
-
-## 1
-### Task 
-
-### Solution
-
+```bash
+sudo bash -c "lsof -p '[PID]'  >> /opt/openedfiles.txt"
+```
 ---
 
