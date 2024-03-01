@@ -2,6 +2,13 @@ import createMDX from '@next/mdx'
 // import remarkGfm from 'remark-gfm'
 // import rehypePrettyCode from 'rehype-pretty-code'
 import rehypeHighlight from 'rehype-highlight'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+console.info('dirname', __dirname)
+console.info('filename', __filename)
 
 // https://colinhemphill.com/blog/markdown-syntax-highlighting-with-the-nextjs-app-router
 /** @type {import('next').NextConfig} */
@@ -19,6 +26,9 @@ const nextConfig = {
         destination: `${process.env.NEXT_PUBLIC_PROXY_BASE_URL}/:path*`,
       },
     ]
+  },
+  sassOptions: {
+    includePaths: [path.join(__dirname, 'styles')],
   },
 }
 

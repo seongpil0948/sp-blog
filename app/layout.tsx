@@ -1,12 +1,12 @@
 import 'react-toastify/dist/ReactToastify.css'
 import '@/styles/globals.css'
+import '@/styles/globals.scss'
 
 import { Metadata } from 'next'
 import { siteConfig } from '@/config/site'
 import { fontSans } from '@/config/fonts'
 import clsx from 'clsx'
 import { Providers } from './_providers'
-import { AnimatePresence, motion } from 'framer-motion'
 
 export const metadata: Metadata = {
   title: {
