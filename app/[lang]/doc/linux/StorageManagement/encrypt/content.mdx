@@ -18,7 +18,19 @@
 * eCryptfs
 * EncFS
 * ... 등등
-많지만 우선 `cryptsetup`을 사용해야한다.
+많지만 우선 `cryptsetup`을 사용할 것입니다.
+
+### 순서
+1. disk 혹은 partition을 선정한다.  (using cfdisk, fdisk, gdisk, parted, ...)  
+2. `cryptsetup`을 사용하여 디스크를 암호화한다.
+   1. plain: `cryptsetup --verify-passphrase open --type plain /dev/vde mysecuredisk`
+   2. LUKS: `cryptsetup luksFormat /dev/vde mysecuredisk`
+3. 암호화된 매핑 디스크를 사용하여 파일시스템을 생성하고 마운트한다.
+   1. `mkfs.xfs /dev/mapper/mysecuredisk`
+   2. `mount /dev/mapper/mysecuredisk /mnt/mysecuredisk`
+4. 닫는다
+   1. `cryptsetup close mysecuredisk`
+   2. `umount /mnt/mysecuredisk`
 
 ## cryptsetup
 `cryptsetup`은 리눅스 커널에 매핑된 블록 device 디스크를 암호화하기 위한 인터페이스를 제공하는 유틸리티이다.  

@@ -1,24 +1,26 @@
 # Toc
 - [Toc](#toc)
   - [팁](#팁)
-  - [Text Manipulation and Regular Expressions - 1](#text-manipulation-and-regular-expressions---1)
     - [Task](#task)
     - [Solution](#solution)
-  - [Storage Management - 1](#storage-management---1)
+  - [Text Manipulation and Regular Expressions - 1](#text-manipulation-and-regular-expressions---1)
     - [Task](#task-1)
     - [Solution](#solution-1)
-  - [Storage Management - 2](#storage-management---2)
+  - [Storage Management - 1](#storage-management---1)
     - [Task](#task-2)
     - [Solution](#solution-2)
-  - [Operating Systems - 1](#operating-systems---1)
+  - [Storage Management - 2](#storage-management---2)
     - [Task](#task-3)
     - [Solution](#solution-3)
-  - [User and Group Management - 1](#user-and-group-management---1)
+  - [Operating Systems - 1](#operating-systems---1)
     - [Task](#task-4)
     - [Solution](#solution-4)
-  - [Network Configuration - 1](#network-configuration---1)
+  - [User and Group Management - 1](#user-and-group-management---1)
     - [Task](#task-5)
     - [Solution](#solution-5)
+  - [Network Configuration - 1](#network-configuration---1)
+    - [Task](#task-6)
+    - [Solution](#solution-6)
 
 
 ## 팁
@@ -28,6 +30,19 @@
 - gateway ip 는 ip addr 의 default 말고, `ip r | grep default` 로 찾으셈
 - 
 
+
+### Task
+User user2 should be able to execute sudo bash /root/dangerous.sh without having to enter the root password
+
+### Solution
+You can use `visudo` command to edit the sudoers file.
+```bash
+sudo visudo
+```
+Add below given line at the end of the
+```
+user2 ALL=(ALL) NOPASSWD: /bin/bash /root/dangerous.sh
+```
 
 ## Text Manipulation and Regular Expressions - 1
 ### Task 

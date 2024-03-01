@@ -23,28 +23,31 @@ after installation you can begin to export a device or file now
 
 
 ### Export device
-Example: export ServerSide Disk Device like /dev/sda on port 9999
+Example: export ServerSide Disk Device like `/dev/sda` on port `9999`
 ```bash
 nbd-server 9999 /dev/sda
 ```
 ### Export img file
-Example: export ServceSide .img file like vmdisk.img on port 9998
+Example: export ServerSide .img file like `vmdisk.img` on port 9998
 ```bash
 nbd-server 9998 /path/to/vmdisk.img
 ```
 img over NDB can be useful if you’re working with virtual disk images, for example.  
 
 ## ClientSide
-clientIP: 192.168.1.200
+clientIP: `192.168.1.200`
 
 ### Setup client
 
-On the client machine that we want to use to connect to the NBD export we just created,  
+On the client machine that we want to use to **connect to the NBD export** we just created,  
 we first need to install the NBD client package with:
 ```bash
 apt-get install nbd-client
 modprobe nbd-client
 ```
+- `modprobe`: 모듈(리눅스 커널의 확장 프로그램)을 로드하거나 언로드하는 명령어입니다.
+  - `modprobe nbd-client` 명령어는 nbd-client 모듈을 로드합니다.  
+  - 이 명령어는 nbd-client 모듈을 로드하고, 이 모듈은 클라이언트 시스템에서 네트워크 블록 장치를 사용할 수 있게 해줍니다.
 ### Mount
 map/mount remote NBD exported device as local device `/dev/nbd0`
 ```bash
