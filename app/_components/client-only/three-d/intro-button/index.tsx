@@ -27,6 +27,7 @@ export default function HiButton(props: { onClick?: () => void }) {
         initial={false}
         animate={isHover ? 'hover' : 'rest'}
         onClick={() => {
+          // TODO: fix this
           router.push(`/doc/framework-next/getting-started`)
           props.onClick && props.onClick()
         }}

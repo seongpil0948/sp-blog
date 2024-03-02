@@ -149,20 +149,20 @@ $ cat /etc/default/grub
 
 #### command would be used to generate the new grub configuration file.
 grub 구성 파일을 생성하는 데 사용됩니다...
-```sh
-sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+```bash
+$ sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 ```
 
 #### Install grub to /dev/vda. Make sure to save the installation command output to /home/bob/grub.txt file.
 ```sh
 # 설치 과정의 출력과 에러 메시지가 /home/bob/grub.txt 파일에 기록됩니다.
-sudo grub2-install /dev/vda > /home/bob/grub.txt 2>&1
+$ sudo grub2-install /dev/vda > /home/bob/grub.txt 2>&1
 ```
 
 #### Find out what is the system's current default boot target and save the value in /home/bob/boot-target.txt file.
 
 ```sh
-systemctl get-default > /home/bob/boot-target.txt
+$ systemctl get-default > /home/bob/boot-target.txt
 ```
 
 #### Refs

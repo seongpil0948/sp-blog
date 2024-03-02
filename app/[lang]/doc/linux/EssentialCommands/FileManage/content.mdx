@@ -86,14 +86,14 @@ $ find [path] [option] [expression]
 
 # Practice
 
-### What command would find files and directories modified in the last 5 minutes in /dev directory?  
+### What command would find files and directories modified in the last 5 minutes in `/dev` directory?  
 ```bash
 $ find /dev -mmin -5
 ```
 > -5 : 5분 이내에 수정된 파일을 찾습니다.
 > +5 : 현재 시간으로부터 5분 이상 전인 파일들을 찾습니다.
 ---
-### What command removes the write permission for the group from a file?
+### What command **removes** the write permission for the `group` from a file?
 ```bash
 $ chmod g-w file
 ```
@@ -140,7 +140,7 @@ $ sudo find /opt/findme/ -type f -perm /u=x
 /opt/findme/file688
 ```
 
-### Delete all files created before 2020.
+### Delete all files created before `2020`.
 Always "debug" a command first by just listing without executing a command:  
 num of files: 300
 ```bash

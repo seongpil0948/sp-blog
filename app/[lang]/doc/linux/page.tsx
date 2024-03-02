@@ -11,5 +11,5 @@ interface Param {
 }
 
 export default async function SSGPage({ params: { lang } }: Param) {
-  return redirect(`/${lang}/doc/linux/essential-commands`)
+  return redirect(`/${lang}/doc/app/Linux/EssentialCommands`)
 }

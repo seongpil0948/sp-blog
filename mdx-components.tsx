@@ -6,6 +6,7 @@ import { Snippet } from '@nextui-org/snippet'
 import CodeHeader from '@/app/_components/server-only/CodeHeader'
 import { DetailedHTMLProps, HTMLAttributes, createElement } from 'react'
 import clsx from 'clsx'
+import { Card, CardBody } from '@nextui-org/card'
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -30,7 +31,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         <HeaderWithLink
           props={props}
           level={1}
-          className="mb-5 text-3xl font-bold leading-tight text-slate-900 dark:text-slate-200 md:text-5xl"
+          className="mb-5 mt-10 text-3xl font-bold leading-tight text-slate-900 dark:text-slate-200 md:text-5xl"
         />
       )
     },
@@ -77,18 +78,34 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         height={parseNumber(props.height, 100)}
       />
     ),
-    li: (props) => (
-      <li
-        className=" sm:text-md my-5  mb-2 text-sm font-normal leading-7 md:text-lg  [&::marker]:font-semibold [&:before]:mr-6 [&:before]:content-['-']"
-        {...props}
-      />
-    ),
-    ol: (props) => (
-      <ul
-        className="mb-5 ml-5 mt-2 list-decimal [&>li:before]:mr-4 [&>li:before]:content-['']"
-        {...props}
-      />
-    ),
+    li: (props) => {
+      // console.info('props', )
+      // if (props.children[0].props?.children[0].props?.children[0] === '[]') {
+      // if text is link
+      let child = props.children
+      if (
+        typeof props.children === 'string' &&
+        props.children.startsWith('http')
+      ) {
+        child = <Link href={props.children}>{props.children}</Link>
+      }
+      return (
+        <li className=" sm:text-md my-5  mb-2 text-sm font-normal leading-7 md:text-lg  [&::marker]:font-semibold [&:before]:mr-6 [&:before]:content-['-']">
+          {child}
+        </li>
+      )
+    },
+    ol: (props) => {
+      return (
+        <ul
+          className="mb-5 ml-5 mt-2 list-decimal [&>li:before]:mr-4 [&>li:before]:content-['']"
+          {...props}
+        />
+      )
+    },
+    ul: (props) => {
+      return <ul className="my-5 list-none [blockquote_&]:my-0" {...props} />
+    },
     p: (props) => (
       <p
         className="sm:text-md my-5 text-sm font-normal leading-7 md:text-lg"
@@ -114,9 +131,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         </Snippet>
       )
     },
-    ul: (props) => (
-      <ul className="my-5 list-none [blockquote_&]:my-0" {...props} />
-    ),
+
     table: (props) => (
       <table className="w-full border-collapse">{props.children}</table>
     ),

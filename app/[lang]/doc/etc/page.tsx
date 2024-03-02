@@ -11,5 +11,5 @@ interface Param {
 }
 
 export default async function SSGPage({ params: { lang } }: Param) {
-  return redirect(`/${lang}/doc/etc/vim`)
+  return redirect(`/${lang}/doc/Ect/Vim`)
 }

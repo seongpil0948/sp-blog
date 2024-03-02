@@ -93,18 +93,21 @@ or
 $ pgrep ssh
 ```
 
-### List all files that are opened by process with PID 1, this process is owned by the root user. Save the output in /home/bob/files.txt file.
+### **List all files** that are opened by process with PID 1,   
+this process is owned by the `root` user. Save the output in `/home/bob/files.txt` file.
 ```bash
 $ sudo lsof -p 1 > /home/bob/files.txt
 ```
 
-### Search the logs for entries related to the SSH daemon i.e sshd. Find out what IP address last connected to this daemon successfully.
-Save that IP in /home/bob/ip.txt file.
+### Search the logs for entries related to the **SSH daemon** i.e `sshd`.   
+Find out what IP address last connected to this daemon successfully.  
+Save that IP in `/home/bob/ip.txt` file.
 
 ```bash
 $ sudo journalctl -u ssh.service | grep 'Accepted password for' | tail -n 1 | awk '{print $11}' | cut -d ':' -f 1 > /home/bob/ip.txt
 ```
 or
+
 Execute below given command:
 `sudo journalctl --unit=sshd.service -n 20 --no-pager`  
 and look for the logs entries like
@@ -120,7 +123,7 @@ $ pgrep -a rpcbind
 630 /usr/bin/rpcbind -w -f
 ```
 
-### With the systemctl command, find out the PID of the process currently managed by the sshd.service. Send the SIGHUP signal to this process.
+### With the systemctl command, find out the PID of the process currently managed by the `sshd.service`. Send the SIGHUP signal to this process.
 HUP(hangup) signal is used to reload configuration files.
 목매달다 라는 뜻으로, 프로세스에게 재시작하라는 신호를 보내는 것입니다...
 
@@ -130,19 +133,19 @@ $ systemctl kill -s SIGHUP sshd.service
 ```
 
 
-### Under /var/log directory, search for all files containing the reboot string and save the search result in /home/bob/reboot.log file.
+### Under `/var/log` directory, search for all files containing the reboot string and save the search result in `/home/bob/reboot.log` file.
 
 ```bash
 sudo grep -r 'reboot' /var/log/ > reboot.log
 ```
 
 
-### Analiyze the error logs through journalctl with the priority flag and copy the output to /home/bob/.priority/priority.log.
+### Analiyze the **error** logs through `journalctl` with the priority flag and copy the output to `/home/bob/.priority/priority.log`.
 ```bash
 $ sudo journalctl -p err > /home/bob/.priority/priority.log
 ```
 
-### Analyse the info priority logs through journalctl that begin with letter c and store the output in /home/bob/.priority/boot.log file.
+### Analyse the **info** priority logs through `journalctl` that begin with letter `c` and store the output in `/home/bob/.priority/boot.log` file.
 ```bash
 $ sudo journalctl -p info -g '^c' > .priority/boot.log
 or
@@ -150,7 +153,8 @@ $ sudo journalctl -p info | grep '^c' > /home/bob/.priority/boot.log
 $ sudo journalctl -p info | grep -E '^c' > /home/bob/.priority/boot.log
 ```
 
-### Using ps command, identify the CPU and Memory usage by only the process having PID 1 and save the entire command output in /home/bob/resources.txt file.
+### Using ps command, identify the **CPU and Memory usage** by only the process having PID `1`   
+and save the entire command output in `/home/bob/resources.txt` file.
 ```bash
 ps u 1 > /home/bob/resources.txt
 ```

@@ -1,5 +1,5 @@
 # Linux에서의 Email
-리눅스 특히 Redhat and CentOS는 이메일을 수신하면 /var/spool/mail/에 저장합니다. 
+리눅스 특히 Redhat and CentOS는 이메일을 수신하면 `/var/spool/mail/`에 저장합니다. 
 만약 `aaron`에게 수신한 이메일이 있다면, `/var/spool/mail/aaron` (followed by username) 에 저장됩니다.  
 
 
@@ -26,7 +26,7 @@ sudo systemctl enable postfix
 
 ```bash
 # echo "This is the body of the email" | mail -s "This is the subject line" aaron@localhost
-$ sendamil aaron@localhost <<< "This is the body of the email"
+$ sendmail aaron@localhost <<< "This is the body of the email"
 $ cat /var/spool/mail/aaron
 From aaron@localhost  Wed Sep  1 15:58:01 2021
 Return-Path: <aaron@localhost>
