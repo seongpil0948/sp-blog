@@ -1,31 +1,152 @@
 # 서론
 
-#TODO
 
-## Find Process
+## `pgrep`, `pkill`, `pidwait` - 프로세스 조회, 신호 또는 대기   
 
-### ps
-
+### SYNOPSIS
 ```bash
-$ ps aux
-$ ps -ef
+pgrep [options] pattern
+pkill [options] pattern
+pidwait [options] pattern
 ```
 
-### pgrep
+### Options
+#### `pgrep` only
+- `-a`, `--list-full` : 모든 컬럼 조회: (기본적으로 id만 출력하여 다른 명령어와 조합하여 사용)
+- `-d` : 각 프로세스 ID 를 구분하는 문자열을 지정합니다.(기본적으로 newline)
+#### `pkill` only
+- `--echo`: killed 된 process id 를 출력합니다.
+#### `pidwait` only
 
+#### common
+- `-u` : 유저에 대한 프로세스 필터링
+- `-U` : real user ID에 대한 프로세스 필터링 
+- `-i` : 대소문자 구분하지 않음
+- `--exact` : 정확한 패턴 일치
+- `-s` : 세션 ID에 대한 프로세스 필터링
+
+
+
+
+### Example
+이름이 상당히 직관적이라 부연설명이 오히려 헷갈릴 수 있다 예제로 보자.  
+
+#### `pid` 프로세스가 종료될 때까지 대기
 ```bash
-$ pgrep -u root
-$ pgrep -a bash
+$ pwait pid
 ```
 
-### lsof
+#### `sshd` daemon에 대한 유저가(owned by) root인 프로세스 조회
+```bash 
+$ pgrep -u root sshd
+```
+
+#### `sshd`, `root` 유저에 대한 프로세스 조회
+```bash
+$ pgrep -u root,daemon
+```
+
+#### `xterm` 프로세스에 대한 자세한 정보 제공
+```bash
+$ ps -fp $(pgrep -d, -x xterm)
+```
+
+#### `admin` 유저의 `python` process 종료
+```bash
+$ pkill -u admin python
+```
+#### `SIGKILL` 신호를 사용하여 `emacs` 프로세스 강제 종료:
+```bash
+$ pkill -KILL emacs
+```
+
+#### `Chrome` 프로세스에 대한 nice value를 +5 변경
+```bash
+$ renice +5 $(pgrep chrome)
+```
+#### `dev` group 프로세스 종료
+```bash
+$ pkill -g dev
+```
+
+#### background 에서 [pid] 프로세스 종료를 대기한 후 특정 스크립트 실행
+```bash
+$ vi wait.sh
+# append the following
+pidwait -n [pid] && ./script.sh
+
+$ chmod +x wait.sh
+# excute the script in background
+$ ./wait.sh &
+# check background jobs
+$ jobs
+```
+
+
+
+
+## lsof
+
+`lsof` 는 list open files 의 약자로 시스템에서 열린 파일 목록을 알려주고 사용하는 프로세스, 디바이스 정보, 파일의 종류등 상세한 정보를 출력해 준다.
+
+리눅스와 유닉스는 추상화된 파일 시스템(VFS - Virtual File System)을 사용하므로 일반 파일, 디렉터리, 네트워크 소켓, 라이브러리, 심볼릭 링크 등도 모두 파일로 처리되며 lsof 에서 상세한 정보를 확인할 수 있다.
+
+### Synopsis
+
+```bash
+$ lsof [options]
+```
+
+
+### Options
+
+- `-i` : 네트워크 연결 정보를 확인할 수 있다.
+- `-t` : 프로세스 ID만 출력한다.
+- `-p` : 특정 프로세스 ID를 지정한다.
+- `-u` : 특정 사용자의 열린 파일을 확인한다.
+
+### Output
+
+| Column   | Description                 |
+| -------- | --------------------------- |
+| COMMAND  | 프로세스명                  |
+| PID      | 프로세스 ID                 |
+| USER     | 사용자명                    |
+| FD       | 파일 Descriptor             |
+| TYPE     | 파일 타입                   |
+| DEVICE   | 파일이 위치한 디바이스 번호 |
+| SIZE/OFF | 파일 크기 또는 오프셋       |
+| NODE     | 파일의 I-node 번호          |
+| NAME     | 파일명                      |
+
+
+
+#### 파일 Descriptor
+- `cwd` : current working directory
+- `txt` : program text
+- `mem` : memory-mapped file
+- `rtd` : root directory
+- `DEL` : deleted file
+- `0u` : standard input
+- `1u` : standard output
+- `2u` : standard error
+- `3r` : read file descriptor
+- `4w` : write file descriptor
+
+
+### print all opend files
+```bash
+$ lsof
+```
+
+
+
 
 ```bash
 $ lsof -i :80 -t
 $ lsof -p 1
 $ lsof ./test.txt
 $ sudo lsof /var/log/messages
-
 ```
 
 ### pkill
@@ -45,3 +166,6 @@ $ pkill -a bash
   ```
 
 
+
+### Reference
+- [https://www.lesstif.com/system-admin/lsof-20776078.html](https://www.lesstif.com/system-admin/lsof-20776078.html)

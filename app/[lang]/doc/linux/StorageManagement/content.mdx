@@ -2,6 +2,8 @@
   - [POSIX(Portable Operating System Interface)](#posixportable-operating-system-interface)
   - [EXT 파일 시스템(2, 3, 4 포함)](#ext-파일-시스템2-3-4-포함)
   - [Mount](#mount)
+  - [du](#du)
+    - [Example](#example)
   - [LVM(Logical Volume Manager)](#lvmlogical-volume-manager)
   - [Partition](#partition)
     - [cfdisk](#cfdisk)
@@ -88,6 +90,31 @@ TARGET    SOURCE         FSTYPE OPTIONS
 │ ├─/sys/fs/bpf   bpf    bpf    rw,nosuid,nodev,noexec,relatime,mode=700
 ...
 ```
+
+## du
+`du` 명령어는 디렉토리의 디스크 사용량을 확인하는데 사용됩니다.    
+사용법은 `du [OPTION]... [FILE]...` 입니다.  
+
+- `-h` : 사람이 읽기 쉬운 형식으로 출력합니다.
+- `-s` : 디렉토리의 총 합계를 출력합니다. (summarize)  
+- `max-depth=N` : 최대 깊이를 설정합니다.  
+- `--all`: 디렉토리뿐 아니라 파일도 모두 출력합니다.  
+
+### Example
+```bash
+$ du -h --max-depth=1 /etc
+# example
+4.0K    /etc/ssl
+4.0K    /etc/alternatives
+4.0K    /etc/ssh
+
+$ du -sh /etc
+# example
+4.0K    /etc
+```
+---
+
+
 
 ## LVM(Logical Volume Manager)
 여러 하드디스크를 하나의 논리적인 디스크로 사용할 수도, 하나의 디스크를 여러 파티션으로 나누어 사용할 수도 있습니다.  
