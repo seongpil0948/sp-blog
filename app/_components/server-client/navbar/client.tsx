@@ -43,7 +43,9 @@ export default function CommonClientNavbar(props: CommonNavbarProps) {
           <ul>
             {tree.children.map((item) => (
               <NavbarItem key={item.href}>
-                <NextLink href={item.href}>{item.label}</NextLink>
+                <NextLink href={item.href}>
+                  <p className="font-bold">{item.label}</p>
+                </NextLink>
               </NavbarItem>
             ))}
           </ul>

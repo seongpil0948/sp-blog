@@ -4,7 +4,7 @@ import '@/styles/globals.scss'
 
 import { Metadata } from 'next'
 import { siteConfig } from '@/config/site'
-import { fontSans } from '@/config/fonts'
+import { fontSans, fontMono, roboto } from '@/config/fonts'
 import clsx from 'clsx'
 import { Providers } from './_providers'
 
@@ -44,7 +44,9 @@ export default function RootLayout({
       <body
         className={clsx(
           'min-h-screen bg-background font-sans antialiased',
-          fontSans.variable,
+          fontSans.className,
+          fontMono.className,
+          roboto.className,
         )}
       >
         <Providers
