@@ -35,6 +35,8 @@ export function getTree(args: IGetTreeArgs) {
   const tree =  dirTreeToTree(libTree)
   return tree
 }
+
+
 function dirTreeToTree(obj: DirectoryTree<TDirCustom>): TreeSectionProps | undefined {
   // obj.name = dirTree.name.replace('.mdx', '').replace('.tsx', '')
   if ((obj.type && obj.type === 'file') || !obj.custom || !obj.custom.href) return 
@@ -46,4 +48,25 @@ function dirTreeToTree(obj: DirectoryTree<TDirCustom>): TreeSectionProps | undef
     // children: obj.children?.map(dirTreeToTree).filter(o => !o.label.includes('content')),
     children: obj.children?.map(dirTreeToTree).filter(o => o) as TreeSectionProps[] ?? [],
   }
+}
+
+
+export function getOnlyFiles(dir: string, options: DirectoryTreeOptions) {
+  const tree = dirTree(dir, options)
+  const files :string[] = []
+  tree.children?.forEach((item) => {
+    const p = item.path
+    if (isAssetFile(p)) {
+      files.push(assetToHref(p))
+    }
+  })
+  return files
+}
+
+const isAssetFile = (path: string) => {
+  return path.includes('public')
+}
+
+const assetToHref = (path: string) => {
+  return path.split('public')[1]
 }

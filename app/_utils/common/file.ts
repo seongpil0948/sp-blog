@@ -34,3 +34,9 @@ export const getByteInfo = (
   const value = Math.floor(byteData / BYTE_UNIT ** idx)
   return { size: FILE_UNITS[idx], value, idx }
 }
+
+export function fileNameFromPath(path: string) {
+  let name = path.split('/').pop()
+  if (!name) return path
+  return name?.split('.')[0]
+}

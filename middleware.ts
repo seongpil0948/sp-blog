@@ -15,6 +15,7 @@ export const config = {
     "/doc/:path*",
     "/artifacts/:path*",
     "/home",
+    "/about",
     "/projects/:path*",
     "/",
   ],
