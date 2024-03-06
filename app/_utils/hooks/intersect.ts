@@ -13,7 +13,7 @@ export function useIntersect(
   const ref = useRef<HTMLDivElement>(null)
   const callback = useCallback(
     (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-      console.log('entries onIntersect : ', entries)
+      // console.log('entries onIntersect : ', entries)
       entries.forEach((entry) => {
         if (entry.isIntersecting) return onIntersect(entry, observer)
       })

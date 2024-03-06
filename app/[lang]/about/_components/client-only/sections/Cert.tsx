@@ -1,11 +1,81 @@
 'use client'
 
 import { ImageCard } from '@/app/_components/client-only/card/dynamic'
+import { useIntersect } from '@/app/_utils/hooks/intersect'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 
 export default function CertSection(props: { certData: string[] }) {
   const { certData } = props
-  const sectionRef = useRef<HTMLDivElement>(null)
+
+  const isDoneCertScroll = () => {
+    if (!certConatinerRef.current)return 
+    const cert = certConatinerRef.current
+    const scrollHeight = cert.scrollHeight
+    const clientHeight = cert.clientHeight
+    const scrollTop = cert.scrollTop
+    console.log(scrollTop, clientHeight, scrollHeight)
+    if (scrollTop + clientHeight >= scrollHeight) {
+      console.log('done')
+      return true
+    }
+    return false
+  }
+
+  const isCertScrollMode = () => {
+    const body = document.querySelector('body')
+    if (!body) return false
+    console.log('body.style.overflow in isCertScrollMode : ', body.style.overflow)
+    return body.style.overflow === 'hidden'
+  }
+
+  const startInnerScroll = () => {
+    console.log('startInnerScroll')
+    const body = document.querySelector('body')
+    if (!sectionRef.current || !certConatinerRef.current || !body) return
+    else if (isCertScrollMode()) return console.error('scroll is already in progress')
+    else if (isDoneCertScroll()) return console.log('scroll is already done')
+
+    // only available scroll in certConatinerRef
+    body.style.overflow = 'hidden'
+    sectionRef.current.scrollIntoView({ behavior: 'smooth' })
+    certConatinerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const endInnerScroll = () => {
+    console.log('endInnerScroll')
+    const body = document.querySelector('body')
+    if (!body) return
+    else if (!isDoneCertScroll()) return console.error("scroll is not done")
+    body.style.overflow = 'auto'
+  }
+
+  const sectionRef = useIntersect(
+    (entry) => {
+      console.log('entry : ', entry)
+      if (entry.isIntersecting && entry.intersectionRatio > 0.9) {
+        console.log('section is visible')
+      }
+      if (entry.intersectionRatio > 0.5) {
+        console.log('section is visible 50%')
+      }
+
+      if (entry.intersectionRatio > 0.9) {
+        console.log('section is visible 90%')
+      }
+
+      if (entry.intersectionRatio === 1) {
+        console.log('section is visible 100%')
+      }
+    },
+    {
+      root: null,
+      rootMargin: '0px',
+      // // 타겟의 가시성이 0%, 30%, 100%일 때 모두 옵저버가 실행됩니다.
+      // threshold: [0, 0.3, 1]
+      threshold: [0, 1]
+      
+    }
+  )
   const certConatinerRef = useRef<HTMLDivElement>(null)
 
   const colOne: ReactNode[] = []
@@ -43,7 +113,7 @@ export default function CertSection(props: { certData: string[] }) {
   // if section is visible
 
   return (
-    <section ref={sectionRef} className="scene one flex">
+    <section ref={sectionRef} className="scene two flex">
       <header>
         <h1>Lorem ipsum dolor sit amet.</h1> Lorem ipsum dolor sit amet,
         consectetur adipisicing elit. Totam suscipit sint ab beatae nihi

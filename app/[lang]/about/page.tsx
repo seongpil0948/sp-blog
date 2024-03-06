@@ -2,6 +2,7 @@ import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
 import { getDictionary } from '../dictionaries'
 import { getOnlyFiles } from '@/app/_utils/dir-tree'
 import CertSection from './_components/client-only/sections/Cert'
+import SectionOne from './_components/client-only/sections/SectOne'
 
 export async function generateStaticParams() {
   return AVAIL_LOCALES.map((lang) => ({ lang }))
@@ -23,12 +24,7 @@ export default async function SSGPage({ params: { lang } }: Param) {
 
   return (
     <div>
-      <section className="scene two">
-        <header>
-          <h1>Lorem ipsum dolor sit amet.</h1> Lorem ipsum dolor sit amet,
-          consectetur adipisicing elit. Totam suscipit sint ab beatae nihi
-        </header>
-      </section>
+      <SectionOne />
       <CertSection certData={certData} />
       <section className="scene three">
         <header>
