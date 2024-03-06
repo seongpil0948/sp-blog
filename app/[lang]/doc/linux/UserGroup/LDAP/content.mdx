@@ -25,7 +25,7 @@ LDAP(Lightweight Directory Access Protocol) 는 디렉터리 서비스를 위한
   - `CN`은 항목을 식별하는 데 사용되는 고유한 이름입니다.
   - `CN`은 사용자 이름, 그룹 이름 또는 호스트 이름과 같은 항목과 관련된 의미 있는 이름을 포함해야 합니다.
   - 여러 개의 `cn`을 사용하여 단일 항목을 식별할 수 있습니다.
-- `sn`(서브네임)은 사용자의 성을 나타내는 데 사용됩니다.
+- `sn`(suffix name)은 사용자의 성을 나타내는 데 사용됩니다.
 - `givenName`은 사용자의 이름을 나타내는 데 사용됩니다.
 - `uid`(사용자 ID)는 사용자의 고유 식별자를 나타내는 데 사용됩니다.
 - `gid`(그룹 ID)는 그룹의 고유 식별자를 나타내는 데 사용됩니다.
@@ -116,7 +116,7 @@ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif
 ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/openldap.ldif
 ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/dyngroup.ldif
 ```
-5. LDAP 서버에 대한 액세스를 구성하고 서버에 대한 Manager 사용자를 구성합니다. 
+5. LDAP 서버에 대한 액세스를 구성하고 서버에 대한 `surffix` 및 `관리자`를 구성합니다. 
 ```bash
 $ sudo vi manager.ldif
 # Add the following lines
@@ -154,14 +154,14 @@ objectClass: top
 objectClass: dcObject
 objectclass: organization
 o: Abacus RPA Server
-dc: rpa
+dc: abacus
 
 dn: cn=Manager,dc=abacus,dc=co,dc=kr
 objectClass: organizationalRole
 cn: Manager
 description: LDAP Manager
 
-dn: ou=rpausers,dc=abacus,dc=co,dc=kr
+dn: ou=users,dc=abacus,dc=co,dc=kr
 objectClass: organizationalUnit
 ou: rpaUsers
 ```
@@ -180,7 +180,7 @@ ldap_bind: Invalid credentials (49)
 먼저 사용할 유저의 비밀번호를 암호화 해야합니다.
 ```bash
 $ slappasswd -h {SSHA} -s password
-{SSHA}aeJB3935hNMhk4ZjC12WmcMEkZEsgcV3
+{SSHA}v2JToQPeYErAEUvG/2xQgRutft/o0qWM
 ```
 이제 `ldif` 파일을 생성하여 유저를 등록합니다.
 
@@ -205,7 +205,7 @@ cn: SejinPark
 sn: Park
 givenName: Sejin
 telephoneNumber: 010-1234-5678
-userPassword: {SSHA}aeJB3935hNMhk4ZjC12WmcMEkZEsgcV3
+userPassword: {SSHA}v2JToQPeYErAEUvG/2xQgRutft/o0qWM
 ```
 세진 유저를 등록합니다.
 ```bash
@@ -367,6 +367,89 @@ ldapsearch -x -LLL -b dc=example,dc=com cn=developer -H ldap://192.168.0.103
 ```
 
 
+---
+
+# Ansible
+ansible은 RedHat에서 개발한 오픈소스 IT 자동화 도구이다.  
+ansible은 SSH를 사용하여 리눅스 서버를 관리하고, YAML을 사용하여 작업을 정의한다.  
+우린 구축한 LDAP 서버의 개발자들을 관리하기 위해 ansible을 사용할 것이다.  
+
+## 목적
+- LDAP 서버의 사용자와 사내서버계정을 동기화(단방향)한다.  
+
+## Setup
+- **control node**: `192.168.0.103`
+- **inventory(host) path**: `/home/admin/.ansible/server.ini`
+- **managed node**: `192.168.0.102`
+
+노드간 SSH 통신이 가능해야한다. control node 에서 다음 명령어를 실행하여 SSH 키를 생성하고, **managed node**에 복사한다.  
+```bash
+# create ssh key (without passphrase)
+$ ssh-keygen -t rsa
+# check
+$ ls .ssh
+# copy public key to managed node
+$ ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.0.102
+# check
+$ ssh root@192.168.0.102
+Last login: Wed Mar  6 16:33:52 2024 from hp4
+```
+### Setup Inventory
+`inventory`는 ansible이 관리하는 서버의 목록을 정의하는 파일이다.
+```bash
+$ mkdir  .ansible
+$ vi .ansible/server.ini
+# append the following lines
+[server]
+root@192.168.0.102
+```
+
+
+### Install Ansible
+설치전 사전 세팅은 끝났다.
+Centos
+```bash
+sudo dnf install ansible -y
+```
+Ubuntu
+```bash
+sudo apt-get install ansible -y
+```
+### Check
+```bash
+$ ansible --version
+ansible 2.9.27
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/home/admin/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, Nov 14 2023, 16:14:06) [GCC 4.8.5 20150623 (Red Hat 4.8.5-44)]
+```
+필자는 Centos 환경으로 관련 파일을 확인해보았다.
+```bash
+$ dnf repoquery --list ansible > .ansible/ansible-files.txt
+$ cat .ansible/ansible-files.txt | grep python
+/usr/lib/python2.7/site-packages/ansible/vars/reserved.pyo
+$ cat .ansible/ansible-files.txt | grep -v 'python' | grep -v man | grep -v /usr/share | grep -v /usr/bin
+/etc/ansible
+/etc/ansible/ansible.cfg
+/etc/ansible/hosts
+/etc/ansible/roles
+```
+등록된 inventory 파일을 검증해보자.
+```bash
+$ ansible server --inventory ~/.ansible/server.ini -m ping
+root@192.168.0.102 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    }, 
+    "changed": false, 
+    "ping": "pong"
+}
+```
+성공적으로 서버에 연결되었다.  
+
+
 
 
 
@@ -380,3 +463,8 @@ ldapsearch -x -LLL -b dc=example,dc=com cn=developer -H ldap://192.168.0.103
 - [https://www.openldap.org/doc/admin26/quickstart.html](https://www.openldap.org/doc/admin26/quickstart.html)
 - [https://linux.die.net/man/5/slapd.access](https://linux.die.net/man/5/slapd.access)
 - [oid](https://ldap.com/ldap-oid-reference-guide/)
+- https://co-de.tistory.com/114
+- https://nightlies.apache.org/directory/studio/2.0.0.v20210717-M17/userguide/ldap_browser/tools_newconnection_wizard.html
+### Ansible
+- https://docs.ansible.com/ansible/latest/inventory_guide/index.html
+- https://wikidocs.net/130113
