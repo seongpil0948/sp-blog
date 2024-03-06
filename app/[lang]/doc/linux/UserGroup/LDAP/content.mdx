@@ -438,6 +438,10 @@ $ cat .ansible/ansible-files.txt | grep -v 'python' | grep -v man | grep -v /usr
 ```
 등록된 inventory 파일을 검증해보자.
 ```bash
+$ ansible server --inventory ~/.ansible/server.ini --list
+  hosts (1):
+    root@192.168.0.102
+
 $ ansible server --inventory ~/.ansible/server.ini -m ping
 root@192.168.0.102 | SUCCESS => {
     "ansible_facts": {
@@ -448,6 +452,22 @@ root@192.168.0.102 | SUCCESS => {
 }
 ```
 성공적으로 서버에 연결되었다.  
+
+### Setup Configuration
+`ansible.cfg` 파일을 생성하여 ansible의 설정을 정의할 수 있다.    
+https://docs.ansible.com/ansible/latest/reference_appendices/config.html#ansible-configuration-settings   
+
+ansible은 아래 순서로 설정 파일을 찾는다.
+1. `ANSIBLE_CONFIG` 환경 변수
+2. `./ansible.cfg` 파일
+3. `~/.ansible.cfg` 파일
+4. `/etc/ansible/ansible.cfg` 파일
+필요시 기 존재하는 `/etc/ansible/ansible.cfg` 파일을 수정하여 사용하겠다.
+```bash
+# backup
+$ cp /etc/ansible/ansible.cfg /etc/ansible/ansible.cfg.bak
+```
+
 
 
 
