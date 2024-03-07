@@ -6,78 +6,6 @@ import { ReactNode, useEffect, useRef, useState } from 'react'
 
 export default function CertSection(props: { certData: string[] }) {
   const { certData } = props
-
-  const isDoneCertScroll = () => {
-    if (!certConatinerRef.current)return 
-    const cert = certConatinerRef.current
-    const scrollHeight = cert.scrollHeight
-    const clientHeight = cert.clientHeight
-    const scrollTop = cert.scrollTop
-    console.log(scrollTop, clientHeight, scrollHeight)
-    if (scrollTop + clientHeight >= scrollHeight) {
-      console.log('done')
-      return true
-    }
-    return false
-  }
-
-  const isCertScrollMode = () => {
-    const body = document.querySelector('body')
-    if (!body) return false
-    console.log('body.style.overflow in isCertScrollMode : ', body.style.overflow)
-    return body.style.overflow === 'hidden'
-  }
-
-  const startInnerScroll = () => {
-    console.log('startInnerScroll')
-    const body = document.querySelector('body')
-    if (!sectionRef.current || !certConatinerRef.current || !body) return
-    else if (isCertScrollMode()) return console.error('scroll is already in progress')
-    else if (isDoneCertScroll()) return console.log('scroll is already done')
-
-    // only available scroll in certConatinerRef
-    body.style.overflow = 'hidden'
-    sectionRef.current.scrollIntoView({ behavior: 'smooth' })
-    certConatinerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const endInnerScroll = () => {
-    console.log('endInnerScroll')
-    const body = document.querySelector('body')
-    if (!body) return
-    else if (!isDoneCertScroll()) return console.error("scroll is not done")
-    body.style.overflow = 'auto'
-  }
-
-  const sectionRef = useIntersect(
-    (entry) => {
-      console.log('entry : ', entry)
-      if (entry.isIntersecting && entry.intersectionRatio > 0.9) {
-        console.log('section is visible')
-      }
-      if (entry.intersectionRatio > 0.5) {
-        console.log('section is visible 50%')
-      }
-
-      if (entry.intersectionRatio > 0.9) {
-        console.log('section is visible 90%')
-      }
-
-      if (entry.intersectionRatio === 1) {
-        console.log('section is visible 100%')
-      }
-    },
-    {
-      root: null,
-      rootMargin: '0px',
-      // // 타겟의 가시성이 0%, 30%, 100%일 때 모두 옵저버가 실행됩니다.
-      // threshold: [0, 0.3, 1]
-      threshold: [0, 1]
-      
-    }
-  )
-  const certConatinerRef = useRef<HTMLDivElement>(null)
-
   const colOne: ReactNode[] = []
   const colTwo: ReactNode[] = []
   for (let i = 0; i < certData.length; i++) {
@@ -89,28 +17,83 @@ export default function CertSection(props: { certData: string[] }) {
     }
   }
 
-  // const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+  const getRef =()=> {
+    const body = document.querySelector('body')
+    if (!sectionRef.current || !certConatinerRef.current || !body) throw new Error('no ref')
+    return {sect: sectionRef.current, cert: certConatinerRef.current, body}    
+  }
 
-  // useEffect(() => {
-  //   const scrollHandler = () => {
-  //     if (!sectionRef.current || !certConatinerRef.current) return;
-  //     const cert = certConatinerRef.current
-  //     const sect = sectionRef.current
+  const isDoneCertScroll = () => {
+    const {cert} = getRef()
+    const scrollHeight = cert.scrollHeight
+    const clientHeight = cert.clientHeight
+    const scrollTop = cert.scrollTop
+    const ratio = ((scrollTop + clientHeight) / scrollHeight) * 100
+    if (ratio > 99) {
+      console.log('done')
+      return true
+    }
+    return false
+  }
 
-  //     const scrollTop = cert.scrollTop
-  //     const scrollHeight = cert.scrollHeight;
+  const isCertScrollMode = () => {
+    const {body} = getRef()
+    return body.style.overflow === 'hidden'
+  }
 
-  //     console.log(scrollTop, window.innerHeight, scrollHeight)
-  //     if (scrollTop + window.innerHeight >= scrollHeight) {
-  //       setIsScrolledToBottom(true);
-  //     }
-  //   };
-  //   document.getElementById('section3').addEventListener('scroll', scrollHandler);
-  //   return () => document.getElementById('section3').removeEventListener('scroll', scrollHandler);
-  // }, []);
-  // sectionRef.current?.scrollIntoView
+  const handleRedirectWheel = (to: HTMLElement, evt: WheelEvent) => {
+      // evt.preventDefault()
+      // to.dispatchEvent(new WheelEvent('wheel', evt))
+      to.scrollBy({ top: evt.deltaY * 1.5, behavior: 'smooth' })
+  }
+  const startRedirectWheel = (from: HTMLElement, to: HTMLElement) => {
+    from.style.overflow = 'hidden'
+    from.addEventListener('wheel', (evt) => handleRedirectWheel(to, evt))
+  }
+  const stopRedirectWheel = (from: HTMLElement, to: HTMLElement) => {
+    from.style.overflow = 'auto'
+    from.removeEventListener('wheel', (evt) => handleRedirectWheel(to, evt))
+  }
 
-  // if section is visible
+  const startInnerScroll = () => {
+    const {sect, cert, body} = getRef()
+    if (isCertScrollMode()) return // scroll is already in progress
+    else if (isDoneCertScroll()) return console.log('scroll is already done')
+
+    sect.scrollIntoView({ behavior: 'smooth' })
+    cert.scrollTo({ top: 0, behavior: 'smooth' })
+    startRedirectWheel(body, cert)
+  }
+
+  const endInnerScroll = (evt: Event) => {
+    if (!isDoneCertScroll()) return console.error("scroll is not done")
+    const {body, cert} = getRef()
+    stopRedirectWheel(body, cert)
+  }
+
+  const sectionRef = useIntersect(
+    (entry) => {
+      if (!entry.isIntersecting) return
+      if (entry.intersectionRatio === 1) {
+        startInnerScroll()
+      }
+    },
+    { root: null, rootMargin: '0px', threshold: [0, 1] }
+  )
+  const certConatinerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!certConatinerRef.current) return
+    const cert = certConatinerRef.current
+    const handleScroll = (evt: Event) => {
+      if (isDoneCertScroll()) endInnerScroll(evt)
+    }
+    cert.addEventListener('scroll', handleScroll)
+    return () => cert.removeEventListener('scroll',handleScroll)
+  })
+
+
+
 
   return (
     <section ref={sectionRef} className="scene two flex">

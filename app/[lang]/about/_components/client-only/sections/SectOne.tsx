@@ -13,13 +13,13 @@ export default function SectionOne() {
     const next = document.querySelector<HTMLDivElement>('section.scene.two')
     if (!next || !ref.current) return console.log('next or ref.current is null')
     console.log("in wheel event", ref.current, evt)
+  
+  setTimeout(() => {
+    next.scrollIntoView({ behavior: 'smooth', block: 'end'})
     document.body.style.overflow = 'auto'
-
-    setTimeout(() => {
-      next.scrollIntoView({ behavior: 'smooth', block: 'end'})
-    }, 500)
-    console.log('scrollHeight : ', ref.current.scrollHeight, 'scrollTop : ', ref.current.scrollTop, 'clientHeight : ', ref.current.clientHeight)
     window.removeEventListener('wheel', handleScroll)
+    }, 300)
+    console.log('scrollHeight : ', ref.current.scrollHeight, 'scrollTop : ', ref.current.scrollTop, 'clientHeight : ', ref.current.clientHeight)
   }
 
   useEffect(() => {
