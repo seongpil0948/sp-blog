@@ -1,25 +1,34 @@
-
 'use client'
 
-import { use, useEffect, useRef } from "react"
+import { useScroll } from 'framer-motion'
+import { use, useEffect, useRef } from 'react'
 
 export default function SectionOne() {
   // body overflow hidden when initial
-  // listen scrolldown event and scroll to next section  
-  // body overflow auto when done scroll to next section  
+  // listen scrolldown event and scroll to next section
+  // body overflow auto when done scroll to next section
   const ref = useRef<HTMLDivElement>(null)
-  
+
+  // const {} = useScroll()
+
   const handleScroll = (evt: Event) => {
     const next = document.querySelector<HTMLDivElement>('section.scene.two')
     if (!next || !ref.current) return console.log('next or ref.current is null')
-    console.log("in wheel event", ref.current, evt)
-  
-  setTimeout(() => {
-    next.scrollIntoView({ behavior: 'smooth', block: 'end'})
-    document.body.style.overflow = 'auto'
-    window.removeEventListener('wheel', handleScroll)
+    console.log('in wheel event', ref.current, evt)
+
+    setTimeout(() => {
+      next.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      document.body.style.overflow = 'auto'
+      window.removeEventListener('wheel', handleScroll)
     }, 300)
-    console.log('scrollHeight : ', ref.current.scrollHeight, 'scrollTop : ', ref.current.scrollTop, 'clientHeight : ', ref.current.clientHeight)
+    console.log(
+      'scrollHeight : ',
+      ref.current.scrollHeight,
+      'scrollTop : ',
+      ref.current.scrollTop,
+      'clientHeight : ',
+      ref.current.clientHeight,
+    )
   }
 
   useEffect(() => {
@@ -28,7 +37,6 @@ export default function SectionOne() {
     window.addEventListener('wheel', handleScroll)
     return () => window.removeEventListener('wheel', handleScroll)
   })
-  
 
   return (
     <section ref={ref} className="scene one">

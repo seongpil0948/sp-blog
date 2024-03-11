@@ -1,0 +1,32 @@
+# 익시 통합관리 도구
+- 익시 통합관리 도구는 LG의 인공지능(AI) 서비스를 통합 관리하는 도구로, 사용자는 익시 통합관리 도구를 통해 LG의 인공지능(AI) 서비스를 통합 관리할 수 있습니다.
+- NLP, TTS 등 다양한 인공지능(AI) 서비스를 통합 관리
+### 진행기간 
+2023-12 ~ 2024-03
+
+### 프로젝트 기술
+- kubernetes(violet)
+- typescript
+- vue-js
+- java spring
+
+### 소감
+LG 내부 개발 도구인 violet(바이올렛, kuberneteskubeflow 프레임워크)은 각 서비스 별 vscode 컨테이너 환경을 제공받아 개발을 진행하였습니다.   
+바이올렛 환경이 아직 초기 단계여서, 개발환경 구축에 어려움(웹서비스 개발은 우리팀이 처음)이 있었다.  
+gateway(apache), container 환경(network, resource) 수동관리, 환경변수 수동 주입, 컨테이너 실행 리소스(프로세스 권한, 파일 관리) 등 상세한 부분은 직접 관리해야 했습니다.  
+
+하지만 다양한 리소스들을 직접 관리하면서, kubernetes 환경에서 개발하는 것이 재밌었습니다.  
+`horizontal pod autoscaler`, `Notebook resource`, `Argo`, 리소스 라벨 관리등 row level 단계에서 `kubectl` 명령어를 직접 사용할 기회(EKS 진짜 비쌈..)가 흔치 않은데 LG 개발팀과 티키타카하며 문제를 해결하면서 흥미로웠습니다.  
+
+매 Notebook 를 종료시 이미지를 `ECR`에서 관리하고 있었는데 매 버전이 10GB 이상이 되는경우, 작성된 버전이 저장되지 않는경우 등 `ECR` 에 서비스별 이미지를 관리하는 것이 아직 안정화되지 않아보였습니다.  
+(매일 야근하시면서 우리팀 업무도 도와주시는 분들이 계셔서 다행이었습니다...)
+
+곧 온프레미스로 전환한다고 하는데, 1년후에 좋을 것 같습니다..  
+
+
+<img src="/ixi-admin/1.png" />
+<img src="/ixi-admin/2.png" />
+<img src="/ixi-admin/3.png" />
+<img src="/ixi-admin/4.png" />
+<img src="/ixi-admin/5.png" />
+<img src="/ixi-admin/6.png" />
