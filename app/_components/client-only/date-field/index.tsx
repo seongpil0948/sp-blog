@@ -7,10 +7,10 @@ import {
   useLocale,
 } from 'react-aria'
 import {
-  CalendarStateOptions,
-  DateFieldState,
-  DateFieldStateOptions,
-  DateSegment,
+  type CalendarStateOptions,
+  type DateFieldState,
+  type DateFieldStateOptions,
+  type DateSegment,
   useDateFieldState,
 } from 'react-stately'
 import { RefObject, forwardRef, useMemo, useRef, useState } from 'react'
