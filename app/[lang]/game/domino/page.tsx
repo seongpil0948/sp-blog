@@ -1,7 +1,8 @@
 import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
-import { getDictionary } from '../dictionaries'
 import { Button } from '@nextui-org/button'
 import { Link } from '@nextui-org/link'
+import { getDictionary } from '../../dictionaries'
+import Domino from '../_components/client-only/Domino'
 
 export async function generateStaticParams() {
   return AVAIL_LOCALES.map((lang) => ({ lang }))
@@ -16,13 +17,7 @@ export default async function SSGPage({ params: { lang } }: Param) {
 
   return (
     <div>
-      hi
-      <Button>
-        <Link href="/game/onemin">onemin</Link>
-      </Button>
-      <Button>
-        <Link href="/game/domino">domino</Link>
-      </Button>
+      <Domino />
     </div>
   )
 }
