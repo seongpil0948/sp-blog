@@ -16,6 +16,7 @@ export const config = {
     "/artifacts/:path*",
     "/home",
     "/about",
+    "/game/:path*",
     "/projects/:path*",
     "/",
   ],

@@ -30,7 +30,9 @@ Licensed under the [MIT license](https://github.com/nextui-org/next-app-template
 
 - https://github.com/vercel/platforms/blob/main/app/sitemap.ts
 
-
+### blog
+- https://github.com/timlrx/tailwind-nextjs-starter-blog/blob/main/contentlayer.config.ts
+- https://tailwind-nextjs-starter-blog.vercel.app/blog/new-features-in-v1#analytics
 
 ### about
 - https://www.enricodeiana.design/about
