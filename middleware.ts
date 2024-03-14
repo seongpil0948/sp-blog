@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { LANDING_PATH } from './config/site'
 import { splitLocaleAndPath, getLocaleRequest } from './app/_utils/locale'
+import { LANDING_PATH } from './config'
 
 export const config = {
   // Matcher ignoring `/_next/` and `/api/`

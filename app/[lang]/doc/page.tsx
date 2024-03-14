@@ -1,4 +1,4 @@
-import { AVAIL_LOCALES, LANDING_PATH, TAvailLocale } from '@/config/system'
+import { AVAIL_LOCALES, LANDING_PATH, TAvailLocale } from '@/config'
 import { Suspense } from 'react'
 import { docWrapper } from '@/app/_components/server-only/primitives'
 import { ResolvingMetadata, Metadata } from 'next'

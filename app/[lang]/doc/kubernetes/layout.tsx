@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { LANDING_PATH, siteConfig } from '@/config/site'
+import { LANDING_PATH, siteConfig } from '@/config'
 import { layout, docWrapper } from '@/app/_components/server-only/primitives'
 
 export const metadata: Metadata = {

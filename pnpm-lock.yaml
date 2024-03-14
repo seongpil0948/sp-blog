@@ -158,6 +158,9 @@ dependencies:
   framer-motion-3d:
     specifier: ^11.0.12
     version: 11.0.12(@react-three/fiber@8.15.19)(react-dom@18.2.0)(react@18.2.0)(three@0.162.0)
+  gsap:
+    specifier: ^3.12.5
+    version: 3.12.5
   highlight.js:
     specifier: ^11.9.0
     version: 11.9.0
@@ -8794,6 +8797,10 @@ packages:
 
   /graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
+
+  /gsap@3.12.5:
+    resolution: {integrity: sha512-srBfnk4n+Oe/ZnMIOXt3gT605BX9x5+rh/prT2F1SsNJsU1XuMiP0E2aptW481OnonOGACZWBqseH5Z7csHxhQ==}
+    dev: false
 
   /gunzip-maybe@1.4.2:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}

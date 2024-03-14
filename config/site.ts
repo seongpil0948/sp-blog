@@ -3,7 +3,6 @@ import { uniqueFilter } from '@/app/_utils'
 
 // TODO: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons
 export type SiteConfig = typeof siteConfig
-export const LANDING_PATH = '/home'
 export const APP_DOMAIN = 'https://www.peachhub.love'
 
 export const siteConfig = {
@@ -34,7 +33,7 @@ export const reduceChildLinks = (tree: TreeSectionProps): string[] => {
 
   return tree.children.reduce((acc, link) => {
     if (link.children) {
-      acc.push( ...reduceChildLinks(link))
+      acc.push(...reduceChildLinks(link))
     }
     acc.push(link.href)
     return acc

@@ -16,7 +16,7 @@ import {
 import { Logo } from '@/app/_components/server-only/icons'
 import { SearchInput } from '@/app/_components/client-only/input/search'
 import { CommonNavbarProps } from './types'
-import { LANDING_PATH } from '@/config/site'
+import { LANDING_PATH } from '@/config'
 import { Kbd } from '@nextui-org/kbd'
 import { PrefixComp } from './side'
 

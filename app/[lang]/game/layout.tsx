@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { LANDING_PATH, siteConfig } from '@/config/site'
+import { LANDING_PATH, siteConfig } from '@/config'
 import CommonNavbar from '@/app/_components/server-client/navbar'
 import {
   docWrapper,

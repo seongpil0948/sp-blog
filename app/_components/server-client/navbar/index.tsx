@@ -3,7 +3,7 @@ import { CommonNavbarProps } from './types'
 import { clsx, type ClassValue } from 'clsx'
 import { navbar } from './theme'
 import { getTree } from '@/app/_utils/dir-tree'
-import { LANDING_PATH, siteConfig } from '@/config/site'
+import { LANDING_PATH, siteConfig } from '@/config'
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
