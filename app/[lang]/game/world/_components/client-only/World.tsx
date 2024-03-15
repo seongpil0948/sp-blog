@@ -13,42 +13,11 @@ export default function World() {
 
   useEffect(() => {
     if (!canvasRef.current) return
-    // Texture
-    const textureLoader = new THREE.TextureLoader()
-    const floorTexture = textureLoader.load('/image/grid.png')
-    floorTexture.wrapS = THREE.RepeatWrapping
-    floorTexture.wrapT = THREE.RepeatWrapping
-    floorTexture.repeat.x = 10
-    floorTexture.repeat.y = 10
-
-    // Renderer
     const canvas = canvasRef.current
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-    })
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1)
-    renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
-
-    // Scene
+    const renderer = getRenderer(canvas)
     const scene = new THREE.Scene()
-
-    // Camera
-    const camera = new THREE.OrthographicCamera(
-      -(window.innerWidth / window.innerHeight), // left
-      window.innerWidth / window.innerHeight, // right,
-      1, // top
-      -1, // bottom
-      -1000,
-      1000,
-    )
-
     const cameraPosition = new THREE.Vector3(1, 5, 5)
-    camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z)
-    camera.zoom = 0.2
-    camera.updateProjectionMatrix()
+    const camera = getCamera.orthographic(cameraPosition)
     scene.add(camera)
 
     // // Controls
@@ -64,68 +33,20 @@ export default function World() {
     // Light
     const ambientLight = new THREE.AmbientLight('white', 1)
     scene.add(ambientLight)
-
-    const directionalLight = new THREE.DirectionalLight('white', 0.5)
-    const directionalLightOriginPosition = new THREE.Vector3(1, 1, 1)
-    directionalLight.position.x = directionalLightOriginPosition.x
-    directionalLight.position.y = directionalLightOriginPosition.y
-    directionalLight.position.z = directionalLightOriginPosition.z
-    directionalLight.castShadow = true
-
-    // mapSize 세팅으로 그림자 퀄리티 설정
-    directionalLight.shadow.mapSize.width = 2048
-    directionalLight.shadow.mapSize.height = 2048
-    // 그림자 범위
-    directionalLight.shadow.camera.left = -100
-    directionalLight.shadow.camera.right = 100
-    directionalLight.shadow.camera.top = 100
-    directionalLight.shadow.camera.bottom = -100
-    directionalLight.shadow.camera.near = -100
-    directionalLight.shadow.camera.far = 100
+    const directionalLight = getDirectionalLight()
     scene.add(directionalLight)
 
     // Mesh
     const meshes: THREE.Mesh[] = []
-    const floorMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshStandardMaterial({
-        map: floorTexture,
-      }),
-    )
-    floorMesh.name = 'floor'
-    floorMesh.rotation.x = -Math.PI / 2
-    floorMesh.receiveShadow = true
+    const floorMesh = meshFactory.floor()
     scene.add(floorMesh)
     meshes.push(floorMesh)
-
-    const pointerMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({
-        color: 'crimson',
-        transparent: true,
-        opacity: 0.5,
-      }),
-    )
-    pointerMesh.rotation.x = -Math.PI / 2
-    pointerMesh.position.y = 0.01
-    pointerMesh.receiveShadow = true
+    const pointerMesh = meshFactory.pointer()
     scene.add(pointerMesh)
-
-    const spotMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(3, 3),
-      new THREE.MeshStandardMaterial({
-        color: 'yellow',
-        transparent: true,
-        opacity: 0.5,
-      }),
-    )
-    spotMesh.position.set(5, 0.005, 5)
-    spotMesh.rotation.x = -Math.PI / 2
-    spotMesh.receiveShadow = true
+    const spotMesh = meshFactory.spot()
     scene.add(spotMesh)
 
     const gltfLoader = new GLTFLoader()
-
     const house = new House({
       gltfLoader,
       scene,
@@ -134,7 +55,6 @@ export default function World() {
       y: -1.3,
       z: 2,
     })
-
     const player = new Player({
       scene,
       meshes,
@@ -290,23 +210,24 @@ export default function World() {
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       console.log(e)
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        console.info('위로')
-        // destinationPoint.x = player.modelMesh.position.x +
         destinationPoint.z = player.modelMesh.position.z - 5
         player.moving = true
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        console.info('아래로')
         destinationPoint.z = player.modelMesh.position.z + 5
         player.moving = true
       } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        console.info('왼쪽으로')
         destinationPoint.x = player.modelMesh.position.x - 5
         player.moving = true
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        console.info('오른쪽으로')
         destinationPoint.x = player.modelMesh.position.x + 5
         player.moving = true
       }
+
+      // space 키일 경우 카메라를 perspective로 변경
+      if (e.key === ' ') {
+        console.log('space, go to perspective')
+      }
+
       if (player.moving) {
         player.modelMesh.lookAt(destinationPoint)
         pointerMesh.position.x = destinationPoint.x
@@ -327,4 +248,117 @@ export default function World() {
       }}
     ></canvas>
   )
+}
+
+function getDirectionalLight() {
+  const directionalLight = new THREE.DirectionalLight('white', 0.5)
+  const directionalLightOriginPosition = new THREE.Vector3(1, 1, 1)
+  directionalLight.position.x = directionalLightOriginPosition.x
+  directionalLight.position.y = directionalLightOriginPosition.y
+  directionalLight.position.z = directionalLightOriginPosition.z
+  directionalLight.castShadow = true
+
+  // mapSize 세팅으로 그림자 퀄리티 설정
+  directionalLight.shadow.mapSize.width = 2048
+  directionalLight.shadow.mapSize.height = 2048
+  // 그림자 범위
+  directionalLight.shadow.camera.left = -100
+  directionalLight.shadow.camera.right = 100
+  directionalLight.shadow.camera.top = 100
+  directionalLight.shadow.camera.bottom = -100
+  directionalLight.shadow.camera.near = -100
+  directionalLight.shadow.camera.far = 100
+  return directionalLight
+}
+
+const getCamera = {
+  perspective: () => {
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    )
+    camera.position.z = 5
+    return camera
+  },
+  orthographic: (postion: THREE.Vector3) => {
+    const camera = new THREE.OrthographicCamera(
+      -(window.innerWidth / window.innerHeight), // left
+      window.innerWidth / window.innerHeight, // right,
+      1, // top
+      -1, // bottom
+      -1000,
+      1000,
+    )
+    camera.position.set(...postion.toArray())
+    camera.zoom = 0.2
+    camera.updateProjectionMatrix()
+    return camera
+  },
+}
+
+function getRenderer(canvas: HTMLCanvasElement) {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+  })
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1)
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  return renderer
+}
+
+const meshFactory = {
+  floor: () => {
+    const floorMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.MeshStandardMaterial({
+        map: getGridImg(),
+      }),
+    )
+    floorMesh.name = 'floor'
+    floorMesh.rotation.x = -Math.PI / 2
+    floorMesh.receiveShadow = true
+    return floorMesh
+  },
+  pointer: () => {
+    const pointerMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        color: 'crimson',
+        transparent: true,
+        opacity: 0.5,
+      }),
+    )
+    pointerMesh.rotation.x = -Math.PI / 2
+    pointerMesh.position.y = 0.01
+    pointerMesh.receiveShadow = true
+    return pointerMesh
+  },
+  spot: () => {
+    const spotMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(3, 3),
+      new THREE.MeshStandardMaterial({
+        color: 'yellow',
+        transparent: true,
+        opacity: 0.5,
+      }),
+    )
+    spotMesh.position.set(5, 0.005, 5)
+    spotMesh.rotation.x = -Math.PI / 2
+    spotMesh.receiveShadow = true
+    return spotMesh
+  },
+}
+
+const getGridImg = () => {
+  const textureLoader = new THREE.TextureLoader()
+  const floorTexture = textureLoader.load('/image/grid.png')
+  floorTexture.wrapS = THREE.RepeatWrapping
+  floorTexture.wrapT = THREE.RepeatWrapping
+  floorTexture.repeat.x = 10
+  floorTexture.repeat.y = 10
+  return floorTexture
 }
