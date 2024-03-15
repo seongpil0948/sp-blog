@@ -1,4 +1,5 @@
-export class House {
+'use client'
+export default class House {
   x: number;
   y: number;
   z: number;
