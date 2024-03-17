@@ -2,58 +2,32 @@
 
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
 import gsap from 'gsap'
-import House from '../../_logic/House'
-import Player from '../../_logic/Player'
 import StateVillage from '../../_logic/Village'
 
 export default function World() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const s = new StateVillage({ canvasRef })
-    if (!s.isInitialized) return
-
+    if (!canvasRef.current) return
+    const s = new StateVillage({ canvasRef, cameraMode: 'orthographic' })
     const renderer = getRenderer(s.canvas)
-    const scene = new THREE.Scene()
-    const cameraPosition = new THREE.Vector3(1, 5, 5)
-    const camera = getCamera.orthographic(cameraPosition)
-    scene.add(camera)
+    // cameraPerspective.position.x = s.player.modelMesh?.position.x
+    // cameraPerspective.position.z = s.player.modelMesh?.position.z + 5
+    s.scene.add(s.camera.orthographic)
 
-    // Light
-    const ambientLight = new THREE.AmbientLight('white', 1)
-    scene.add(ambientLight)
-    const directionalLight = getDirectionalLight()
-    scene.add(directionalLight)
+    s.scene.add(s.light.ambient)
+    s.scene.add(s.light.directional)
 
     // Mesh
-    const meshes: THREE.Mesh[] = []
-    const floorMesh = meshFactory.floor()
-    scene.add(floorMesh)
-    meshes.push(floorMesh)
-    const pointerMesh = meshFactory.pointer()
-    scene.add(pointerMesh)
-    const spotMesh = meshFactory.spot()
-    scene.add(spotMesh)
 
-    const gltfLoader = new GLTFLoader()
-    const house = new House({
-      gltfLoader,
-      scene,
-      modelSrc: '/glb/house.glb',
-      x: 5,
-      y: -1.3,
-      z: 2,
-    })
-    const player = new Player({
-      scene,
-      meshes,
-      gltfLoader,
-      // modelSrc: '/glb/ilbuni.glb',
-      modelSrc: '/glb/ilbuni.glb',
-    })
+    const floorMesh = meshFactory.floor()
+    s.scene.add(floorMesh)
+    s.meshes.push(floorMesh)
+    const pointerMesh = meshFactory.pointer()
+    s.scene.add(pointerMesh)
+    const spotMesh = meshFactory.spot()
+    s.scene.add(spotMesh)
 
     const raycaster = new THREE.Raycaster()
     let destinationPoint = new THREE.Vector3()
@@ -65,77 +39,73 @@ export default function World() {
     function draw() {
       const delta = clock.getDelta()
 
-      if (player.mixer) player.mixer.update(delta)
+      if (s.player.mixer) s.player.mixer.update(delta)
 
-      if (player.isInitialized) {
-        camera.lookAt(player.modelMesh.position)
+      if (s.player.isInitialized) {
+        s.camera.orthographic.lookAt(s.player.modelMesh.position)
         if (s.isPressed) {
           raycasting()
         }
 
-        if (player.moving) {
+        if (s.player.moving) {
           // 걸어가는 상태
-          angle = player.getAngle(destinationPoint)
-          player.moveTo(angle, cameraPosition, camera)
+          angle = s.player.getAngle(destinationPoint)
+          s.player.moveTo(angle, s.cameraPosition, s.camera.orthographic)
 
-          if (player.isCloseTo(destinationPoint)) {
-            player.moving = false
-            console.log('멈춤')
+          if (s.player.isCloseTo(destinationPoint)) {
+            s.player.moving = false
           }
 
-          if (player.isOnTheSpot(spotMesh.position)) {
-            if (!house.visible) {
-              console.log('나와')
-              house.visible = true
+          if (s.player.isOnTheSpot(spotMesh.position)) {
+            if (!s.house.visible) {
+              s.house.visible = true
               spotMesh.material.color.set('seagreen')
-              gsap.to(house.modelMesh.position, {
+              gsap.to(s.house.modelMesh.position, {
                 duration: 1,
                 y: 1,
                 ease: 'Bounce.easeOut',
               })
-              gsap.to(camera.position, {
+              gsap.to(s.camera.orthographic.position, {
                 duration: 1,
                 y: 3,
               })
             }
-          } else if (house.visible) {
-            console.log('들어가')
-            house.visible = false
+          } else if (s.house.visible) {
+            s.house.visible = false
             spotMesh.material.color.set('yellow')
-            gsap.to(house.modelMesh.position, {
+            gsap.to(s.house.modelMesh.position, {
               duration: 0.5,
               y: -1.3,
             })
-            gsap.to(camera.position, {
+            gsap.to(s.camera.orthographic.position, {
               duration: 1,
               y: 5,
             })
           }
         } else {
           // 서 있는 상태
-          if (player.actions) {
-            player.actions[1].stop()
-            player.actions[0].play()
+          if (s.player.actions) {
+            s.player.actions[1].stop()
+            s.player.actions[0].play()
           }
         }
       }
-
-      renderer.render(scene, camera)
+      renderer.render(s.scene, s.camera.orthographic)
       renderer.setAnimationLoop(draw)
     }
 
     function checkIntersects() {
-      // raycaster.setFromCamera(mouse, camera);
+      // raycaster.setFromCamera(mouse, s.camera);
 
-      const intersects = raycaster.intersectObjects(meshes)
+      const intersects = raycaster.intersectObjects(s.meshes)
       for (const item of intersects) {
-        if (item.object.name === 'floor' && player.modelMesh) {
+        if (item.object.name === 'floor' && s.player.modelMesh) {
           destinationPoint.x = item.point.x
           destinationPoint.y = 0.3
           destinationPoint.z = item.point.z
-          player.modelMesh.lookAt(destinationPoint)
+          s.player.modelMesh.lookAt(destinationPoint)
           // console.log(item.point)
-          player.moving = true
+          s.player.moving = true
           pointerMesh.position.x = destinationPoint.x
           pointerMesh.position.z = destinationPoint.z
         }
@@ -144,14 +114,14 @@ export default function World() {
     }
 
     function setSize() {
-      camera.left = -(window.innerWidth / window.innerHeight)
-      camera.right = window.innerWidth / window.innerHeight
-      camera.top = 1
-      camera.bottom = -1
+      s.camera.orthographic.left = -(window.innerWidth / window.innerHeight)
+      s.camera.orthographic.right = window.innerWidth / window.innerHeight
+      s.camera.orthographic.top = 1
+      s.camera.orthographic.bottom = -1
 
-      camera.updateProjectionMatrix()
+      s.camera.orthographic.updateProjectionMatrix()
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.render(scene, camera)
+      renderer.render(s.scene, s.cameraCurrent)
     }
     // 마우스 좌표를 three.js에 맞게 변환
     function calculateMousePosition(e: MouseEvent | Touch) {
@@ -163,23 +133,22 @@ export default function World() {
 
     // 변환된 마우스 좌표를 이용해 래이캐스팅
     function raycasting() {
-      raycaster.setFromCamera(s.mouse, camera)
+      raycaster.setFromCamera(s.mouse, s.cameraCurrent)
       checkIntersects()
     }
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log(e)
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        destinationPoint.z = player.modelMesh.position.z - 5
-        player.moving = true
+        destinationPoint.z = s.player.modelMesh.position.z - 5
+        s.player.moving = true
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        destinationPoint.z = player.modelMesh.position.z + 5
-        player.moving = true
+        destinationPoint.z = s.player.modelMesh.position.z + 5
+        s.player.moving = true
       } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        destinationPoint.x = player.modelMesh.position.x - 5
-        player.moving = true
+        destinationPoint.x = s.player.modelMesh.position.x - 5
+        s.player.moving = true
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        destinationPoint.x = player.modelMesh.position.x + 5
-        player.moving = true
+        destinationPoint.x = s.player.modelMesh.position.x + 5
+        s.player.moving = true
       }
 
       // space 키일 경우 카메라를 perspective로 변경
@@ -187,8 +156,8 @@ export default function World() {
         console.log('space, go to perspective')
       }
 
-      if (player.moving) {
-        player.modelMesh.lookAt(destinationPoint)
+      if (s.player.moving) {
+        s.player.modelMesh.lookAt(destinationPoint)
         pointerMesh.position.x = destinationPoint.x
         pointerMesh.position.z = destinationPoint.z
       }
@@ -249,54 +218,6 @@ export default function World() {
       }}
     ></canvas>
   )
-}
-
-function getDirectionalLight() {
-  const directionalLight = new THREE.DirectionalLight('white', 0.5)
-  const directionalLightOriginPosition = new THREE.Vector3(1, 1, 1)
-  directionalLight.position.x = directionalLightOriginPosition.x
-  directionalLight.position.y = directionalLightOriginPosition.y
-  directionalLight.position.z = directionalLightOriginPosition.z
-  directionalLight.castShadow = true
-
-  // mapSize 세팅으로 그림자 퀄리티 설정
-  directionalLight.shadow.mapSize.width = 2048
-  directionalLight.shadow.mapSize.height = 2048
-  // 그림자 범위
-  directionalLight.shadow.camera.left = -100
-  directionalLight.shadow.camera.right = 100
-  directionalLight.shadow.camera.top = 100
-  directionalLight.shadow.camera.bottom = -100
-  directionalLight.shadow.camera.near = -100
-  directionalLight.shadow.camera.far = 100
-  return directionalLight
-}
-
-const getCamera = {
-  perspective: () => {
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000,
-    )
-    camera.position.z = 5
-    return camera
-  },
-  orthographic: (postion: THREE.Vector3) => {
-    const camera = new THREE.OrthographicCamera(
-      -(window.innerWidth / window.innerHeight), // left
-      window.innerWidth / window.innerHeight, // right,
-      1, // top
-      -1, // bottom
-      -1000,
-      1000,
-    )
-    camera.position.set(...postion.toArray())
-    camera.zoom = 0.2
-    camera.updateProjectionMatrix()
-    return camera
-  },
 }
 
 function getRenderer(canvas: HTMLCanvasElement, isShadow = true) {
