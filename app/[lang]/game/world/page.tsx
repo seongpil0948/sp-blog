@@ -1,6 +1,6 @@
 import { AVAIL_LOCALES, TAvailLocale } from '@/config/system'
 import { getDictionary } from '../../dictionaries'
-import SPWorld from './_components/client-only/World'
+import Village from './_components/client-only/Village'
 
 export async function generateStaticParams() {
   return AVAIL_LOCALES.map((lang) => ({ lang }))
@@ -20,7 +20,7 @@ export default async function SSGPage({ params: { lang } }: Param) {
         margin: '0',
       }}
     >
-      <SPWorld />
+      <Village />
     </div>
   )
 }

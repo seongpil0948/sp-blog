@@ -7,28 +7,20 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import gsap from 'gsap'
 import House from '../../_logic/House'
 import Player from '../../_logic/Player'
+import StateVillage from '../../_logic/Village'
 
 export default function World() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (!canvasRef.current) return
-    const canvas = canvasRef.current
-    const renderer = getRenderer(canvas)
+    const s = new StateVillage({ canvasRef })
+    if (!s.isInitialized) return
+
+    const renderer = getRenderer(s.canvas)
     const scene = new THREE.Scene()
     const cameraPosition = new THREE.Vector3(1, 5, 5)
     const camera = getCamera.orthographic(cameraPosition)
     scene.add(camera)
-
-    // // Controls
-    // const controls = new PointerLockControls(camera, renderer.domElement)
-    // window.addEventListener('keyup', (e) => {
-    //   console.info(e.key)
-    //   if (e.key === 'v') {
-    //     console.log(controls.isLocked)
-    //     controls.isLocked ? controls.unlock() : controls.lock()
-    //   }
-    // })
 
     // Light
     const ambientLight = new THREE.AmbientLight('white', 1)
@@ -64,10 +56,8 @@ export default function World() {
     })
 
     const raycaster = new THREE.Raycaster()
-    let mouse = new THREE.Vector2()
     let destinationPoint = new THREE.Vector3()
     let angle = 0
-    let isPressed = false // 마우스를 누르고 있는 상태
 
     // 그리기
     const clock = new THREE.Clock()
@@ -79,7 +69,7 @@ export default function World() {
 
       if (player.isInitialized) {
         camera.lookAt(player.modelMesh.position)
-        if (isPressed) {
+        if (s.isPressed) {
           raycasting()
         }
 
@@ -163,51 +153,20 @@ export default function World() {
       renderer.setSize(window.innerWidth, window.innerHeight)
       renderer.render(scene, camera)
     }
-
-    // 이벤트
-    window.addEventListener('resize', setSize)
-
     // 마우스 좌표를 three.js에 맞게 변환
     function calculateMousePosition(e: MouseEvent | Touch) {
-      mouse.x = (e.clientX / canvas.clientWidth) * 2 - 1
-      mouse.y = -((e.clientY / canvas.clientHeight) * 2 - 1)
+      s.mouse = new THREE.Vector2(
+        (e.clientX / s.canvas.clientWidth) * 2 - 1,
+        -((e.clientY / s.canvas.clientHeight) * 2 - 1),
+      )
     }
 
     // 변환된 마우스 좌표를 이용해 래이캐스팅
     function raycasting() {
-      raycaster.setFromCamera(mouse, camera)
+      raycaster.setFromCamera(s.mouse, camera)
       checkIntersects()
     }
-
-    // 마우스 이벤트
-    canvas.addEventListener('mousedown', (e) => {
-      isPressed = true
-      calculateMousePosition(e)
-    })
-    canvas.addEventListener('mouseup', () => {
-      isPressed = false
-    })
-    canvas.addEventListener('mousemove', (e) => {
-      if (isPressed) {
-        calculateMousePosition(e)
-      }
-    })
-
-    // 터치 이벤트
-    canvas.addEventListener('touchstart', (e) => {
-      isPressed = true
-      calculateMousePosition(e.touches[0])
-    })
-    canvas.addEventListener('touchend', () => {
-      isPressed = false
-    })
-    canvas.addEventListener('touchmove', (e) => {
-      if (isPressed) {
-        calculateMousePosition(e.touches[0])
-      }
-    })
-
-    window.addEventListener('keydown', (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       console.log(e)
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         destinationPoint.z = player.modelMesh.position.z - 5
@@ -233,9 +192,51 @@ export default function World() {
         pointerMesh.position.x = destinationPoint.x
         pointerMesh.position.z = destinationPoint.z
       }
-    })
+    }
+    const handleMouseDown = (e: MouseEvent) => {
+      s.isPressed = true
+      calculateMousePosition(e)
+    }
+    const handleMouseUp = () => {
+      s.isPressed = false
+    }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (s.isPressed) {
+        calculateMousePosition(e)
+      }
+    }
+    const handleTouchStart = (e: TouchEvent) => {
+      s.isPressed = true
+      calculateMousePosition(e.touches[0])
+    }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (s.isPressed) {
+        calculateMousePosition(e.touches[0])
+      }
+    }
+    const handleTouchEnd = () => {
+      s.isPressed = false
+    }
+    window.addEventListener('resize', setSize)
+    s.canvas.addEventListener('mousedown', handleMouseDown)
+    s.canvas.addEventListener('mouseup', handleMouseUp)
+    s.canvas.addEventListener('mousemove', handleMouseMove)
+    s.canvas.addEventListener('touchstart', handleTouchStart, { passive: true })
+    s.canvas.addEventListener('touchend', handleTouchEnd)
+    s.canvas.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('keydown', handleKeyDown)
 
     draw()
+    return () => {
+      window.removeEventListener('resize', setSize)
+      s.canvas.removeEventListener('mousedown', handleMouseDown)
+      s.canvas.removeEventListener('mouseup', handleMouseUp)
+      s.canvas.removeEventListener('mousemove', handleMouseMove)
+      s.canvas.removeEventListener('touchstart', handleTouchStart)
+      s.canvas.removeEventListener('touchend', handleTouchEnd)
+      s.canvas.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   })
 
   return (
@@ -298,15 +299,17 @@ const getCamera = {
   },
 }
 
-function getRenderer(canvas: HTMLCanvasElement) {
+function getRenderer(canvas: HTMLCanvasElement, isShadow = true) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
   })
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1)
-  renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  if (isShadow) {
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  }
   return renderer
 }
 
