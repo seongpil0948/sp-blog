@@ -1,5 +1,5 @@
 import { RefObject } from "react"
-import { AmbientLight, Camera, DirectionalLight, Mesh, OrthographicCamera, PerspectiveCamera, Scene, Vector2, Vector3 } from "three"
+import { AmbientLight, Camera, DirectionalLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PlaneGeometry, RepeatWrapping, Scene, TextureLoader, Vector2, Vector3 } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import House from "./House"
 import Player from "./Player"
@@ -16,13 +16,19 @@ export default class StateVillage {
   private _mouse = new Vector2()
   private _canvasRef: RefObject<HTMLCanvasElement>
   private _isPerspective = true
-  private cameraMode: CameraMode = 'orthographic'
+  private _cameraMode
+  private _destinationPoint?: Vector3
+  public floorMesh = meshFactory.floor()
+  public pointerMesh = meshFactory.pointer()
+  public spotMesh = meshFactory.spot()
+
   public house: House
   public player: Player
   public meshes: Mesh[] = []
 
+
   public scene: Scene
-  private _cameraPosition: { [k in CameraMode]: Vector3 } = {
+  public cameraPosition: { [k in CameraMode]: Vector3 } = {
     perspective: new Vector3(0, 0, 5),
     orthographic: new Vector3(1, 5, 5),
   }
@@ -36,11 +42,9 @@ export default class StateVillage {
     orthographic: OrthographicCamera
   }
 
-
-
   constructor(p: ConstructorParam) {
     this._canvasRef = p.canvasRef
-    this.cameraMode = p.cameraMode
+    this._cameraMode = p.cameraMode
     this.scene = new Scene()
     this.gltfLoader = new GLTFLoader()
     this.house = new House({
@@ -59,15 +63,42 @@ export default class StateVillage {
       modelSrc: '/glb/ilbuni.glb',
     })
     this.camera = {
-      perspective: getCamera.perspective(this._cameraPosition.perspective),
-      orthographic: getCamera.orthographic(this._cameraPosition.orthographic),
+      perspective: getCamera.perspective(this.cameraPosition.perspective),
+      orthographic: getCamera.orthographic(this.cameraPosition.orthographic),
     }
+
+    this.scene.add(
+      this.camera.orthographic,
+      this.camera.perspective,
+      this.light.ambient,
+      this.light.directional,
+      this.floorMesh,
+      this.pointerMesh,
+      this.spotMesh,
+    )
+    this.meshes.push(this.floorMesh)
   }
 
-  public get cameraPosition() {
-    return this.cameraMode === 'perspective'
-      ? this._cameraPosition.perspective
-      : this._cameraPosition.orthographic
+  lookAt() {
+    if (!this._destinationPoint) {
+      this._destinationPoint = this.player.modelMesh.position
+    }
+    this.camera.perspective.lookAt(this._destinationPoint)
+    this.camera.orthographic.lookAt(this._destinationPoint)
+  }
+
+  public set destinationPoint(value: Vector3) {
+    this._destinationPoint = value
+    this.player.modelMesh.lookAt(this.destinationPoint)
+    this.player.moving = true
+  }
+
+
+  public get cameraMode() {
+    return this._cameraMode
+  }
+  public set cameraMode(value: CameraMode) {
+    this._cameraMode = value
   }
 
   public get cameraCurrent() {
@@ -86,7 +117,6 @@ export default class StateVillage {
   public set isPerspective(value: boolean) {
     this._isPerspective = value
   }
-
 
   public get canvas(): HTMLCanvasElement {
     if (!this._canvasRef.current) {
@@ -157,4 +187,57 @@ function getDirectionalLight() {
   directionalLight.shadow.camera.near = -100
   directionalLight.shadow.camera.far = 100
   return directionalLight
+}
+
+const meshFactory = {
+  floor: () => {
+    const floorMesh = new Mesh(
+      new PlaneGeometry(100, 100),
+      new MeshStandardMaterial({
+        map: getGridImg(),
+      }),
+    )
+    floorMesh.name = 'floor'
+    floorMesh.rotation.x = -Math.PI / 2
+    floorMesh.receiveShadow = true
+    return floorMesh
+  },
+  pointer: () => {
+    const pointerMesh = new Mesh(
+      new PlaneGeometry(1, 1),
+      new MeshBasicMaterial({
+        color: 'crimson',
+        transparent: true,
+        opacity: 0.5,
+      }),
+    )
+    pointerMesh.rotation.x = -Math.PI / 2
+    pointerMesh.position.y = 0.01
+    pointerMesh.receiveShadow = true
+    return pointerMesh
+  },
+  spot: () => {
+    const spotMesh = new Mesh(
+      new PlaneGeometry(3, 3),
+      new MeshStandardMaterial({
+        color: 'yellow',
+        transparent: true,
+        opacity: 0.5,
+      }),
+    )
+    spotMesh.position.set(5, 0.005, 5)
+    spotMesh.rotation.x = -Math.PI / 2
+    spotMesh.receiveShadow = true
+    return spotMesh
+  },
+}
+
+const getGridImg = () => {
+  const textureLoader = new TextureLoader()
+  const floorTexture = textureLoader.load('/image/grid.png')
+  floorTexture.wrapS = RepeatWrapping
+  floorTexture.wrapT = RepeatWrapping
+  floorTexture.repeat.x = 10
+  floorTexture.repeat.y = 10
+  return floorTexture
 }

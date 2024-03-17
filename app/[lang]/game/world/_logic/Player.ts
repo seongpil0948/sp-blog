@@ -103,8 +103,6 @@ export default class Player {
 	}
 
 	moveTo(angle: number, cameraPosition: Vector3, camera: Camera) {
-		this.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
-		this.modelMesh.position.z += Math.sin(angle) * CONFIG.player.speed
 		camera.position.x = cameraPosition.x + this.modelMesh.position.x
 		camera.position.z = cameraPosition.z + this.modelMesh.position.z
 		this.actDefault.stop()

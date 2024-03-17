@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import StateVillage from '../../_logic/Village'
+import CONFIG from '../../config'
 
 export default function World() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -14,20 +15,6 @@ export default function World() {
     const renderer = getRenderer(s.canvas)
     // cameraPerspective.position.x = s.player.modelMesh?.position.x
     // cameraPerspective.position.z = s.player.modelMesh?.position.z + 5
-    s.scene.add(s.camera.orthographic)
-
-    s.scene.add(s.light.ambient)
-    s.scene.add(s.light.directional)
-
-    // Mesh
-
-    const floorMesh = meshFactory.floor()
-    s.scene.add(floorMesh)
-    s.meshes.push(floorMesh)
-    const pointerMesh = meshFactory.pointer()
-    s.scene.add(pointerMesh)
-    const spotMesh = meshFactory.spot()
-    s.scene.add(spotMesh)
 
     const raycaster = new THREE.Raycaster()
     let destinationPoint = new THREE.Vector3()
@@ -35,31 +22,35 @@ export default function World() {
 
     // 그리기
     const clock = new THREE.Clock()
-
     function draw() {
       const delta = clock.getDelta()
-
       if (s.player.mixer) s.player.mixer.update(delta)
-
       if (s.player.isInitialized) {
-        s.camera.orthographic.lookAt(s.player.modelMesh.position)
         if (s.isPressed) {
           raycasting()
         }
 
+        s.lookAt()
         if (s.player.moving) {
           // 걸어가는 상태
           angle = s.player.getAngle(destinationPoint)
-          s.player.moveTo(angle, s.cameraPosition, s.camera.orthographic)
+          s.player.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
+          s.player.modelMesh.position.z += Math.sin(angle) * CONFIG.player.speed
+
+          s.player.moveTo(
+            angle,
+            s.cameraPosition.orthographic,
+            s.camera.orthographic,
+          )
 
           if (s.player.isCloseTo(destinationPoint)) {
             s.player.moving = false
           }
 
-          if (s.player.isOnTheSpot(spotMesh.position)) {
+          if (s.player.isOnTheSpot(s.spotMesh.position)) {
             if (!s.house.visible) {
               s.house.visible = true
-              spotMesh.material.color.set('seagreen')
+              s.spotMesh.material.color.set('seagreen')
               gsap.to(s.house.modelMesh.position, {
                 duration: 1,
                 y: 1,
@@ -72,7 +63,7 @@ export default function World() {
             }
           } else if (s.house.visible) {
             s.house.visible = false
-            spotMesh.material.color.set('yellow')
+            s.spotMesh.material.color.set('yellow')
             gsap.to(s.house.modelMesh.position, {
               duration: 0.5,
               y: -1.3,
@@ -90,36 +81,37 @@ export default function World() {
           }
         }
       }
-      renderer.render(s.scene, s.camera.orthographic)
+      renderer.render(s.scene, s.cameraCurrent)
       renderer.setAnimationLoop(draw)
     }
 
     function checkIntersects() {
-      // raycaster.setFromCamera(mouse, s.camera);
-
       const intersects = raycaster.intersectObjects(s.meshes)
       for (const item of intersects) {
         if (item.object.name === 'floor' && s.player.modelMesh) {
-          destinationPoint.x = item.point.x
-          destinationPoint.y = 0.3
-          destinationPoint.z = item.point.z
-          s.player.modelMesh.lookAt(destinationPoint)
-          // console.log(item.point)
-          s.player.moving = true
-          pointerMesh.position.x = destinationPoint.x
-          pointerMesh.position.z = destinationPoint.z
+          s.destinationPoint = new THREE.Vector3(
+            item.point.x,
+            0.3,
+            item.point.z,
+          )
+          s.pointerMesh.position.x = destinationPoint.x
+          s.pointerMesh.position.z = destinationPoint.z
         }
         break
       }
     }
 
     function setSize() {
-      s.camera.orthographic.left = -(window.innerWidth / window.innerHeight)
-      s.camera.orthographic.right = window.innerWidth / window.innerHeight
+      const aspect = window.innerWidth / window.innerHeight
+      s.camera.orthographic.left = -aspect
+      s.camera.orthographic.right = aspect
       s.camera.orthographic.top = 1
       s.camera.orthographic.bottom = -1
-
       s.camera.orthographic.updateProjectionMatrix()
+
+      s.camera.perspective.aspect = aspect
+      s.camera.perspective.updateProjectionMatrix()
+
       renderer.setSize(window.innerWidth, window.innerHeight)
       renderer.render(s.scene, s.cameraCurrent)
     }
@@ -158,8 +150,8 @@ export default function World() {
 
       if (s.player.moving) {
         s.player.modelMesh.lookAt(destinationPoint)
-        pointerMesh.position.x = destinationPoint.x
-        pointerMesh.position.z = destinationPoint.z
+        s.pointerMesh.position.x = destinationPoint.x
+        s.pointerMesh.position.z = destinationPoint.z
       }
     }
     const handleMouseDown = (e: MouseEvent) => {
@@ -232,57 +224,4 @@ function getRenderer(canvas: HTMLCanvasElement, isShadow = true) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
   }
   return renderer
-}
-
-const meshFactory = {
-  floor: () => {
-    const floorMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshStandardMaterial({
-        map: getGridImg(),
-      }),
-    )
-    floorMesh.name = 'floor'
-    floorMesh.rotation.x = -Math.PI / 2
-    floorMesh.receiveShadow = true
-    return floorMesh
-  },
-  pointer: () => {
-    const pointerMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({
-        color: 'crimson',
-        transparent: true,
-        opacity: 0.5,
-      }),
-    )
-    pointerMesh.rotation.x = -Math.PI / 2
-    pointerMesh.position.y = 0.01
-    pointerMesh.receiveShadow = true
-    return pointerMesh
-  },
-  spot: () => {
-    const spotMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(3, 3),
-      new THREE.MeshStandardMaterial({
-        color: 'yellow',
-        transparent: true,
-        opacity: 0.5,
-      }),
-    )
-    spotMesh.position.set(5, 0.005, 5)
-    spotMesh.rotation.x = -Math.PI / 2
-    spotMesh.receiveShadow = true
-    return spotMesh
-  },
-}
-
-const getGridImg = () => {
-  const textureLoader = new THREE.TextureLoader()
-  const floorTexture = textureLoader.load('/image/grid.png')
-  floorTexture.wrapS = THREE.RepeatWrapping
-  floorTexture.wrapT = THREE.RepeatWrapping
-  floorTexture.repeat.x = 10
-  floorTexture.repeat.y = 10
-  return floorTexture
 }
