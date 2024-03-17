@@ -87,8 +87,14 @@ export default class StateVillage {
     this.camera.orthographic.lookAt(this._destinationPoint)
   }
 
+  public get destinationPoint() {
+    return this._destinationPoint ?? this.player.modelMesh.position
+  }
   public set destinationPoint(value: Vector3) {
     this._destinationPoint = value
+    this.pointerMesh.position.x = value.x
+    this.pointerMesh.position.z = value.z
+
     this.player.modelMesh.lookAt(this.destinationPoint)
     this.player.moving = true
   }
@@ -108,7 +114,7 @@ export default class StateVillage {
   }
 
   public get isInitialized(): boolean {
-    return !!this._canvasRef.current
+    return !!this._canvasRef.current && this.player.isInitialized
   }
 
   public get isPerspective(): boolean {

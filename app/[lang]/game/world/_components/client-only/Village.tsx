@@ -17,7 +17,6 @@ export default function World() {
     // cameraPerspective.position.z = s.player.modelMesh?.position.z + 5
 
     const raycaster = new THREE.Raycaster()
-    let destinationPoint = new THREE.Vector3()
     let angle = 0
 
     // 그리기
@@ -25,15 +24,16 @@ export default function World() {
     function draw() {
       const delta = clock.getDelta()
       if (s.player.mixer) s.player.mixer.update(delta)
-      if (s.player.isInitialized) {
+      if (s.isInitialized) {
+        s.camera.orthographic.lookAt(s.player.modelMesh.position)
         if (s.isPressed) {
           raycasting()
         }
 
-        s.lookAt()
+        // s.lookAt()
         if (s.player.moving) {
           // 걸어가는 상태
-          angle = s.player.getAngle(destinationPoint)
+          angle = s.player.getAngle(s.destinationPoint)
           s.player.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
           s.player.modelMesh.position.z += Math.sin(angle) * CONFIG.player.speed
 
@@ -43,7 +43,7 @@ export default function World() {
             s.camera.orthographic,
           )
 
-          if (s.player.isCloseTo(destinationPoint)) {
+          if (s.player.isCloseTo(s.destinationPoint)) {
             s.player.moving = false
           }
 
@@ -87,15 +87,14 @@ export default function World() {
 
     function checkIntersects() {
       const intersects = raycaster.intersectObjects(s.meshes)
+      if (!s.isInitialized) return
       for (const item of intersects) {
-        if (item.object.name === 'floor' && s.player.modelMesh) {
+        if (item.object.name === 'floor') {
           s.destinationPoint = new THREE.Vector3(
             item.point.x,
             0.3,
             item.point.z,
           )
-          s.pointerMesh.position.x = destinationPoint.x
-          s.pointerMesh.position.z = destinationPoint.z
         }
         break
       }
@@ -129,17 +128,18 @@ export default function World() {
       checkIntersects()
     }
     const handleKeyDown = (e: KeyboardEvent) => {
+      let d = s.destinationPoint.clone()
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-        destinationPoint.z = s.player.modelMesh.position.z - 5
+        d.z = s.player.modelMesh.position.z - 5
         s.player.moving = true
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-        destinationPoint.z = s.player.modelMesh.position.z + 5
+        d.z = s.player.modelMesh.position.z + 5
         s.player.moving = true
       } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        destinationPoint.x = s.player.modelMesh.position.x - 5
+        d.x = s.player.modelMesh.position.x - 5
         s.player.moving = true
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        destinationPoint.x = s.player.modelMesh.position.x + 5
+        d.x = s.player.modelMesh.position.x + 5
         s.player.moving = true
       }
 
@@ -149,9 +149,7 @@ export default function World() {
       }
 
       if (s.player.moving) {
-        s.player.modelMesh.lookAt(destinationPoint)
-        s.pointerMesh.position.x = destinationPoint.x
-        s.pointerMesh.position.z = destinationPoint.z
+        s.destinationPoint = d
       }
     }
     const handleMouseDown = (e: MouseEvent) => {
