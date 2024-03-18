@@ -23,16 +23,18 @@ export default function World() {
       const delta = clock.getDelta()
       if (s.player.mixer) s.player.mixer.update(delta)
       if (s.isInitialized) {
-        s.beforeRender()
         s.camera.orthographic.lookAt(s.player.modelMesh.position)
-        s.camera.perspective.lookAt(s.player.modelMesh.position)
-        if (s.isPressed) {
-          raycasting()
+        
+        if (s.cameraMode === 'perspective') {
+          s.controls.update()
+        } else {
+          if (s.isPressed) {
+            raycasting()
+          }
         }
-        // s.lookAt()
         if (s.player.moving) {
-          // s.camera.perspective.lookAt(s.destinationPoint)
-          // s.updatePosition()
+          s.updatePosition()
+          s.camera.perspective.lookAt(s.player.modelMesh.position)
           if (s.player.isCloseTo(s.destinationPoint)) {
             s.player.moving = false
           }

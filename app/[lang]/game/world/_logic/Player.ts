@@ -41,6 +41,7 @@ export default class Player {
 
 				this._modelMesh = glb.scene.children[0];
 				this._modelMesh.position.set(...Player.initialPosition.toArray())
+				this._modelMesh.rotateY(Math.PI);
 
 				this._modelMesh.name = 'ilbuni';
 				info.scene.add(this._modelMesh);

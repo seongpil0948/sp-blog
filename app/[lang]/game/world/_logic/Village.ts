@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import House from "./House"
 import Player from "./Player"
 import CONFIG from "../config"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 
 type CameraMode = 'perspective' | 'orthographic'
@@ -30,7 +31,7 @@ export default class StateVillage {
   public meshes: Mesh[] = []
   public scene: Scene
   public cameraPosition: { [k in CameraMode]: Vector3 } = {
-    perspective: new Vector3(0, 1, -2),
+    perspective: new Vector3(0, 1, 2),
     orthographic: new Vector3(1, 5, 5),
   }
   public gltfLoader: GLTFLoader
@@ -42,6 +43,8 @@ export default class StateVillage {
     perspective: PerspectiveCamera
     orthographic: OrthographicCamera
   }
+  public controls: OrbitControls
+
 
   constructor(p: ConstructorParam) {
     this._canvasRef = p.canvasRef
@@ -67,6 +70,7 @@ export default class StateVillage {
       perspective: getCamera.perspective(this.cameraPosition.perspective),
       orthographic: getCamera.orthographic(this.cameraPosition.orthographic),
     }
+    this.controls = new OrbitControls(this.camera.perspective, this.canvas)
 
     this.scene.add(
       this.camera.orthographic,
@@ -86,7 +90,6 @@ export default class StateVillage {
       )
     }
   }
-  beforeRender() { }
   async initialize() {
     if (this._isdebug && !this._isInitialized) {
       this._isInitialized = true
@@ -108,8 +111,9 @@ export default class StateVillage {
     this.camera.orthographic.position.z = this.cameraPosition.orthographic.z + this.player.modelMesh.position.z
     this.camera.perspective.position.x = this.cameraPosition.perspective.x + this.player.modelMesh.position.x
     this.camera.perspective.position.z = (this.cameraPosition.perspective.z + this.player.modelMesh.position.z)
-    // 1인칭 카메라 시점
-    // this.camera.perspective.quaternion.copy(this.player.modelMesh.quaternion)
+    // Camera의 rotation을 player의 rotation으로 설정합니다.
+    // this.camera.perspective.rotation.copy(this.player.modelMesh.rotation);
+    // this.camera.perspective.position.copy(this.player.modelMesh.position);
     this.player.actDefault.stop()
     this.player.actWork.play()
   }
@@ -179,7 +183,6 @@ const getCamera = {
       1000,
     )
     camera.position.set(...postion.toArray())
-    camera.rotateY(-3)
     camera.updateProjectionMatrix()
     return camera
   },
