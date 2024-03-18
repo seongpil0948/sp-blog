@@ -19,17 +19,20 @@ export default function World() {
 
     // 그리기
     const clock = new THREE.Clock()
-    function draw() {
+    function _draw() {
       const delta = clock.getDelta()
       if (s.player.mixer) s.player.mixer.update(delta)
       if (s.isInitialized) {
+        s.beforeRender()
         s.camera.orthographic.lookAt(s.player.modelMesh.position)
+        s.camera.perspective.lookAt(s.player.modelMesh.position)
         if (s.isPressed) {
           raycasting()
         }
         // s.lookAt()
         if (s.player.moving) {
-          s.updatePosition()
+          // s.camera.perspective.lookAt(s.destinationPoint)
+          // s.updatePosition()
           if (s.player.isCloseTo(s.destinationPoint)) {
             s.player.moving = false
           }
@@ -70,6 +73,13 @@ export default function World() {
       }
       renderer.render(s.scene, s.cameraCurrent)
       renderer.setAnimationLoop(draw)
+    }
+    function draw() {
+      if (s.initializable) {
+        s.initialize().then(_draw)
+      } else {
+        _draw()
+      }
     }
 
     function checkIntersects() {

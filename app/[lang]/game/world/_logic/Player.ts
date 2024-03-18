@@ -23,6 +23,7 @@ export default class Player {
 	private _modelMesh?: Object3D
 	private _mixer?: AnimationMixer
 	private _actions?: AnimationAction[]
+	static initialPosition = new Vector3(0, 0.3, 0)
 
 
 	constructor(info: ConstructorParams) {
@@ -39,7 +40,8 @@ export default class Player {
 				});
 
 				this._modelMesh = glb.scene.children[0];
-				this._modelMesh.position.y = 0.3;
+				this._modelMesh.position.set(...Player.initialPosition.toArray())
+
 				this._modelMesh.name = 'ilbuni';
 				info.scene.add(this._modelMesh);
 				info.meshes.push(this._modelMesh);
@@ -53,7 +55,6 @@ export default class Player {
 			}
 		);
 	}
-
 
 	public get isInitialized(): boolean {
 		return !!this._modelMesh

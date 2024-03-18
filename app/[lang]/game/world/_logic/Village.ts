@@ -1,5 +1,6 @@
+'use client'
 import { RefObject } from "react"
-import { AmbientLight, Camera, DirectionalLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PlaneGeometry, RepeatWrapping, Scene, TextureLoader, Vector2, Vector3 } from "three"
+import { AmbientLight, AxesHelper, Camera, DirectionalLight, DirectionalLightHelper, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, PerspectiveCamera, PlaneGeometry, RepeatWrapping, Scene, TextureLoader, Vector2, Vector3 } from "three"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import House from "./House"
 import Player from "./Player"
@@ -21,13 +22,15 @@ export default class StateVillage {
   public floorMesh = meshFactory.floor()
   public pointerMesh = meshFactory.pointer()
   public spotMesh = meshFactory.spot()
+  private _isdebug = true
+  private _isInitialized = false
 
   public house: House
   public player: Player
   public meshes: Mesh[] = []
   public scene: Scene
   public cameraPosition: { [k in CameraMode]: Vector3 } = {
-    perspective: new Vector3(1, 3, -3),
+    perspective: new Vector3(0, 1, -2),
     orthographic: new Vector3(1, 5, 5),
   }
   public gltfLoader: GLTFLoader
@@ -75,15 +78,28 @@ export default class StateVillage {
       this.spotMesh,
     )
     this.meshes.push(this.floorMesh)
+
+    if (this._isdebug) {
+      this.scene.add(
+        new AxesHelper(3),
+        new DirectionalLightHelper(this.light.directional),
+      )
+    }
+  }
+  beforeRender() { }
+  async initialize() {
+    if (this._isdebug && !this._isInitialized) {
+      this._isInitialized = true
+      const dat = await import('dat.gui')
+      const gui = new dat.GUI();
+      gui.add(this.camera.perspective.position, 'x', -5, 5, 0.1).name('카메라 trans X');
+      gui.add(this.camera.perspective.position, 'y', -5, 5, 0.1).name('카메라 trans Y');
+      gui.add(this.camera.perspective.position, 'z', -10, 10, 0.1).name('카메라 trans Z');
+      gui.add(this.camera.perspective.rotation, 'x', -Math.PI, Math.PI, 0.1).name('카메라 rot X');
+      gui.add(this.camera.perspective.rotation, 'y', -Math.PI, Math.PI, 0.1).name('카메라 rot Y');
+    }
   }
 
-  lookAt() {
-    if (!this._destinationPoint) {
-      this._destinationPoint = this.player.modelMesh.position
-    }
-    this.camera.perspective.lookAt(this._destinationPoint)
-    this.camera.orthographic.lookAt(this._destinationPoint)
-  }
   updatePosition() {
     const angle = this.player.getAngle(this.destinationPoint)
     this.player.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
@@ -91,7 +107,7 @@ export default class StateVillage {
     this.camera.orthographic.position.x = this.cameraPosition.orthographic.x + this.player.modelMesh.position.x
     this.camera.orthographic.position.z = this.cameraPosition.orthographic.z + this.player.modelMesh.position.z
     this.camera.perspective.position.x = this.cameraPosition.perspective.x + this.player.modelMesh.position.x
-    this.camera.perspective.position.z = (this.cameraPosition.perspective.z + this.player.modelMesh.position.z) - 3
+    this.camera.perspective.position.z = (this.cameraPosition.perspective.z + this.player.modelMesh.position.z)
     // 1인칭 카메라 시점
     // this.camera.perspective.quaternion.copy(this.player.modelMesh.quaternion)
     this.player.actDefault.stop()
@@ -124,8 +140,12 @@ export default class StateVillage {
       : this.camera.orthographic
   }
 
+  public get initializable() {
+    return !this._isInitialized && !!this._canvasRef.current && this.player.isInitialized && typeof window !== 'undefined'
+  }
+
   public get isInitialized(): boolean {
-    return !!this._canvasRef.current && this.player.isInitialized
+    return this._isInitialized && !!this._canvasRef.current && this.player.isInitialized && typeof window !== 'undefined'
   }
 
   public get canvas(): HTMLCanvasElement {
@@ -159,6 +179,7 @@ const getCamera = {
       1000,
     )
     camera.position.set(...postion.toArray())
+    camera.rotateY(-3)
     camera.updateProjectionMatrix()
     return camera
   },
@@ -251,3 +272,15 @@ const getGridImg = () => {
   floorTexture.repeat.y = 10
   return floorTexture
 }
+
+function getPerspectiveCameraPosition(targetPos: Vector3) {
+  return new Vector3(targetPos.x, targetPos.y + 1, targetPos.z - 2)
+}
+
+// function cameraPositionByPosition(cameraPos: Vector3, tartgetPos: Vector3, mode: CameraMode) {
+//   if (mode==='perspective') {
+//     return position
+//   } else {
+//     return 
+//   }
+// }
