@@ -3,6 +3,7 @@ import { AmbientLight, Camera, DirectionalLight, Mesh, MeshBasicMaterial, MeshSt
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 import House from "./House"
 import Player from "./Player"
+import CONFIG from "../config"
 
 
 type CameraMode = 'perspective' | 'orthographic'
@@ -15,7 +16,6 @@ export default class StateVillage {
   private _isPressed = false
   private _mouse = new Vector2()
   private _canvasRef: RefObject<HTMLCanvasElement>
-  private _isPerspective = true
   private _cameraMode
   private _destinationPoint?: Vector3
   public floorMesh = meshFactory.floor()
@@ -25,11 +25,9 @@ export default class StateVillage {
   public house: House
   public player: Player
   public meshes: Mesh[] = []
-
-
   public scene: Scene
   public cameraPosition: { [k in CameraMode]: Vector3 } = {
-    perspective: new Vector3(0, 0, 5),
+    perspective: new Vector3(1, 3, -3),
     orthographic: new Vector3(1, 5, 5),
   }
   public gltfLoader: GLTFLoader
@@ -86,6 +84,19 @@ export default class StateVillage {
     this.camera.perspective.lookAt(this._destinationPoint)
     this.camera.orthographic.lookAt(this._destinationPoint)
   }
+  updatePosition() {
+    const angle = this.player.getAngle(this.destinationPoint)
+    this.player.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
+    this.player.modelMesh.position.z += Math.sin(angle) * CONFIG.player.speed
+    this.camera.orthographic.position.x = this.cameraPosition.orthographic.x + this.player.modelMesh.position.x
+    this.camera.orthographic.position.z = this.cameraPosition.orthographic.z + this.player.modelMesh.position.z
+    this.camera.perspective.position.x = this.cameraPosition.perspective.x + this.player.modelMesh.position.x
+    this.camera.perspective.position.z = (this.cameraPosition.perspective.z + this.player.modelMesh.position.z) - 3
+    // 1인칭 카메라 시점
+    // this.camera.perspective.quaternion.copy(this.player.modelMesh.quaternion)
+    this.player.actDefault.stop()
+    this.player.actWork.play()
+  }
 
   public get destinationPoint() {
     return this._destinationPoint ?? this.player.modelMesh.position
@@ -115,13 +126,6 @@ export default class StateVillage {
 
   public get isInitialized(): boolean {
     return !!this._canvasRef.current && this.player.isInitialized
-  }
-
-  public get isPerspective(): boolean {
-    return this._isPerspective
-  }
-  public set isPerspective(value: boolean) {
-    this._isPerspective = value
   }
 
   public get canvas(): HTMLCanvasElement {

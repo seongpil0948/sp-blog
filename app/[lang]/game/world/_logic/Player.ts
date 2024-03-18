@@ -101,12 +101,4 @@ export default class Player {
 	getAngle(dest: { x: number, z: number }) {
 		return Math.atan2(dest.z - this.modelMesh.position.z, dest.x - this.modelMesh.position.x);
 	}
-
-	moveTo(angle: number, cameraPosition: Vector3, camera: Camera) {
-		camera.position.x = cameraPosition.x + this.modelMesh.position.x
-		camera.position.z = cameraPosition.z + this.modelMesh.position.z
-		this.actDefault.stop()
-		this.actWork.play()
-	}
-
 }

@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import StateVillage from '../../_logic/Village'
 import CONFIG from '../../config'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export default function World() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -13,11 +14,8 @@ export default function World() {
     if (!canvasRef.current) return
     const s = new StateVillage({ canvasRef, cameraMode: 'orthographic' })
     const renderer = getRenderer(s.canvas)
-    // cameraPerspective.position.x = s.player.modelMesh?.position.x
-    // cameraPerspective.position.z = s.player.modelMesh?.position.z + 5
 
     const raycaster = new THREE.Raycaster()
-    let angle = 0
 
     // 그리기
     const clock = new THREE.Clock()
@@ -29,20 +27,9 @@ export default function World() {
         if (s.isPressed) {
           raycasting()
         }
-
         // s.lookAt()
         if (s.player.moving) {
-          // 걸어가는 상태
-          angle = s.player.getAngle(s.destinationPoint)
-          s.player.modelMesh.position.x += Math.cos(angle) * CONFIG.player.speed
-          s.player.modelMesh.position.z += Math.sin(angle) * CONFIG.player.speed
-
-          s.player.moveTo(
-            angle,
-            s.cameraPosition.orthographic,
-            s.camera.orthographic,
-          )
-
+          s.updatePosition()
           if (s.player.isCloseTo(s.destinationPoint)) {
             s.player.moving = false
           }
@@ -145,7 +132,8 @@ export default function World() {
 
       // space 키일 경우 카메라를 perspective로 변경
       if (e.key === ' ') {
-        console.log('space, go to perspective')
+        s.cameraMode =
+          s.cameraMode === 'orthographic' ? 'perspective' : 'orthographic'
       }
 
       if (s.player.moving) {
