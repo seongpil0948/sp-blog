@@ -1,3 +1,4 @@
+'use client'
 import {
 	Scene,
 	BoxGeometry,
@@ -60,11 +61,13 @@ export const mat = {
 	})
 };
 
-const normalSound = new Audio();
-normalSound.src = '/sounds/Crash.mp3';
-const strongSound = new Audio();
-strongSound.src = '/sounds/Wood Hit Metal Crash.mp3';
-export const sounds = {
-	normal: normalSound,
-	strong: strongSound
-};
+export const getSounds = () => {
+	const normal = new Audio();
+	normal.src = '/sounds/Crash.mp3';
+	const strong = new Audio();
+	strong.src = '/sounds/Wood Hit Metal Crash.mp3';
+	return {
+		normal,
+		strong
+	};
+}

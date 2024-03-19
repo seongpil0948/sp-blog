@@ -12,9 +12,9 @@ import { SideLight } from '../../_logic/SideLight'
 import { Glass } from '../../_logic/Glass'
 import { Player } from '../../_logic/Player'
 import { useEffect, useRef } from 'react'
+import { PreventDragClick } from '../../../_utils/PreventDragClick'
 
 type GlassType = 'normal' | 'strong'
-// TODO: audio file, model, preventDragClick
 export default function Bridge() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {

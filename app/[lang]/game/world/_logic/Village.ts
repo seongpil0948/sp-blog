@@ -6,6 +6,7 @@ import House from "./House"
 import Player from "./Player"
 import CONFIG from "../config"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import CONFIG_GAME from "../../_utils/config"
 
 
 type CameraMode = 'perspective' | 'orthographic'
@@ -63,8 +64,7 @@ export default class StateVillage {
       scene: this.scene,
       meshes: this.meshes,
       gltfLoader: this.gltfLoader,
-      // modelSrc: '/glb/ilbuni.glb',
-      modelSrc: '/glb/ilbuni.glb',
+      modelSrc: CONFIG_GAME.playerSrc,
     })
     this.camera = {
       perspective: getCamera.perspective(this.cameraPosition.perspective),

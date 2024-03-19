@@ -6,6 +6,7 @@ import {
 	MeshBasicMaterial
 } from 'three';
 import { Stuff } from './Stuff';
+import CONFIG_GAME from "../../_utils/config"
 
 export class Player extends Stuff {
 	constructor(info) {
@@ -16,7 +17,8 @@ export class Player extends Stuff {
 		this.depth = 0.5;
 
 		cm1.gltfLoader.load(
-			'/models/ilbuni.glb',
+			// CONFIG_GAME.playerSrc,
+			"/glb/ilbuni-bridge.glb",
 			glb => {
 				// shadow
 				glb.scene.traverse(child => {
@@ -37,6 +39,9 @@ export class Player extends Stuff {
 
 				this.modelMesh.animations = glb.animations;
 				cm1.mixer = new AnimationMixer(this.modelMesh);
+				console.log("modelMesh", this.modelMesh)
+
+
 				this.actions = [];
 				this.actions[0] = cm1.mixer.clipAction(this.modelMesh.animations[0]); // default
 				this.actions[1] = cm1.mixer.clipAction(this.modelMesh.animations[1]); // fall

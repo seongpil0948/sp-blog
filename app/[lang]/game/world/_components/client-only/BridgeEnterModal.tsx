@@ -9,6 +9,7 @@ import {
 } from '@nextui-org/modal'
 import { Button } from '@nextui-org/button'
 import { ElementRef, forwardRef, useImperativeHandle } from 'react'
+import { useRouter } from 'next/navigation'
 
 const BridgeEnterModal = forwardRef<
   ElementRef<typeof Modal>,
@@ -16,6 +17,8 @@ const BridgeEnterModal = forwardRef<
   any
 >(({ placement = 'left', classNames, ...props }, ref) => {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure()
+  const router = useRouter()
+
   useImperativeHandle(
     ref,
     () =>
@@ -29,6 +32,7 @@ const BridgeEnterModal = forwardRef<
     if (!isOpen) onOpen()
   }
   const handleEnterBridge = () => {
+    router.push('/game/bridge')
     onClose()
   }
   return (
