@@ -190,13 +190,16 @@ export default function World() {
     draw()
     return () => {
       window.removeEventListener('resize', setSize)
-      s.canvas.removeEventListener('mousedown', handleMouseDown)
-      s.canvas.removeEventListener('mouseup', handleMouseUp)
-      s.canvas.removeEventListener('mousemove', handleMouseMove)
-      s.canvas.removeEventListener('touchstart', handleTouchStart)
-      s.canvas.removeEventListener('touchend', handleTouchEnd)
-      s.canvas.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('keydown', handleKeyDown)
+
+      if (s.canvasExist) {
+        s.canvas.removeEventListener('mousedown', handleMouseDown)
+        s.canvas.removeEventListener('mouseup', handleMouseUp)
+        s.canvas.removeEventListener('mousemove', handleMouseMove)
+        s.canvas.removeEventListener('touchstart', handleTouchStart)
+        s.canvas.removeEventListener('touchend', handleTouchEnd)
+        s.canvas.removeEventListener('touchmove', handleTouchMove)
+      }
     }
   })
 

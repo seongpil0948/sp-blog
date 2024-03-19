@@ -2,19 +2,25 @@ import { cm1 } from './common';
 import {
 	Mesh,
 	AnimationMixer,
-	BoxGeometry,
-	MeshBasicMaterial
+	Object3D,
+	AnimationAction,
 } from 'three';
-import { Stuff } from './Stuff';
+import { Stuff, StuffChildParams } from './Stuff';
 import CONFIG_GAME from "../../_utils/config"
 
+const SUFFIX= "-player"
 export class Player extends Stuff {
-	constructor(info) {
-		super(info);
+	modelMesh: Object3D | undefined;
+	actions: AnimationAction[] = [];
 
-		this.width = 0.5;
-		this.height = 0.5;
-		this.depth = 0.5;
+	constructor(info: StuffChildParams) {
+		super({
+			width: 0.5,
+			height: 0.5,
+			depth: 0.5,
+			...info,
+			name: `${info.name}${SUFFIX}`
+		});
 
 		cm1.gltfLoader.load(
 			// CONFIG_GAME.playerSrc,
@@ -22,12 +28,12 @@ export class Player extends Stuff {
 			glb => {
 				// shadow
 				glb.scene.traverse(child => {
-					if (child.isMesh) {
+					if (child instanceof Mesh) {
 						child.castShadow = true;
 					}
 				});
 
-				this.modelMesh = glb.scene.children[0];
+				this.modelMesh = glb.scene.children[0] as Object3D;
 				this.modelMesh.position.set(this.x, this.y, this.z);
 				this.modelMesh.rotation.set(
 					this.rotationX,
@@ -38,16 +44,12 @@ export class Player extends Stuff {
 				cm1.scene.add(this.modelMesh);
 
 				this.modelMesh.animations = glb.animations;
-				cm1.mixer = new AnimationMixer(this.modelMesh);
+				cm1.mixer = new AnimationMixer(this.modelMesh!);
 				console.log("modelMesh", this.modelMesh)
-
-
-				this.actions = [];
-				this.actions[0] = cm1.mixer.clipAction(this.modelMesh.animations[0]); // default
-				this.actions[1] = cm1.mixer.clipAction(this.modelMesh.animations[1]); // fall
-				this.actions[2] = cm1.mixer.clipAction(this.modelMesh.animations[2]); // jump
+				this.actions[0] = cm1.mixer.clipAction(this.modelMesh!.animations[0]); // default
+				this.actions[1] = cm1.mixer.clipAction(this.modelMesh!.animations[1]); // fall
+				this.actions[2] = cm1.mixer.clipAction(this.modelMesh!.animations[2]); // jump
 				this.actions[2].repetitions = 1;
-				
 				this.actions[0].play();
 
 				this.setCannonBody();
@@ -59,5 +61,9 @@ export class Player extends Stuff {
 		// this.mesh.castShadow = true;
 		// this.mesh.receiveShadow = true;
 		// cm1.scene.add(this.mesh);
+	}
+
+	static isPlayer(obj: any): obj is Player {
+		return obj instanceof Player && (obj.name as string).endsWith(SUFFIX);
 	}
 }

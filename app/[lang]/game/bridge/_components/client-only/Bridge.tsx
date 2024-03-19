@@ -13,6 +13,7 @@ import { Glass } from '../../_logic/Glass'
 import { Player } from '../../_logic/Player'
 import { useEffect, useRef } from 'react'
 import { PreventDragClick } from '../../../_utils/PreventDragClick'
+import { Stuff } from '../../_logic/Stuff'
 
 type GlassType = 'normal' | 'strong'
 export default function Bridge() {
@@ -122,7 +123,7 @@ export default function Bridge() {
     // 물체 만들기
     const glassUnitSize = 1.2 // 유리판 크기
     const numberOfGlass = 10 // 유리판 개수
-    const objects: any[] = []
+    const objects: VillageObject[] = []
 
     // 바닥
     const floor = new Floor({
@@ -213,7 +214,7 @@ export default function Bridge() {
 
     // 플레이어
     const player = new Player({
-      name: 'player',
+      name: '1min',
       x: 0,
       y: 10.9,
       z: 13,
@@ -329,23 +330,28 @@ export default function Bridge() {
       cm1.world.step(cannonStepTime, delta, 3)
 
       objects.forEach((item) => {
-        if (item.cannonBody) {
-          if (item.name === 'player') {
-            if (item.modelMesh) {
-              item.modelMesh.position.copy(item.cannonBody.position)
-              if (fail)
+        try {
+          if (Stuff.hasCannonBody(item)) {
+            if (Player.isPlayer(item)) {
+              if (item.modelMesh) {
+                item.modelMesh.position.copy(item.cannonBody.position)
+                if (fail)
+                  item.modelMesh.quaternion.copy(item.cannonBody.quaternion)
+                item.modelMesh.position.y += 0.15
+              }
+            } else if (Stuff.hasMesh(item)) {
+              item.mesh.position.copy(item.cannonBody.position)
+              item.mesh.quaternion.copy(item.cannonBody.quaternion)
+  
+              if (Stuff.hasModelMesh(item)) {
+                item.modelMesh.position.copy(item.cannonBody.position)
                 item.modelMesh.quaternion.copy(item.cannonBody.quaternion)
-            }
-            item.modelMesh.position.y += 0.15
-          } else {
-            item.mesh.position.copy(item.cannonBody.position)
-            item.mesh.quaternion.copy(item.cannonBody.quaternion)
-
-            if (item.modelMesh) {
-              item.modelMesh.position.copy(item.cannonBody.position)
-              item.modelMesh.quaternion.copy(item.cannonBody.quaternion)
+              }
             }
           }
+        } catch (e) {
+          console.error(item)
+          throw e
         }
       })
 
@@ -360,7 +366,6 @@ export default function Bridge() {
           camera2.position.z = player.cannonBody.position.z
         }
       }
-
       renderer.setAnimationLoop(draw)
     }
 
@@ -397,3 +402,4 @@ export default function Bridge() {
     </>
   )
 }
+type VillageObject = Stuff | Player | Glass | Floor | Pillar | Bar | SideLight

@@ -13,10 +13,10 @@ import {
 	Material
 } from 'cannon-es';
 
-export const cm1: Record<string, any> = {
+export const cm1 = {
 	scene: new Scene(),
 	gltfLoader: new GLTFLoader(),
-	mixer: undefined,
+	mixer: undefined as AnimationMixer | undefined,
 
 	// cannon
 	world: new World(),

@@ -158,6 +158,9 @@ export default class StateVillage {
     }
     return this._canvasRef.current
   }
+  public get canvasExist(): boolean {
+    return !!this._canvasRef.current
+  }
 
   public get isPressed(): boolean {
     return this._isPressed

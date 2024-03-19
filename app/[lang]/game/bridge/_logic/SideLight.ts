@@ -1,8 +1,16 @@
 import { cm1, cm2, geo, mat } from './common';
-import { Mesh } from 'three';
+import { Mesh, SphereGeometry, Material } from 'three';
 
 export class SideLight {
-	constructor(info) {
+	name: string;
+	x: number;
+	y: number;
+	z: number;
+	geometry: SphereGeometry;
+	material: Material;
+	mesh: Mesh;
+
+	constructor(info: { container?: Mesh; name?: string; x?: number; y?: number; z?: number }) {
 		const container = info.container || cm1.scene;
 
 		this.name = info.name || '';
