@@ -4,18 +4,15 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import StateVillage from '../../_logic/Village'
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from '@nextui-org/modal'
-import { Button } from '@nextui-org/button'
-
+import BridgeEnterModal from './BridgeEnterModal'
 export default function World() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure()
-  
+  const bridgeEnterRef = useRef<any>(null)
+
   useEffect(() => {
     if (!canvasRef.current) return
     const s = new StateVillage({ canvasRef, cameraMode: 'orthographic' })
     const renderer = getRenderer(s.canvas)
-
     const raycaster = new THREE.Raycaster()
 
     // 그리기
@@ -25,7 +22,7 @@ export default function World() {
       if (s.player.mixer) s.player.mixer.update(delta)
       if (s.isInitialized) {
         s.camera.orthographic.lookAt(s.player.modelMesh.position)
-        
+
         if (s.cameraMode === 'perspective') {
           s.controls.update()
         } else {
@@ -42,7 +39,6 @@ export default function World() {
 
           if (s.player.isOnTheSpot(s.spotMesh.position)) {
             if (!s.house.visible) {
-            
               s.house.visible = true
               s.spotMesh.material.color.set('seagreen')
               gsap.to(s.house.modelMesh.position, {
@@ -54,9 +50,10 @@ export default function World() {
                 duration: 1,
                 y: 3,
               })
-              if (!isOpen) {
-                onOpen()
-              }                
+              console.log(bridgeEnterRef.current)
+              if (bridgeEnterRef.current) {
+                bridgeEnterRef.current.open()
+              }
             }
           } else if (s.house.visible) {
             s.house.visible = false
@@ -68,7 +65,7 @@ export default function World() {
             gsap.to(s.camera.orthographic.position, {
               duration: 1,
               y: 5,
-            })          
+            })
           }
         } else {
           // 서 있는 상태
@@ -203,35 +200,17 @@ export default function World() {
     }
   })
 
-  const handleEnterBridge = () => {
-    onClose()
-  }
-
   return (
     <>
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
-      }}
-    />
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="auto">
-        <ModalContent>
-          <>
-            <ModalHeader className="flex flex-col gap-1">안내문</ModalHeader>
-            <ModalBody>
-              사다리맵으로 이동하시겠습니까?
-            </ModalBody>
-            <ModalFooter>
-              <Button color="primary" onPress={handleEnterBridge}>
-                입장하기
-              </Button>
-            </ModalFooter>
-          </>
-        </ModalContent>
-      </Modal>    
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+        }}
+      />
+      <BridgeEnterModal ref={bridgeEnterRef} />
     </>
   )
 }
